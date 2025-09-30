@@ -10,7 +10,7 @@ services:
       POSTGRES_USER: kanvaro
       POSTGRES_PASSWORD: Kanvaro@2025
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -24,7 +24,7 @@ services:
     image: redis:7-alpine
     container_name: kanvaro-redis
     ports:
-      - "6379:6379"
+      - "6380:6379"
     volumes:
       - redis_data:/data
     healthcheck:
@@ -44,13 +44,13 @@ services:
       DATABASE_URL: postgresql://kanvaro:Kanvaro%402025@postgres:5432/kanvaro?schema=public
       REDIS_HOST: redis
       REDIS_PORT: 6379
-      FRONTEND_URL: http://localhost:3000
-      API_URL: http://localhost:3001
+      FRONTEND_URL: http://localhost:3010
+      API_URL: http://localhost:8001
       JWT_SECRET: dev-secret-key
       SESSION_SECRET: dev-session-secret
       CSRF_SECRET: dev-csrf-secret
     ports:
-      - "3001:3001"
+      - "8001:3001"
     depends_on:
       postgres:
         condition: service_healthy
@@ -68,17 +68,12 @@ services:
       dockerfile: apps/web/Dockerfile
     container_name: kanvaro-web
     environment:
-      NODE_ENV: development
-      NEXT_PUBLIC_API_URL: http://localhost:3001
+      NODE_ENV: production
+      NEXT_PUBLIC_API_URL: http://localhost:8001
     ports:
-      - "3000:3000"
+      - "3010:3000"
     depends_on:
       - api
-    volumes:
-      - ./apps/web:/app
-      - /app/node_modules
-      - /app/.next
-    command: npm run dev
 
   # Database Management
   db-studio:

@@ -11,26 +11,20 @@ datasource db {
 }
 
 model User {
-  id             String    @id @default(cuid())
-  email          String    @unique
-  name           String?
-  passwordHash   String?
-  role           String    @default("USER") // USER, ADMIN, OWNER
-  avatarUrl      String?
-  emailVerifiedAt DateTime?
-  mfaEnabled     Boolean   @default(false)
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
+  id           String    @id @default(cuid())
+  email        String    @unique
+  name         String?
+  passwordHash String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
 
   // Relations
-  sessions       Session[]
-  projects       Project[]
-  projectsLead   Project[] @relation("ProjectLead")
-  tasks          Task[]
-  tasksCreated   Task[] @relation("TaskCreator")
-  timeLogs       TimeLog[]
-  notifications  Notification[]
-  comments       Comment[]
+  sessions     Session[]
+  projects     Project[]
+  tasks        Task[]
+  timeLogs     TimeLog[]
+  notifications Notification[]
+  comments     Comment[]
 
   @@map("users")
 }
@@ -43,7 +37,6 @@ model Session {
   ipHash          String
   userAgentHash   String
   refreshTokenHash String
-  revokedAt       DateTime?
 
   // Relations
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -54,23 +47,18 @@ model Session {
 model Project {
   id          String    @id @default(cuid())
   name        String
-  key         String    @unique
   description String?
-  isActive    Boolean   @default(true)
-  leadUserId  String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
   ownerId     String
 
   // Relations
   owner       User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  lead        User?     @relation("ProjectLead", fields: [leadUserId], references: [id], onDelete: SetNull)
   boards      Board[]
   sprints     Sprint[]
   tasks       Task[]
   timeLogs    TimeLog[]
   comments    Comment[]
-  labels      Label[]
 
   @@map("projects")
 }
@@ -95,7 +83,6 @@ model Column {
   id          String    @id @default(cuid())
   name        String
   orderKey    String    @default("0|000000")
-  wipLimit    Int?
   boardId     String
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -112,22 +99,16 @@ model Task {
   title       String
   description String?
   orderKey    String    @default("0|000000")
-  status      String    @default("TODO") // TODO, IN_PROGRESS, DONE
-  points      Int?
-  boardId     String
   columnId    String
   projectId   String
   assigneeId  String?
-  createdBy   String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
   // Relations
-  board       Board     @relation(fields: [boardId], references: [id], onDelete: Cascade)
   column      Column    @relation(fields: [columnId], references: [id], onDelete: Cascade)
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
   assignee    User?     @relation(fields: [assigneeId], references: [id], onDelete: SetNull)
-  creator     User?     @relation("TaskCreator", fields: [createdBy], references: [id], onDelete: SetNull)
   timeLogs    TimeLog[]
   comments    Comment[]
 
@@ -139,8 +120,6 @@ model Sprint {
   name        String
   description String?
   status      String    @default("PLANNED") // PLANNED, ACTIVE, CLOSED
-  state       String    @default("PLANNED") // PLANNED, ACTIVE, CLOSED
-  goal        String?
   startDate   DateTime?
   endDate     DateTime?
   projectId   String
@@ -149,7 +128,6 @@ model Sprint {
 
   // Relations
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  timeLogs    TimeLog[]
 
   @@map("sprints")
 }
@@ -157,18 +135,13 @@ model Sprint {
 model TimeLog {
   id          String    @id @default(cuid())
   description String?
-  note        String?
   startTime   DateTime
-  startedAt   DateTime
   endTime     DateTime?
-  endedAt     DateTime?
   duration    Int?      // in minutes
-  durationSec Int?      // in seconds
   billable    Boolean   @default(false)
   userId      String
   taskId      String
   projectId   String
-  sprintId    String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 
@@ -176,7 +149,6 @@ model TimeLog {
   user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   task        Task      @relation(fields: [taskId], references: [id], onDelete: Cascade)
   project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  sprint      Sprint?   @relation(fields: [sprintId], references: [id], onDelete: SetNull)
 
   @@map("time_logs")
 }
@@ -204,7 +176,6 @@ model Notification {
   title       String
   body        String?
   link        String?
-  data        Json?
   readAt      DateTime?
   userId      String
   taskId      String?
@@ -228,40 +199,4 @@ model AuditLog {
   createdAt   DateTime  @default(now())
 
   @@map("audit_logs")
-}
-
-model Label {
-  id          String    @id @default(cuid())
-  name        String
-  color       String
-  projectId   String
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  // Relations
-  project     Project   @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@map("labels")
-}
-
-model InstanceSettings {
-  id          String    @id @default(cuid())
-  setupCompleted Boolean @default(false)
-  isInitialized Boolean @default(false)
-  organizationName String?
-  organizationLogo String?
-  primaryColor String?
-  timezone    String?
-  appUrl      String?
-  apiUrl      String?
-  appBaseUrl  String?
-  cookieDomain String?
-  cspMode     String?
-  fromEmail   String?
-  fromName    String?
-  orgName     String?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@map("instance_settings")
 }

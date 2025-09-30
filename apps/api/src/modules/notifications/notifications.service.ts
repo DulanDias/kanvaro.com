@@ -30,7 +30,7 @@ export class NotificationsService {
         type: input.type,
         title: input.title,
         body: input.body,
-        data: input.data as Record<string, unknown>,
+        data: input.data as any,
       },
     });
     this.realtime.emitNotification(input.userId, notif);

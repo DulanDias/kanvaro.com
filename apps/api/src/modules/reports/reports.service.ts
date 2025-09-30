@@ -103,7 +103,7 @@ export class ReportsService {
       const dayData = { date: dayStr };
 
       statuses.forEach((status) => {
-        const change = statusChanges.find(
+        const change = (statusChanges as any[]).find(
           (change: any) =>
             change.date.toISOString().split('T')[0] === dayStr &&
             change.status === status
@@ -212,11 +212,11 @@ export class ReportsService {
     `;
 
     const avgCompletionTime =
-      completionTimes.length > 0
-        ? completionTimes.reduce(
+      (completionTimes as any[]).length > 0
+        ? (completionTimes as any[]).reduce(
             (sum: number, time: any) => sum + time.days_to_complete,
             0
-          ) / completionTimes.length
+          ) / (completionTimes as any[]).length
         : 0;
 
     return {
@@ -225,7 +225,7 @@ export class ReportsService {
       to: toDate,
       weeklyThroughput,
       averageCompletionTime: Math.round(avgCompletionTime * 100) / 100,
-      totalCompleted: completionTimes.length,
+      totalCompleted: (completionTimes as any[]).length,
     };
   }
 
@@ -327,22 +327,22 @@ export class ReportsService {
       teamStats,
       velocity: velocity.averageVelocity,
       performance: {
-        totalTasks: teamStats.reduce(
+        totalTasks: (teamStats as any[]).reduce(
           (sum: number, member: any) => sum + parseInt(member.tasks_assigned),
           0
         ),
-        completedTasks: teamStats.reduce(
+        completedTasks: (teamStats as any[]).reduce(
           (sum: number, member: any) => sum + parseInt(member.tasks_completed),
           0
         ),
         completionRate:
-          teamStats.length > 0
-            ? teamStats.reduce(
+          (teamStats as any[]).length > 0
+            ? (teamStats as any[]).reduce(
                 (sum: number, member: any) =>
                   sum + parseInt(member.tasks_completed),
                 0
               ) /
-              teamStats.reduce(
+              (teamStats as any[]).reduce(
                 (sum: number, member: any) =>
                   sum + parseInt(member.tasks_assigned),
                 0

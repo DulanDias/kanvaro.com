@@ -172,7 +172,7 @@ export class BackgroundService {
         }
 
         case 'old-audit-logs': {
-          const deletedAuditLogs = await this.prisma.auditEvent.deleteMany({
+          const deletedAuditLogs = await this.prisma.auditLog.deleteMany({
             where: {
               createdAt: { lt: olderThan },
             },

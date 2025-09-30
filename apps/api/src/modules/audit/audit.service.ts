@@ -12,13 +12,13 @@ export class AuditService {
     entityId?: string | null;
     metadata?: Record<string, unknown> | null;
   }) {
-    return this.prisma.auditEvent.create({
+    return this.prisma.auditLog.create({
       data: {
         userId: event.userId || null,
         action: event.action,
         entityType: event.entityType || null,
         entityId: event.entityId || null,
-        metadata: event.metadata as unknown as Record<string, unknown>,
+        metadata: event.metadata as any,
       },
     });
   }
@@ -31,7 +31,7 @@ export class AuditService {
     to?: string;
   }) {
     const { userId, action, entityType, from, to } = params;
-    return this.prisma.auditEvent.findMany({
+    return this.prisma.auditLog.findMany({
       where: {
         ...(userId ? { userId } : {}),
         ...(action ? { action } : {}),

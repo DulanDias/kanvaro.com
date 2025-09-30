@@ -22,7 +22,7 @@ export class ProjectsService {
       data: {
         name: dto.name,
         key: dto.key,
-        leadUserId: owner.id,
+        ownerId: owner.id,
       },
       select: { id: true, name: true, key: true },
     });

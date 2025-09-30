@@ -85,6 +85,7 @@ export class TimeLogsService {
         userId: 'current-user', // TODO: Get from session
         projectId: task.projectId,
         sprintId: activeSprint?.id,
+        startTime: new Date(),
         startedAt: new Date(),
         note: dto.note,
         billable: true,
@@ -174,7 +175,9 @@ export class TimeLogsService {
         userId: 'current-user', // TODO: Get from session
         projectId: task.projectId,
         sprintId: activeSprint?.id,
+        startTime: startedAt,
         startedAt,
+        endTime: endedAt,
         endedAt,
         durationSec,
         note: dto.note,

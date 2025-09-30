@@ -115,6 +115,16 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Generate Prisma client
+        run: npm run prisma:generate
+        working-directory: ./apps/api
+
+      - name: Run Prisma migrate
+        run: npm run prisma:migrate
+        working-directory: ./apps/api
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/kanvaro_test
+
       - name: Run tests
         run: npm run test
         env:

@@ -1,8 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../common/prisma/prisma.service';
-import { OrganizationDto, AdminDto, EmailTestDto, DefaultsDto, RuntimeDto } from './dto/setup.dto';
+import {
+  OrganizationDto,
+  AdminDto,
+  EmailTestDto,
+  DefaultsDto,
+  RuntimeDto,
+} from './dto/setup.dto';
 import * as argon2 from 'argon2';
-import { v4 as uuidv4 } from 'uuid';
+// import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class SetupService {
@@ -10,7 +16,7 @@ export class SetupService {
 
   async getStatus() {
     const settings = await this.prisma.instanceSettings.findFirst();
-    
+
     return {
       isInitialized: settings?.isInitialized || false,
       checks: {
@@ -25,7 +31,7 @@ export class SetupService {
 
   async createOrganization(organizationDto: OrganizationDto) {
     const settings = await this.prisma.instanceSettings.findFirst();
-    
+
     if (settings?.isInitialized) {
       throw new Error('Instance is already initialized');
     }
@@ -34,14 +40,14 @@ export class SetupService {
       where: { id: '1' },
       update: {
         orgName: organizationDto.name,
-        logoS3Key: organizationDto.logoKey,
+        organizationLogo: organizationDto.logoKey,
         primaryColor: organizationDto.primaryColor,
         timezone: organizationDto.timezone || 'UTC',
       },
       create: {
         id: '1',
         orgName: organizationDto.name,
-        logoS3Key: organizationDto.logoKey,
+        organizationLogo: organizationDto.logoKey,
         primaryColor: organizationDto.primaryColor,
         timezone: organizationDto.timezone || 'UTC',
       },
@@ -52,7 +58,7 @@ export class SetupService {
 
   async createAdmin(adminDto: AdminDto) {
     const settings = await this.prisma.instanceSettings.findFirst();
-    
+
     if (settings?.isInitialized) {
       throw new Error('Instance is already initialized');
     }
@@ -86,7 +92,10 @@ export class SetupService {
       },
     });
 
-    return { success: true, admin: { id: admin.id, email: admin.email, name: admin.name } };
+    return {
+      success: true,
+      admin: { id: admin.id, email: admin.email, name: admin.name },
+    };
   }
 
   async testEmail(emailTestDto: EmailTestDto) {
@@ -101,7 +110,7 @@ export class SetupService {
 
   async createDefaults(defaultsDto: DefaultsDto) {
     const settings = await this.prisma.instanceSettings.findFirst();
-    
+
     if (settings?.isInitialized) {
       throw new Error('Instance is already initialized');
     }
@@ -120,7 +129,7 @@ export class SetupService {
       data: {
         name: 'Default Project',
         key: 'DEFAULT',
-        leadUserId: admin.id,
+        ownerId: admin.id,
       },
     });
 
@@ -167,7 +176,7 @@ export class SetupService {
     // Create sample data if requested
     if (defaultsDto.createSampleData) {
       const backlogColumn = columns[0];
-      
+
       // Create sample tasks
       const sampleTasks = [
         'Set up development environment',
@@ -202,13 +211,13 @@ export class SetupService {
       success: true,
       project: { id: project.id, name: project.name, key: project.key },
       board: { id: board.id, name: board.name },
-      columns: columns.map(col => ({ id: col.id, name: col.name })),
+      columns: columns.map((col) => ({ id: col.id, name: col.name })),
     };
   }
 
   async configureRuntime(runtimeDto: RuntimeDto) {
     const settings = await this.prisma.instanceSettings.findFirst();
-    
+
     if (settings?.isInitialized) {
       throw new Error('Instance is already initialized');
     }
@@ -217,14 +226,12 @@ export class SetupService {
       where: { id: '1' },
       update: {
         appBaseUrl: runtimeDto.appBaseUrl,
-        apiBaseUrl: runtimeDto.apiBaseUrl,
         cookieDomain: runtimeDto.cookieDomain,
         cspMode: runtimeDto.cspMode,
       },
       create: {
         id: '1',
         appBaseUrl: runtimeDto.appBaseUrl,
-        apiBaseUrl: runtimeDto.apiBaseUrl,
         cookieDomain: runtimeDto.cookieDomain,
         cspMode: runtimeDto.cspMode,
       },
@@ -235,13 +242,13 @@ export class SetupService {
 
   async completeSetup() {
     const settings = await this.prisma.instanceSettings.findFirst();
-    
+
     if (settings?.isInitialized) {
       throw new Error('Instance is already initialized');
     }
 
     // Mark as initialized
-    const updatedSettings = await this.prisma.instanceSettings.upsert({
+    await this.prisma.instanceSettings.upsert({
       where: { id: '1' },
       update: {
         isInitialized: true,
@@ -253,15 +260,13 @@ export class SetupService {
     });
 
     // Create audit event
-    await this.prisma.auditEvent.create({
+    await this.prisma.auditLog.create({
       data: {
         userId: 'system', // System user for setup
         entityType: 'instance',
         entityId: '1',
         action: 'initialized',
-        diff: { isInitialized: true },
-        ipHash: 'setup',
-        userAgentHash: 'setup',
+        metadata: { isInitialized: true },
       },
     });
 
