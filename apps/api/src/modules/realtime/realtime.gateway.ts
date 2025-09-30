@@ -56,4 +56,24 @@ export class RealtimeGateway {
   emitTaskMoved(boardId: string, task: Record<string, unknown>) {
     this.server.to(`board:${boardId}`).emit('task.moved', task);
   }
+
+  // Emit sprint started event to project room
+  emitSprintStarted(projectId: string, sprint: Record<string, unknown>) {
+    this.server.to(`project:${projectId}`).emit('sprint.started', sprint);
+  }
+
+  // Emit sprint closed event to project room
+  emitSprintClosed(projectId: string, sprint: Record<string, unknown>) {
+    this.server.to(`project:${projectId}`).emit('sprint.closed', sprint);
+  }
+
+  // Emit time log started event
+  emitTimeLogStarted(userId: string, timeLog: Record<string, unknown>) {
+    this.server.to(`user:${userId}`).emit('timelog.started', timeLog);
+  }
+
+  // Emit time log stopped event
+  emitTimeLogStopped(userId: string, timeLog: Record<string, unknown>) {
+    this.server.to(`user:${userId}`).emit('timelog.stopped', timeLog);
+  }
 }
