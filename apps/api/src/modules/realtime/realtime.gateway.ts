@@ -76,4 +76,18 @@ export class RealtimeGateway {
   emitTimeLogStopped(userId: string, timeLog: Record<string, unknown>) {
     this.server.to(`user:${userId}`).emit('timelog.stopped', timeLog);
   }
+
+  // Emit notification to a user room
+  emitNotification(userId: string, notification: Record<string, unknown>) {
+    this.server.to(`user:${userId}`).emit('notification', notification);
+  }
+
+  @SubscribeMessage('join-user')
+  handleJoinUser(
+    @ConnectedSocket() client: Socket,
+    @MessageBody() data: { userId: string }
+  ) {
+    client.join(`user:${data.userId}`);
+    this.logger.log(`Client ${client.id} joined user room ${data.userId}`);
+  }
 }

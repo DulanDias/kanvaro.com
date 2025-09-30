@@ -13,6 +13,7 @@ export function useSocket() {
         {
           path: '/ws',
           transports: ['websocket'],
+          withCredentials: true,
         }
       );
     }

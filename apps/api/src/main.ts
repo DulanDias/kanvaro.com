@@ -6,6 +6,7 @@ import {
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import { AuditInterceptor } from './modules/audit/audit.interceptor';
 import { PrismaService } from './common/prisma/prisma.service';
 import helmet from 'helmet';
 import cookie from '@fastify/cookie';
@@ -39,6 +40,9 @@ async function bootstrap() {
       transform: true,
     })
   );
+
+  // Global audit interceptor
+  app.useGlobalInterceptors(app.get(AuditInterceptor));
 
   // Swagger documentation
   const config = new DocumentBuilder()
