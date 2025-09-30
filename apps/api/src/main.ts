@@ -1,21 +1,29 @@
 import { NestFactory } from '@nestjs/core';
-import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
+import {
+  FastifyAdapter,
+  NestFastifyApplication,
+} from '@nestjs/platform-fastify';
 import { ValidationPipe } from '@nestjs/common';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { PrismaService } from './common/prisma/prisma.service';
 import helmet from 'helmet';
-import cookieParser from 'cookie-parser';
+import cookie from '@fastify/cookie';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    new FastifyAdapter(),
+    new FastifyAdapter()
   );
 
-  // Security middleware
+  // Security headers
+  // @ts-expect-error - Fastify types for helmet differ
   app.use(helmet());
-  app.use(cookieParser());
+  // Cookies for sessions (httpOnly)
+  await app.register(cookie, {
+    secret: process.env.SESSION_SECRET || 'dev-session-secret',
+    hook: 'onRequest',
+  });
 
   // CORS configuration
   app.enableCors({
@@ -29,7 +37,7 @@ async function bootstrap() {
       whitelist: true,
       forbidNonWhitelisted: true,
       transform: true,
-    }),
+    })
   );
 
   // Swagger documentation

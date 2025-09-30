@@ -1,8 +1,40 @@
-import { Controller } from '@nestjs/common';
-import { ApiTags } from '@nestjs/swagger';
+import { Body, Controller, Get, HttpCode, Post, Res } from '@nestjs/common';
+import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
+import { Response } from 'fastify';
+import { AuthService } from './auth.service';
+import { LoginDto } from './dto/login.dto';
 
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthController {
-  // TODO: Implement authentication endpoints
+  constructor(private readonly authService: AuthService) {}
+
+  @Post('login')
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Password login' })
+  @ApiResponse({ status: 204, description: 'Logged in, cookies set' })
+  async login(
+    @Body() dto: LoginDto,
+    @Res({ passthrough: true }) res: Response
+  ) {
+    const { sessionId, refreshToken } =
+      await this.authService.loginWithPassword(dto.email, dto.password);
+    this.authService.setAuthCookies(res, sessionId, refreshToken);
+    return;
+  }
+
+  @Post('logout')
+  @HttpCode(204)
+  @ApiOperation({ summary: 'Logout and revoke session' })
+  async logout(@Res({ passthrough: true }) res: Response) {
+    this.authService.clearAuthCookies(res);
+    return;
+  }
+
+  @Get('me')
+  @ApiOperation({ summary: 'Current user' })
+  async me() {
+    // TODO: Replace with real session guard
+    return { user: null };
+  }
 }

@@ -300,6 +300,7 @@ model TimeLog {
   taskId      String
   userId      String
   sprintId    String?
+  projectId   String?
   startedAt   DateTime
   endedAt     DateTime?
   durationSec Int?
@@ -312,7 +313,7 @@ model TimeLog {
   task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   user        User     @relation(fields: [userId], references: [id])
   sprint      Sprint?  @relation(fields: [sprintId], references: [id])
-  project     Project  @relation(fields: [projectId], references: [id])
+  project     Project?  @relation(fields: [projectId], references: [id])
 
   @@map("time_logs")
 }
@@ -321,6 +322,7 @@ model Notification {
   id        String           @id @default(cuid())
   userId    String
   projectId String?
+  taskId    String?
   type      NotificationType
   payload   Json
   readAt    DateTime?
@@ -336,7 +338,7 @@ model Notification {
 
 model AuditEvent {
   id         String   @id @default(cuid())
-  userId     String
+  userId     String?
   entityType String
   entityId   String
   action     String
@@ -346,7 +348,7 @@ model AuditEvent {
   createdAt  DateTime @default(now())
 
   // Relations
-  user       User     @relation(fields: [userId], references: [id])
+  user       User?     @relation(fields: [userId], references: [id])
 
   @@map("audit_events")
 }
