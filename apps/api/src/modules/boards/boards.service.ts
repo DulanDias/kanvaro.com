@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '@/common/prisma/prisma.service';
-import { generateLexoRank } from '@kanvaro/shared/dist/utils';
+import { generateLexoRank } from '../../utils/lexorank';
 
 @Injectable()
 export class BoardsService {

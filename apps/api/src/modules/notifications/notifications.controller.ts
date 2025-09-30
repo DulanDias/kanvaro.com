@@ -21,10 +21,7 @@ export class NotificationsController {
   @ApiOperation({ summary: 'List notifications for current user' })
   async list(@Req() req: Request, @Query('unreadOnly') unreadOnly?: string) {
     const userId =
-      req.user?.id ||
-      req.session?.userId ||
-      req.cookies?.userId ||
-      'current-user';
+      (req as any).user?.id || (req as any).cookies?.userId || 'current-user';
     return this.notifications.list(userId, {
       unreadOnly: unreadOnly === 'true',
     });
@@ -34,10 +31,7 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Mark notification as read' })
   async markRead(@Req() req: Request, @Param('id') id: string) {
     const userId =
-      req.user?.id ||
-      req.session?.userId ||
-      req.cookies?.userId ||
-      'current-user';
+      (req as any).user?.id || (req as any).cookies?.userId || 'current-user';
     return this.notifications.markRead(userId, id);
   }
 
@@ -46,10 +40,7 @@ export class NotificationsController {
   @ApiOperation({ summary: 'Mark all notifications as read' })
   async markAllRead(@Req() req: Request) {
     const userId =
-      req.user?.id ||
-      req.session?.userId ||
-      req.cookies?.userId ||
-      'current-user';
+      (req as any).user?.id || (req as any).cookies?.userId || 'current-user';
     return this.notifications.markAllRead(userId);
   }
 }

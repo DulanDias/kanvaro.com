@@ -1,11 +1,16 @@
 'use client';
 
 import { useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { CheckCircle, Circle, Loader2 } from 'lucide-react';
 
 interface SetupStep {
@@ -18,14 +23,49 @@ interface SetupStep {
 export function SetupWizard() {
   const [currentStep, setCurrentStep] = useState(0);
   const [loading, setLoading] = useState(false);
-  const [steps, setSteps] = useState<SetupStep[]>([
-    { id: 'preflight', title: 'Preflight Check', description: 'Verify system requirements', completed: false },
-    { id: 'organization', title: 'Organization', description: 'Set up your organization', completed: false },
-    { id: 'admin', title: 'Admin Account', description: 'Create your admin account', completed: false },
-    { id: 'email', title: 'Email Settings', description: 'Configure email notifications', completed: false },
-    { id: 'defaults', title: 'Defaults', description: 'Create default project and board', completed: false },
-    { id: 'security', title: 'Security & URLs', description: 'Configure security settings', completed: false },
-    { id: 'complete', title: 'Complete', description: 'Finish setup', completed: false },
+  const [steps] = useState<SetupStep[]>([
+    {
+      id: 'preflight',
+      title: 'Preflight Check',
+      description: 'Verify system requirements',
+      completed: false,
+    },
+    {
+      id: 'organization',
+      title: 'Organization',
+      description: 'Set up your organization',
+      completed: false,
+    },
+    {
+      id: 'admin',
+      title: 'Admin Account',
+      description: 'Create your admin account',
+      completed: false,
+    },
+    {
+      id: 'email',
+      title: 'Email Settings',
+      description: 'Configure email notifications',
+      completed: false,
+    },
+    {
+      id: 'defaults',
+      title: 'Defaults',
+      description: 'Create default project and board',
+      completed: false,
+    },
+    {
+      id: 'security',
+      title: 'Security & URLs',
+      description: 'Configure security settings',
+      completed: false,
+    },
+    {
+      id: 'complete',
+      title: 'Complete',
+      description: 'Finish setup',
+      completed: false,
+    },
   ]);
 
   const handleNext = () => {
@@ -43,7 +83,7 @@ export function SetupWizard() {
   const handleComplete = async () => {
     setLoading(true);
     // TODO: Implement actual setup completion
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    await new Promise((resolve) => setTimeout(resolve, 2000));
     setLoading(false);
     // Redirect to login or dashboard
   };
@@ -111,7 +151,7 @@ export function SetupWizard() {
           </CardHeader>
           <CardContent>
             {renderStepContent()}
-            
+
             <div className="flex justify-between mt-8">
               <Button
                 variant="outline"
@@ -120,7 +160,7 @@ export function SetupWizard() {
               >
                 Previous
               </Button>
-              
+
               {currentStep === steps.length - 1 ? (
                 <Button onClick={handleComplete} disabled={loading}>
                   {loading ? (
@@ -133,9 +173,7 @@ export function SetupWizard() {
                   )}
                 </Button>
               ) : (
-                <Button onClick={handleNext}>
-                  Next
-                </Button>
+                <Button onClick={handleNext}>Next</Button>
               )}
             </div>
           </CardContent>
@@ -149,9 +187,10 @@ function PreflightStep() {
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-600">
-        We'll check your system requirements and verify that everything is ready for Kanvaro.
+        We'll check your system requirements and verify that everything is ready
+        for Kanvaro.
       </p>
-      
+
       <div className="space-y-3">
         <div className="flex items-center space-x-3">
           <CheckCircle className="h-5 w-5 text-green-500" />
@@ -181,17 +220,17 @@ function OrganizationStep() {
         <Label htmlFor="orgName">Organization Name</Label>
         <Input id="orgName" placeholder="Enter your organization name" />
       </div>
-      
+
       <div>
         <Label htmlFor="orgLogo">Logo (Optional)</Label>
         <Input id="orgLogo" type="file" accept="image/*" />
       </div>
-      
+
       <div>
         <Label htmlFor="primaryColor">Primary Color</Label>
         <Input id="primaryColor" type="color" defaultValue="#3b82f6" />
       </div>
-      
+
       <div>
         <Label htmlFor="timezone">Timezone</Label>
         <Input id="timezone" defaultValue="UTC" />
@@ -207,17 +246,21 @@ function AdminStep() {
         <Label htmlFor="adminName">Full Name</Label>
         <Input id="adminName" placeholder="Enter your full name" />
       </div>
-      
+
       <div>
         <Label htmlFor="adminEmail">Email Address</Label>
         <Input id="adminEmail" type="email" placeholder="Enter your email" />
       </div>
-      
+
       <div>
         <Label htmlFor="adminPassword">Password</Label>
-        <Input id="adminPassword" type="password" placeholder="Create a strong password" />
+        <Input
+          id="adminPassword"
+          type="password"
+          placeholder="Create a strong password"
+        />
       </div>
-      
+
       <div className="flex items-center space-x-2">
         <input id="enableMfa" type="checkbox" />
         <Label htmlFor="enableMfa">Enable two-factor authentication</Label>
@@ -232,22 +275,26 @@ function EmailStep() {
       <p className="text-sm text-gray-600">
         Configure email settings for notifications and user invitations.
       </p>
-      
+
       <div>
         <Label htmlFor="fromEmail">From Email</Label>
-        <Input id="fromEmail" type="email" placeholder="noreply@yourdomain.com" />
+        <Input
+          id="fromEmail"
+          type="email"
+          placeholder="noreply@yourdomain.com"
+        />
       </div>
-      
+
       <div>
         <Label htmlFor="fromName">From Name</Label>
         <Input id="fromName" placeholder="Kanvaro" />
       </div>
-      
+
       <div>
         <Label htmlFor="testEmail">Test Email Address</Label>
         <Input id="testEmail" type="email" placeholder="test@example.com" />
       </div>
-      
+
       <Button variant="outline" size="sm">
         Send Test Email
       </Button>
@@ -261,16 +308,19 @@ function DefaultsStep() {
       <p className="text-sm text-gray-600">
         Create a default project and board to get started quickly.
       </p>
-      
+
       <div className="flex items-center space-x-2">
         <input id="createSampleData" type="checkbox" />
-        <Label htmlFor="createSampleData">Create sample data for demonstration</Label>
+        <Label htmlFor="createSampleData">
+          Create sample data for demonstration
+        </Label>
       </div>
-      
+
       <div className="bg-blue-50 p-4 rounded-lg">
         <h4 className="font-medium text-blue-900 mb-2">Default Project</h4>
         <p className="text-sm text-blue-700">
-          We'll create a "Default Project" with a Kanban board containing Backlog, In Progress, Review, and Done columns.
+          We'll create a "Default Project" with a Kanban board containing
+          Backlog, In Progress, Review, and Done columns.
         </p>
       </div>
     </div>
@@ -283,22 +333,22 @@ function SecurityStep() {
       <p className="text-sm text-gray-600">
         Configure security settings and URLs for your Kanvaro instance.
       </p>
-      
+
       <div>
         <Label htmlFor="appUrl">App Base URL</Label>
         <Input id="appUrl" placeholder="https://app.yourdomain.com" />
       </div>
-      
+
       <div>
         <Label htmlFor="apiUrl">API Base URL</Label>
         <Input id="apiUrl" placeholder="https://api.yourdomain.com" />
       </div>
-      
+
       <div>
         <Label htmlFor="cookieDomain">Cookie Domain</Label>
         <Input id="cookieDomain" placeholder="yourdomain.com" />
       </div>
-      
+
       <div>
         <Label htmlFor="cspMode">Content Security Policy Mode</Label>
         <select id="cspMode" className="w-full p-2 border rounded">
@@ -316,7 +366,8 @@ function CompleteStep() {
       <CheckCircle className="h-16 w-16 text-green-500 mx-auto" />
       <h3 className="text-xl font-semibold">Setup Complete!</h3>
       <p className="text-gray-600">
-        Your Kanvaro instance is ready to use. You can now start managing your projects and teams.
+        Your Kanvaro instance is ready to use. You can now start managing your
+        projects and teams.
       </p>
     </div>
   );

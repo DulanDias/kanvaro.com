@@ -19,6 +19,16 @@ import {
 } from 'recharts';
 import { Download, Calendar, Clock, TrendingUp } from 'lucide-react';
 
+type DailyDatum = { date: string; hours: number; billable: number };
+type ProjectDatum = { name: string; hours: number; color: string };
+type TeamMember = { name: string; hours: number; tasks: number };
+type ReportsState = {
+  daily: DailyDatum[];
+  weekly: DailyDatum[];
+  projectBreakdown: ProjectDatum[];
+  teamStats: TeamMember[];
+};
+
 export function TimeReports() {
   const [dateRange, setDateRange] = useState({
     from: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
@@ -26,7 +36,7 @@ export function TimeReports() {
       .split('T')[0],
     to: new Date().toISOString().split('T')[0],
   });
-  const [reports, setReports] = useState({
+  const [reports, setReports] = useState<ReportsState>({
     daily: [],
     weekly: [],
     projectBreakdown: [],
@@ -42,7 +52,7 @@ export function TimeReports() {
     try {
       setLoading(true);
       // TODO: Load reports from API
-      const mockDailyData = [
+      const mockDailyData: DailyDatum[] = [
         { date: '2024-01-29', hours: 8.5, billable: 7.5 },
         { date: '2024-01-30', hours: 6.0, billable: 5.5 },
         { date: '2024-01-31', hours: 7.5, billable: 7.0 },
@@ -50,14 +60,14 @@ export function TimeReports() {
         { date: '2024-02-02', hours: 5.5, billable: 5.0 },
       ];
 
-      const mockProjectData = [
+      const mockProjectData: ProjectDatum[] = [
         { name: 'Sprint Management', hours: 24.5, color: '#3b82f6' },
         { name: 'Time Tracking', hours: 18.0, color: '#10b981' },
         { name: 'Reports', hours: 12.5, color: '#f59e0b' },
         { name: 'Bug Fixes', hours: 8.0, color: '#ef4444' },
       ];
 
-      const mockTeamData = [
+      const mockTeamData: TeamMember[] = [
         { name: 'John Doe', hours: 45.5, tasks: 12 },
         { name: 'Jane Smith', hours: 38.0, tasks: 10 },
         { name: 'Mike Johnson', hours: 42.5, tasks: 11 },

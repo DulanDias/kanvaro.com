@@ -1,6 +1,6 @@
 import { Body, Controller, Get, HttpCode, Post, Res } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
-import { Response } from 'fastify';
+import { FastifyReply } from 'fastify';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 
@@ -15,7 +15,7 @@ export class AuthController {
   @ApiResponse({ status: 204, description: 'Logged in, cookies set' })
   async login(
     @Body() dto: LoginDto,
-    @Res({ passthrough: true }) res: Response
+    @Res({ passthrough: true }) res: FastifyReply
   ) {
     const { sessionId, refreshToken } =
       await this.authService.loginWithPassword(dto.email, dto.password);
@@ -26,7 +26,7 @@ export class AuthController {
   @Post('logout')
   @HttpCode(204)
   @ApiOperation({ summary: 'Logout and revoke session' })
-  async logout(@Res({ passthrough: true }) res: Response) {
+  async logout(@Res({ passthrough: true }) res: FastifyReply) {
     this.authService.clearAuthCookies(res);
     return;
   }
@@ -35,6 +35,7 @@ export class AuthController {
   @ApiOperation({ summary: 'Current user' })
   async me() {
     // TODO: Replace with real session guard
-    return { user: null };
+    // Return a minimal user shape for local/dev to unblock UI
+    return { id: 'dev-user', email: 'dev@kanvaro.local', name: 'Developer' };
   }
 }

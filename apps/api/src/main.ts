@@ -8,8 +8,8 @@ import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 import { AuditInterceptor } from './modules/audit/audit.interceptor';
 import { PrismaService } from './common/prisma/prisma.service';
-import helmet from 'helmet';
-import cookie from '@fastify/cookie';
+import helmet from '@fastify/helmet';
+import fastifyCookie from '@fastify/cookie';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestFastifyApplication>(
@@ -18,10 +18,9 @@ async function bootstrap() {
   );
 
   // Security headers
-  // @ts-expect-error - Fastify types for helmet differ
-  app.use(helmet());
+  await (app as any).register(helmet as any);
   // Cookies for sessions (httpOnly)
-  await app.register(cookie, {
+  await (app as any).register(fastifyCookie as any, {
     secret: process.env.SESSION_SECRET || 'dev-session-secret',
     hook: 'onRequest',
   });

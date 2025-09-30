@@ -2,7 +2,7 @@ import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { PrismaService } from '@/common/prisma/prisma.service';
 import * as argon2 from 'argon2';
 import { v4 as uuidv4 } from 'uuid';
-import { Response } from 'fastify';
+import { FastifyReply } from 'fastify';
 
 @Injectable()
 export class AuthService {
@@ -37,7 +37,7 @@ export class AuthService {
     return { sessionId, refreshToken };
   }
 
-  setAuthCookies(res: Response, sessionId: string, refreshToken: string) {
+  setAuthCookies(res: FastifyReply, sessionId: string, refreshToken: string) {
     const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
     const secure = process.env.NODE_ENV !== 'development';
 
@@ -59,7 +59,7 @@ export class AuthService {
     });
   }
 
-  clearAuthCookies(res: Response) {
+  clearAuthCookies(res: FastifyReply) {
     const cookieDomain = process.env.COOKIE_DOMAIN || undefined;
     const secure = process.env.NODE_ENV !== 'development';
     res.clearCookie('sid', { path: '/', domain: cookieDomain, secure });
