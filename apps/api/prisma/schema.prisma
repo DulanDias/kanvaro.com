@@ -1,0 +1,393 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model InstanceSettings {
+  id              String   @id @default(cuid())
+  isInitialized   Boolean  @default(false)
+  orgName         String?
+  logoS3Key       String?
+  primaryColor    String?
+  timezone        String?  @default("UTC")
+  appBaseUrl      String?
+  apiBaseUrl      String?
+  cookieDomain    String?
+  cspMode         String?  @default("strict")
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@map("instance_settings")
+}
+
+model User {
+  id                String    @id @default(cuid())
+  email             String    @unique
+  emailVerifiedAt   DateTime?
+  passwordHash      String?
+  mfaEnabled        Boolean   @default(false)
+  mfaSecretEncrypted String?
+  name              String
+  avatarUrl         String?
+  role              UserRole  @default(VIEWER)
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  lastLoginAt       DateTime?
+
+  // Relations
+  sessions          Session[]
+  emailLoginTokens  EmailLoginToken[]
+  passwordResetTokens PasswordResetToken[]
+  invites           Invite[] @relation("InvitedBy")
+  createdProjects   Project[] @relation("ProjectLead")
+  createdTasks      Task[] @relation("TaskCreator")
+  taskAssignments   TaskAssignee[]
+  comments          Comment[]
+  attachments       Attachment[]
+  timeLogs          TimeLog[]
+  notifications     Notification[]
+  auditEvents      AuditEvent[]
+
+  @@map("users")
+}
+
+model Session {
+  id                String   @id @default(cuid())
+  userId            String
+  createdAt         DateTime @default(now())
+  expiresAt         DateTime
+  ipHash            String
+  userAgentHash     String
+  refreshTokenHash  String
+  revokedAt         DateTime?
+
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model EmailLoginToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("email_login_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    String
+  tokenHash String
+  expiresAt DateTime
+  usedAt    DateTime?
+
+  // Relations
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
+}
+
+model Invite {
+  id        String   @id @default(cuid())
+  email     String
+  role      UserRole
+  tokenHash String
+  invitedBy String
+  acceptedAt DateTime?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  // Relations
+  inviter   User     @relation("InvitedBy", fields: [invitedBy], references: [id])
+
+  @@map("invites")
+}
+
+model Project {
+  id          String   @id @default(cuid())
+  name        String
+  key         String   @unique
+  leadUserId  String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  lead        User     @relation("ProjectLead", fields: [leadUserId], references: [id])
+  boards      Board[]
+  tasks       Task[]
+  sprints     Sprint[]
+  labels      Label[]
+  timeLogs    TimeLog[]
+  notifications Notification[]
+
+  @@map("projects")
+}
+
+model Board {
+  id        String   @id @default(cuid())
+  projectId String
+  name      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  project   Project  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  columns  Column[]
+  tasks    Task[]
+
+  @@map("boards")
+}
+
+model Column {
+  id        String   @id @default(cuid())
+  boardId   String
+  name      String
+  wipLimit  Int?
+  orderKey  String   @default("0|000000")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  board     Board    @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  tasks     Task[]
+
+  @@map("columns")
+}
+
+model Task {
+  id                String      @id @default(cuid())
+  projectId         String
+  boardId           String
+  columnId          String
+  title             String
+  descriptionRich   Json?
+  descriptionText   String?
+  priority          TaskPriority @default(MEDIUM)
+  points            Int?
+  status            TaskStatus  @default(OPEN)
+  dueAt             DateTime?
+  orderKey          String      @default("0|000000")
+  parentId          String?
+  createdBy         String
+  createdAt         DateTime    @default(now())
+  updatedAt         DateTime    @updatedAt
+
+  // Relations
+  project           Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  board             Board       @relation(fields: [boardId], references: [id], onDelete: Cascade)
+  column            Column      @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  creator           User        @relation("TaskCreator", fields: [createdBy], references: [id])
+  parent            Task?       @relation("TaskParent", fields: [parentId], references: [id])
+  subtasks          Task[]      @relation("TaskParent")
+  assignees         TaskAssignee[]
+  labels            TaskLabel[]
+  comments          Comment[]
+  attachments       Attachment[]
+  timeLogs          TimeLog[]
+  notifications     Notification[]
+
+  @@map("tasks")
+}
+
+model TaskAssignee {
+  taskId String
+  userId String
+
+  // Relations
+  task   Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, userId])
+  @@map("task_assignees")
+}
+
+model Label {
+  id        String   @id @default(cuid())
+  projectId String
+  name      String
+  color     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  tasks     TaskLabel[]
+
+  @@map("labels")
+}
+
+model TaskLabel {
+  taskId  String
+  labelId String
+
+  // Relations
+  task    Task   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  label   Label  @relation(fields: [labelId], references: [id], onDelete: Cascade)
+
+  @@id([taskId, labelId])
+  @@map("task_labels")
+}
+
+model Sprint {
+  id        String      @id @default(cuid())
+  projectId String
+  name      String
+  startDate DateTime
+  endDate   DateTime
+  goal      String?
+  state     SprintState @default(PLANNED)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  // Relations
+  project   Project     @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  timeLogs  TimeLog[]
+
+  @@map("sprints")
+}
+
+model Comment {
+  id        String   @id @default(cuid())
+  taskId    String
+  authorId  String
+  bodyRich  Json?
+  bodyText  String
+  replyToId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  task      Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  author    User     @relation(fields: [authorId], references: [id])
+  replyTo   Comment? @relation("CommentReplies", fields: [replyToId], references: [id])
+  replies   Comment[] @relation("CommentReplies")
+
+  @@map("comments")
+}
+
+model Attachment {
+  id         String   @id @default(cuid())
+  taskId     String
+  filename   String
+  mimeType   String
+  size       Int
+  s3Key      String
+  uploadedBy String
+  createdAt  DateTime @default(now())
+
+  // Relations
+  task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  uploader   User     @relation(fields: [uploadedBy], references: [id])
+
+  @@map("attachments")
+}
+
+model TimeLog {
+  id          String   @id @default(cuid())
+  taskId      String
+  userId      String
+  sprintId    String?
+  startedAt   DateTime
+  endedAt     DateTime?
+  durationSec Int?
+  billable    Boolean  @default(true)
+  note        String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  task        Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id])
+  sprint      Sprint?  @relation(fields: [sprintId], references: [id])
+  project     Project  @relation(fields: [projectId], references: [id])
+
+  @@map("time_logs")
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  projectId String?
+  type      NotificationType
+  payload   Json
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  // Relations
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project   Project?         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  task      Task?            @relation(fields: [taskId], references: [id], onDelete: Cascade)
+
+  @@map("notifications")
+}
+
+model AuditEvent {
+  id         String   @id @default(cuid())
+  userId     String
+  entityType String
+  entityId   String
+  action     String
+  diff       Json?
+  ipHash     String
+  userAgentHash String
+  createdAt  DateTime @default(now())
+
+  // Relations
+  user       User     @relation(fields: [userId], references: [id])
+
+  @@map("audit_events")
+}
+
+// Enums
+enum UserRole {
+  OWNER
+  ADMIN
+  PM
+  DEV
+  VIEWER
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TaskStatus {
+  OPEN
+  IN_PROGRESS
+  REVIEW
+  DONE
+  CLOSED
+}
+
+enum SprintState {
+  PLANNED
+  ACTIVE
+  CLOSED
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_MENTIONED
+  COMMENT_ADDED
+  SPRINT_STARTED
+  SPRINT_ENDING
+  INVITE_SENT
+  PASSWORD_RESET
+  MAGIC_LINK
+}
