@@ -3,6 +3,7 @@ import mongoose from 'mongoose'
 import { User } from '@/models/User'
 import { Organization } from '@/models/Organization'
 import bcrypt from 'bcryptjs'
+import { saveDatabaseConfig, markSetupCompleted } from '@/lib/config'
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,14 +39,14 @@ export async function POST(request: NextRequest) {
     
     console.log('Successfully connected to MongoDB')
     
-    // Create organization
-    console.log('Creating organization with data:', setupData.organization)
-    const organization = new Organization({
+    // Create or update organization
+    console.log('Creating/updating organization with data:', setupData.organization)
+    const organizationData = {
       name: setupData.organization.name,
       domain: setupData.organization.domain,
       logo: setupData.organization.logo,
       darkLogo: setupData.organization.darkLogo,
-      logoMode: setupData.organization.logoMode,
+      logoMode: setupData.organization.logoMode === 'dual' ? 'both' : setupData.organization.logoMode,
       timezone: setupData.organization.timezone,
       currency: setupData.organization.currency,
       language: setupData.organization.language,
@@ -67,18 +68,32 @@ export async function POST(request: NextRequest) {
         provider: setupData.email.provider,
         smtp: setupData.email.smtp,
         azure: setupData.email.azure
-      } : undefined
-    })
+      } : undefined,
+      databaseConfig: {
+        host: database.host,
+        port: database.port,
+        database: database.database,
+        username: database.username,
+        password: database.password,
+        authSource: database.authSource,
+        ssl: database.ssl,
+        uri: mongoUri
+      }
+    }
     
-    console.log('Saving organization...')
-    await organization.save()
-    console.log('Organization saved successfully:', organization._id)
+    console.log('Upserting organization...')
+    const organization = await Organization.findOneAndUpdate(
+      { name: setupData.organization.name }, // Find by name
+      organizationData,
+      { upsert: true, new: true, runValidators: true }
+    )
+    console.log('Organization upserted successfully:', organization._id)
     
-    // Create admin user
-    console.log('Creating admin user with data:', setupData.admin)
+    // Create or update admin user
+    console.log('Creating/updating admin user with data:', setupData.admin)
     const hashedPassword = await bcrypt.hash(setupData.admin.password, 12)
     
-    const adminUser = new User({
+    const adminUserData = {
       firstName: setupData.admin.firstName,
       lastName: setupData.admin.lastName,
       email: setupData.admin.email,
@@ -99,14 +114,31 @@ export async function POST(request: NextRequest) {
           push: false
         }
       }
+    }
+    
+    console.log('Upserting admin user...')
+    const adminUser = await User.findOneAndUpdate(
+      { email: setupData.admin.email }, // Find by email
+      adminUserData,
+      { upsert: true, new: true, runValidators: true }
+    )
+    console.log('Admin user upserted successfully:', adminUser._id)
+    
+    // Save database configuration to config file for future use
+    console.log('Saving database configuration to config file...')
+    saveDatabaseConfig({
+      host: database.host,
+      port: database.port,
+      database: database.database,
+      username: database.username,
+      password: database.password,
+      authSource: database.authSource,
+      ssl: database.ssl,
+      uri: mongoUri
     })
     
-    console.log('Saving admin user...')
-    await adminUser.save()
-    console.log('Admin user saved successfully:', adminUser._id)
-    
-    // Save database configuration to environment (in production, this would be saved securely)
-    // For now, we'll just return success and let the client handle the redirect
+    // Mark setup as completed
+    markSetupCompleted(organization._id.toString())
     
     console.log('Setup completed successfully!')
     return NextResponse.json({ 

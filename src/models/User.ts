@@ -16,6 +16,9 @@ export interface IUser extends Document {
   lastLogin?: Date
   emailVerified: boolean
   twoFactorEnabled: boolean
+  passwordResetOtp?: string
+  passwordResetExpiry?: Date
+  passwordResetToken?: string
   preferences: {
     theme: 'light' | 'dark' | 'system'
     sidebarCollapsed: boolean
@@ -49,6 +52,9 @@ const UserSchema = new Schema<IUser>({
   lastLogin: Date,
   emailVerified: { type: Boolean, default: false },
   twoFactorEnabled: { type: Boolean, default: false },
+  passwordResetOtp: String,
+  passwordResetExpiry: Date,
+  passwordResetToken: String,
   preferences: {
     theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
     sidebarCollapsed: { type: Boolean, default: false },

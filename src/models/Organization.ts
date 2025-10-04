@@ -4,6 +4,8 @@ export interface IOrganization extends Document {
   name: string
   domain?: string
   logo?: string
+  darkLogo?: string
+  logoMode?: 'light' | 'dark' | 'both'
   timezone: string
   currency: string
   language: string
@@ -38,6 +40,16 @@ export interface IOrganization extends Document {
       fromName: string
     }
   }
+  databaseConfig?: {
+    host: string
+    port: number
+    database: string
+    username: string
+    password: string
+    authSource: string
+    ssl: boolean
+    uri: string
+  }
   createdAt: Date
   updatedAt: Date
 }
@@ -46,6 +58,8 @@ const OrganizationSchema = new Schema<IOrganization>({
   name: { type: String, required: true, trim: true },
   domain: String,
   logo: String,
+  darkLogo: String,
+  logoMode: { type: String, enum: ['light', 'dark', 'both'], default: 'both' },
   timezone: { type: String, default: 'UTC' },
   currency: { type: String, default: 'USD' },
   language: { type: String, default: 'en' },
@@ -87,6 +101,16 @@ const OrganizationSchema = new Schema<IOrganization>({
       fromEmail: String,
       fromName: String
     }
+  },
+  databaseConfig: {
+    host: String,
+    port: Number,
+    database: String,
+    username: String,
+    password: String,
+    authSource: String,
+    ssl: Boolean,
+    uri: String
   }
 }, {
   timestamps: true

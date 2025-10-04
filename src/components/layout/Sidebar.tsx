@@ -2,8 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
+import { OrganizationLogo } from '@/components/ui/OrganizationLogo'
+import { useOrganization } from '@/hooks/useOrganization'
 import { 
   ChevronLeft, 
   ChevronRight,
@@ -23,7 +26,8 @@ import {
   Play,
   Bell,
   DollarSign,
-  Sliders
+  Sliders,
+  LogOut
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -187,36 +191,15 @@ const navigationItems = [
     label: 'Settings',
     icon: Settings,
     path: '/settings',
-    permission: 'settings:read',
-    children: [
-      {
-        id: 'settings-profile',
-        label: 'Profile',
-        icon: User,
-        path: '/settings/profile',
-        permission: 'settings:read'
-      },
-      {
-        id: 'settings-preferences',
-        label: 'Preferences',
-        icon: Sliders,
-        path: '/settings/preferences',
-        permission: 'settings:read'
-      },
-      {
-        id: 'settings-notifications',
-        label: 'Notifications',
-        icon: Bell,
-        path: '/settings/notifications',
-        permission: 'settings:read'
-      }
-    ]
+    permission: 'settings:read'
   }
 ]
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [expandedItems, setExpandedItems] = useState<string[]>([])
   const pathname = usePathname()
+  const { organization, loading } = useOrganization()
+  const { theme, resolvedTheme } = useTheme()
 
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => 
@@ -224,6 +207,24 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         ? prev.filter(id => id !== itemId)
         : [...prev, itemId]
     )
+  }
+
+  const handleLogout = async () => {
+    try {
+      const response = await fetch('/api/auth/logout', { method: 'POST' })
+      if (response.ok) {
+        // Clear any client-side state if needed
+        window.location.href = '/login'
+      } else {
+        console.error('Logout failed:', await response.text())
+        // Still redirect to login even if logout API fails
+        window.location.href = '/login'
+      }
+    } catch (error) {
+      console.error('Logout failed:', error)
+      // Still redirect to login even if logout API fails
+      window.location.href = '/login'
+    }
   }
 
   return (
@@ -236,11 +237,19 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Sidebar Header */}
       <div className="flex h-16 items-center justify-between px-4">
         {!collapsed && (
-          <div className="flex items-center space-x-2">
-            <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
-              <span className="text-primary-foreground font-bold text-sm">K</span>
-            </div>
-            <span className="font-semibold text-lg">Kanvaro</span>
+          <div className="flex items-center space-x-3">
+            {loading ? (
+              <div className="h-8 w-8 rounded bg-primary/10 animate-pulse" />
+            ) : (
+              <OrganizationLogo 
+                lightLogo={organization?.logo} 
+                darkLogo={organization?.darkLogo}
+                logoMode={organization?.logoMode}
+                fallbackText={organization?.name?.charAt(0) || 'K'}
+                size="sm"
+                className="rounded"
+              />
+            )}
           </div>
         )}
         
@@ -274,6 +283,21 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             />
           ))}
         </nav>
+      </div>
+
+      {/* Sticky Sign Out */}
+      <div className="border-t p-2">
+        <Button
+          variant="ghost"
+          className={cn(
+            'w-full justify-start text-muted-foreground hover:text-foreground',
+            collapsed ? 'px-2' : 'px-3'
+          )}
+          onClick={handleLogout}
+        >
+          <LogOut className={cn('h-4 w-4', collapsed ? 'mx-auto' : 'mr-2')} />
+          {!collapsed && 'Sign Out'}
+        </Button>
       </div>
     </div>
   )

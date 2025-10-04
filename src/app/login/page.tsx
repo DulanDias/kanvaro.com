@@ -7,107 +7,177 @@ import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Label } from '@/components/ui/label'
 import { Alert, AlertDescription } from '@/components/ui/alert'
-import { Database, Users, Building, Mail, Info } from 'lucide-react'
+import { OrganizationLogo } from '@/components/ui/OrganizationLogo'
+import { useOrganization } from '@/hooks/useOrganization'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState('')
   const router = useRouter()
+  const { organization, loading: orgLoading } = useOrganization()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
+    setError('')
+
+    console.log('Attempting login with:', { email, password: '***' })
 
     try {
-      // Mock login - in a real app, this would call the auth API
-      if (email === 'admin@kanvaro.com' && password === 'admin123') {
+      const response = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      })
+
+      console.log('Login response status:', response.status)
+      const data = await response.json()
+      console.log('Login response data:', data)
+
+      if (response.ok && data.success) {
+        console.log('Login successful, redirecting to dashboard')
+        // Login successful, redirect to dashboard
         router.push('/dashboard')
       } else {
-        alert('Invalid credentials. Use admin@kanvaro.com / admin123 for demo')
+        console.error('Login failed:', data.error)
+        setError(data.error || 'Login failed. Please try again.')
       }
     } catch (error) {
       console.error('Login failed:', error)
-      alert('Login failed. Please try again.')
+      setError('Login failed. Please check your connection and try again.')
     } finally {
       setIsLoading(false)
     }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="text-center mb-8">
-          <div className="h-16 w-16 rounded-lg bg-primary flex items-center justify-center mx-auto mb-4">
-            <span className="text-primary-foreground font-bold text-2xl">K</span>
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-md mx-auto">
+          {/* Header Section */}
+          <div className="text-center mb-8">
+            <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center mx-auto mb-4">
+              {orgLoading ? (
+                <div className="h-8 w-8 rounded bg-primary/20 animate-pulse" />
+              ) : (
+                <OrganizationLogo 
+                  lightLogo={organization?.logo} 
+                  darkLogo={organization?.darkLogo}
+                  logoMode={organization?.logoMode}
+                  fallbackText={organization?.name?.charAt(0) || 'K'}
+                  size="lg"
+                  className="rounded"
+                />
+              )}
+            </div>
+            <h1 className="text-3xl font-bold text-foreground mb-2">
+              Welcome to {organization?.name || 'Kanvaro'}
+            </h1>
+            <p className="text-muted-foreground">
+              Sign in to your account to continue
+            </p>
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-2">
-            Welcome to Kanvaro
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300">
-            Sign in to your account to continue
-          </p>
-        </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Sign In</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="email">Email Address</Label>
-                <Input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="admin@kanvaro.com"
-                  required
-                />
-              </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-center">Sign In</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                {error && (
+                  <Alert variant="destructive">
+                    <AlertDescription>{error}</AlertDescription>
+                  </Alert>
+                )}
 
-              <div className="space-y-2">
-                <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
-                  required
-                />
-              </div>
-
-              <Button
-                type="submit"
-                className="w-full"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Signing in...' : 'Sign In'}
-              </Button>
-            </form>
-
-            <Alert className="mt-6">
-              <Info className="h-4 w-4" />
-              <AlertDescription>
-                <div className="font-medium mb-1">Demo Credentials</div>
-                <div className="text-sm">
-                  Email: admin@kanvaro.com<br />
-                  Password: admin123
+                <div className="space-y-2">
+                  <Label htmlFor="email">Email Address</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="admin@kanvaro.com"
+                    required
+                    disabled={isLoading}
+                    className="w-full"
+                  />
                 </div>
-              </AlertDescription>
-            </Alert>
-          </CardContent>
-        </Card>
 
-        <div className="mt-8 text-center">
-          <p className="text-sm text-gray-600 dark:text-gray-400">
-            Need help? Check our{' '}
-            <a href="/docs" className="text-primary hover:underline">
-              documentation
-            </a>
-          </p>
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="password"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      placeholder="Enter your password"
+                      required
+                      disabled={isLoading}
+                      className="w-full pr-10"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                      onClick={() => setShowPassword(!showPassword)}
+                      disabled={isLoading}
+                    >
+                      {showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    'Sign In'
+                  )}
+                </Button>
+
+                <div className="text-center mt-4">
+                  <button
+                    type="button"
+                    onClick={() => router.push('/forgot-password')}
+                    className="text-sm text-primary hover:underline"
+                    disabled={isLoading}
+                  >
+                    Forgot your password?
+                  </button>
+                </div>
+              </form>
+
+            </CardContent>
+          </Card>
+
+          <div className="mt-8 text-center">
+            <p className="text-sm text-muted-foreground">
+              Need help? Check our{' '}
+              <a href="/docs/public" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">
+                Documentation
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     </div>

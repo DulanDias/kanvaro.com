@@ -2,38 +2,43 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Database, Users, Settings, CheckCircle } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 export default function HomePage() {
-  const [isSetupComplete, setIsSetupComplete] = useState<boolean | null>(null)
   const [isLoading, setIsLoading] = useState(true)
-  const [shouldRedirect, setShouldRedirect] = useState(false)
   const router = useRouter()
 
   useEffect(() => {
-    checkSetupStatus()
+    checkAuthAndSetup()
   }, [])
 
-  useEffect(() => {
-    if (shouldRedirect) {
-      router.push('/setup')
-    }
-  }, [shouldRedirect, router])
-
-  const checkSetupStatus = async () => {
+  const checkAuthAndSetup = async () => {
     try {
-      const response = await fetch('/api/setup/status')
-      const data = await response.json()
-      setIsSetupComplete(data.isSetupComplete)
+      // First check if user is already authenticated
+      const authResponse = await fetch('/api/auth/me')
+      if (authResponse.ok) {
+        // User is authenticated, redirect to dashboard
+        router.push('/dashboard')
+        return
+      }
+
+      // If not authenticated, check if setup is complete
+      const setupResponse = await fetch('/api/setup/status')
+      const setupData = await setupResponse.json()
       
-      // Always redirect to setup if not complete
-      if (!data.isSetupComplete) {
-        setShouldRedirect(true)
+      if (!setupData.setupCompleted) {
+        // Setup not complete, redirect to setup
+        console.log('Setup not completed, redirecting to setup')
+        router.push('/setup')
+      } else {
+        // Setup complete but not authenticated, redirect to login
+        console.log('Setup completed, redirecting to login')
+        router.push('/login')
       }
     } catch (error) {
-      console.error('Failed to check setup status:', error)
-      setIsSetupComplete(false)
-      setShouldRedirect(true)
+      console.error('Failed to check auth and setup status:', error)
+      // On error, try to redirect to setup
+      router.push('/setup')
     } finally {
       setIsLoading(false)
     }
@@ -41,88 +46,15 @@ export default function HomePage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-primary"></div>
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-center">
+          <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
       </div>
     )
   }
 
-  // Don't render anything if setup is not complete
-  if (!isSetupComplete || shouldRedirect) {
-    return null
-  }
-
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <div className="container mx-auto px-4 py-16">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 dark:text-white mb-4">
-            Welcome to Kanvaro
-          </h1>
-          <p className="text-xl text-gray-600 dark:text-gray-300">
-            Your self-hosted project management solution is ready!
-          </p>
-        </div>
-
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-4xl mx-auto">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-center mb-4">
-              <Database className="h-8 w-8 text-blue-500 mr-3" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Database
-              </h3>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300">
-              MongoDB connection established and configured
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-center mb-4">
-              <Users className="h-8 w-8 text-green-500 mr-3" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Admin User
-              </h3>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300">
-              Administrator account created and ready
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-center mb-4">
-              <Settings className="h-8 w-8 text-purple-500 mr-3" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Organization
-              </h3>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300">
-              Organization settings configured
-            </p>
-          </div>
-
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg hover:shadow-xl transition-shadow">
-            <div className="flex items-center mb-4">
-              <CheckCircle className="h-8 w-8 text-orange-500 mr-3" />
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
-                Email Service
-              </h3>
-            </div>
-            <p className="text-gray-600 dark:text-gray-300">
-              Email notifications configured
-            </p>
-          </div>
-        </div>
-
-        <div className="text-center mt-12">
-          <button
-            onClick={() => router.push('/dashboard')}
-            className="bg-primary hover:bg-primary/90 text-white font-medium py-3 px-8 rounded-lg transition-colors"
-          >
-            Go to Dashboard
-          </button>
-        </div>
-      </div>
-    </div>
-  )
+  // This should not be reached as we redirect in useEffect
+  return null
 }

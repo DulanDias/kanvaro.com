@@ -29,6 +29,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
   const [isCreating, setIsCreating] = useState(false)
   const [testResult, setTestResult] = useState<'success' | 'error' | null>(null)
   const [testMessage, setTestMessage] = useState('')
+  const [existingData, setExistingData] = useState(null)
 
   const handleTestConnection = async () => {
     setIsTesting(true)
@@ -46,7 +47,13 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
 
       if (response.ok) {
         setTestResult('success')
-        setTestMessage('Database connection successful!')
+        if (result.existingData) {
+          setTestMessage('Database connection successful! Found existing data that will be pre-filled.')
+        } else {
+          setTestMessage('Database connection successful!')
+        }
+        // Store existing data for passing to next steps
+        setExistingData(result.existingData || null)
       } else {
         setTestResult('error')
         setTestMessage(result.error || 'Database connection failed')
@@ -115,7 +122,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
           setTestMessage('Database is ready for use!')
           // Proceed to next step after successful creation
           setTimeout(() => {
-            onNext({ database: formData })
+            onNext({ database: formData, existingData })
           }, 1000)
         } else {
           setTestResult('error')
@@ -129,7 +136,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
       }
     } else {
       // For existing database, proceed if test was successful
-      onNext({ database: formData })
+      onNext({ database: formData, existingData })
     }
   }
 

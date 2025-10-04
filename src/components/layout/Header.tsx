@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
-import { Search, Bell, User, Sun, Moon, Monitor, LogOut } from 'lucide-react'
+import { Search, Bell, User, Sun, Moon, Monitor, LogOut, UserCircle, Settings, Shield } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
@@ -32,6 +32,7 @@ export function Header() {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [isSearchOpen, setIsSearchOpen] = useState(false)
+  const [user, setUser] = useState<any>(null)
   const { theme, setTheme } = useTheme()
   const [notifications] = useState([
     {
@@ -62,6 +63,23 @@ export function Header() {
 
   const unreadCount = notifications.filter(n => n.unread).length
 
+  // Load user data
+  useEffect(() => {
+    const loadUser = async () => {
+      try {
+        const response = await fetch('/api/auth/me')
+        if (response.ok) {
+          const userData = await response.json()
+          setUser(userData)
+        }
+      } catch (error) {
+        console.error('Failed to load user data:', error)
+      }
+    }
+
+    loadUser()
+  }, [])
+
   // Global search functionality
   const handleSearch = async (query: string) => {
     if (query.length < 2) {
@@ -88,29 +106,26 @@ export function Header() {
 
   const handleLogout = async () => {
     try {
-      await fetch('/api/auth/logout', { method: 'POST' })
-      window.location.href = '/login'
+      const response = await fetch('/api/auth/logout', { method: 'POST' })
+      if (response.ok) {
+        // Clear any client-side state if needed
+        window.location.href = '/login'
+      } else {
+        console.error('Logout failed:', await response.text())
+        // Still redirect to login even if logout API fails
+        window.location.href = '/login'
+      }
     } catch (error) {
       console.error('Logout failed:', error)
+      // Still redirect to login even if logout API fails
+      window.location.href = '/login'
     }
   }
 
   return (
-    <header className="flex h-16 items-center justify-between border-b bg-background px-4">
-      {/* Organization Logo */}
-      <div className="flex items-center space-x-4">
-        <OrganizationLogo 
-          lightLogo="/logo-light.png" 
-          darkLogo="/logo-dark.png" 
-          fallbackText="K"
-          size="md"
-          className="rounded"
-        />
-        <div className="text-lg font-semibold text-foreground">Kanvaro</div>
-      </div>
-
-      {/* Global Search */}
-      <div className="flex-1 max-w-md mx-4">
+    <header className="flex h-16 items-center border-b bg-background px-4">
+      {/* Global Search - Full Width */}
+      <div className="flex-1">
         <div className="relative">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
           <Input
@@ -160,55 +175,42 @@ export function Header() {
       </div>
 
       {/* Right Side Actions */}
-      <div className="flex items-center space-x-2">
-        {/* Theme Toggle */}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button 
-              variant="ghost" 
-              size="icon"
-              aria-label="Toggle theme"
-              className="h-9 w-9"
-            >
-              <Sun className="h-4 w-4 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-              <Moon className="absolute h-4 w-4 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-              <span className="sr-only">Toggle theme</span>
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-40">
-            <DropdownMenuLabel>Theme</DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem 
-              onClick={() => setTheme('light')}
-              className={theme === 'light' ? 'bg-accent' : ''}
-            >
-              <Sun className="mr-2 h-4 w-4" />
-              Light
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => setTheme('dark')}
-              className={theme === 'dark' ? 'bg-accent' : ''}
-            >
-              <Moon className="mr-2 h-4 w-4" />
-              Dark
-            </DropdownMenuItem>
-            <DropdownMenuItem 
-              onClick={() => setTheme('system')}
-              className={theme === 'system' ? 'bg-accent' : ''}
-            >
-              <Monitor className="mr-2 h-4 w-4" />
-              System
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+      <div className="flex items-center space-x-2 ml-4">
+        {/* Theme Toggle Buttons */}
+        <div className="flex items-center border rounded-md">
+          <Button
+            variant={theme === 'light' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setTheme('light')}
+            className="h-8 px-3 rounded-r-none border-r"
+          >
+            <Sun className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={theme === 'dark' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setTheme('dark')}
+            className="h-8 px-3 rounded-none border-r"
+          >
+            <Moon className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={theme === 'system' ? 'default' : 'ghost'}
+            size="sm"
+            onClick={() => setTheme('system')}
+            className="h-8 px-3 rounded-l-none"
+          >
+            <Monitor className="h-4 w-4" />
+          </Button>
+        </div>
 
         {/* Notifications */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative">
+            <Button variant="ghost" size="icon" className="relative h-9 w-9">
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs">
+                <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center">
                   {unreadCount}
                 </Badge>
               )}
@@ -252,16 +254,28 @@ export function Header() {
         {/* User Profile Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <User className="h-4 w-4" />
+            <Button variant="ghost" className="h-9 px-3">
+              <User className="h-4 w-4 mr-2" />
+              {user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : 'User'}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>My Account</DropdownMenuLabel>
+            <DropdownMenuLabel>
+              {user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : 'User'}
+            </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>Profile</DropdownMenuItem>
-            <DropdownMenuItem>Preferences</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => window.location.href = '/profile'}>
+              <UserCircle className="mr-2 h-4 w-4" />
+              Profile
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => window.location.href = '/preferences'}>
+              <Settings className="mr-2 h-4 w-4" />
+              Preferences
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => window.location.href = '/security'}>
+              <Shield className="mr-2 h-4 w-4" />
+              Security
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>
               <LogOut className="mr-2 h-4 w-4" />

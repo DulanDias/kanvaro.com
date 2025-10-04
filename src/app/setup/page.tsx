@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Database, User, Building, Mail, CheckCircle } from 'lucide-react'
+import { Database, User, Building, Mail, CheckCircle, BookOpen } from 'lucide-react'
 import { ProgressSteps } from '@/components/setup/ProgressSteps'
 import { DatabaseConfig } from '@/components/setup/DatabaseConfig'
 import { AdminUserSetup } from '@/components/setup/AdminUserSetup'
 import { OrganizationSetup } from '@/components/setup/OrganizationSetup'
 import { EmailConfig } from '@/components/setup/EmailConfig'
 import { SetupComplete } from '@/components/setup/SetupComplete'
+import { Button } from '@/components/ui/Button'
 
 const setupSteps = [
   { id: 'database', title: 'Database', icon: Database },
@@ -25,7 +26,21 @@ export default function SetupPage() {
   const router = useRouter()
 
   const handleNext = (stepData: any) => {
-    setSetupData({ ...setupData, ...stepData })
+    // Extract existing data from database step if present
+    if (stepData.existingData) {
+      const { existingData, ...otherData } = stepData
+      console.log('Pre-filling setup data with existing data:', existingData)
+      setSetupData({ 
+        ...setupData, 
+        ...otherData,
+        // Pre-fill subsequent steps with existing data
+        admin: existingData.adminUser || setupData.admin,
+        organization: existingData.organization || setupData.organization,
+        email: existingData.emailConfig || setupData.email
+      })
+    } else {
+      setSetupData({ ...setupData, ...stepData })
+    }
     
     const stepIndex = setupSteps.findIndex(step => step.id === currentStep)
     if (stepIndex < setupSteps.length - 1) {
@@ -103,10 +118,21 @@ export default function SetupPage() {
                   <h1 className="text-2xl font-bold text-foreground mb-2">
                     Welcome to Kanvaro
                   </h1>
-                  <p className="text-sm text-muted-foreground">
+                  <p className="text-sm text-muted-foreground mb-4">
                     Let's configure your Kanvaro instance with a few simple steps. 
                     This will only take a few minutes.
                   </p>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => window.open('/docs/public', '_blank')}
+                      className="flex items-center space-x-2"
+                    >
+                      <BookOpen className="h-4 w-4" />
+                      <span>Check our Documentation</span>
+                    </Button>
+                  </div>
                 </div>
                 
                 {/* Progress Steps */}

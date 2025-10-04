@@ -4,24 +4,25 @@ import type { NextRequest } from 'next/server'
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  // Skip middleware for API routes, static files, and setup
+  // Skip middleware for API routes, static files, and public routes
   if (
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/') ||
     pathname.startsWith('/static/') ||
     pathname === '/setup' ||
-    pathname.startsWith('/setup/')
+    pathname.startsWith('/setup/') ||
+    pathname === '/login' ||
+    pathname === '/forgot-password' ||
+    pathname === '/verify-otp' ||
+    pathname === '/reset-password' ||
+    pathname.startsWith('/docs') ||
+    pathname === '/favicon.ico'
   ) {
     return NextResponse.next()
   }
 
-  // Redirect to setup if not completed
-  if (pathname === '/' || pathname === '/dashboard') {
-    // In a real app, this would check if setup is complete
-    // For demo purposes, we'll allow access to dashboard
-    return NextResponse.next()
-  }
-
+  // For protected routes, let the client-side handle authentication
+  // The client will check auth status and redirect appropriately
   return NextResponse.next()
 }
 
