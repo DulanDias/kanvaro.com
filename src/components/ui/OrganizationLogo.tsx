@@ -38,15 +38,7 @@ export const OrganizationLogo = ({
 
   const currentTheme = resolvedTheme || theme
   
-  // Debug: Log theme and logo info (only in development)
-  if (process.env.NODE_ENV === 'development') {
-    console.log('OrganizationLogo render:', {
-      currentTheme,
-      lightLogo: lightLogo ? 'present' : 'missing',
-      darkLogo: darkLogo ? 'present' : 'missing',
-      logoMode
-    })
-  }
+  // Debug logging removed to prevent unnecessary re-renders
   
   // Determine which logo to use based on logoMode and current theme
   let logoSrc: string | undefined

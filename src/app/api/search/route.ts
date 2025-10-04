@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         title: 'John Doe',
         description: 'Team member - Project Manager',
         type: 'user',
-        url: '/team/members/1'
+        url: '/team/members'
       },
       {
         id: '4',

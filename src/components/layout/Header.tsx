@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTheme } from 'next-themes'
-import { Search, Bell, User, Sun, Moon, Monitor, LogOut, UserCircle, Settings, Shield } from 'lucide-react'
+import { Search, Bell, User, Sun, Moon, Monitor, LogOut, UserCircle } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
@@ -33,7 +33,12 @@ export function Header() {
   const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [mounted, setMounted] = useState(false)
   const { theme, setTheme } = useTheme()
+
+  useEffect(() => {
+    setMounted(true)
+  }, [])
   const [notifications] = useState([
     {
       id: 1,
@@ -177,32 +182,34 @@ export function Header() {
       {/* Right Side Actions */}
       <div className="flex items-center space-x-2 ml-4">
         {/* Theme Toggle Buttons */}
-        <div className="flex items-center border rounded-md">
-          <Button
-            variant={theme === 'light' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setTheme('light')}
-            className="h-8 px-3 rounded-r-none border-r"
-          >
-            <Sun className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={theme === 'dark' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setTheme('dark')}
-            className="h-8 px-3 rounded-none border-r"
-          >
-            <Moon className="h-4 w-4" />
-          </Button>
-          <Button
-            variant={theme === 'system' ? 'default' : 'ghost'}
-            size="sm"
-            onClick={() => setTheme('system')}
-            className="h-8 px-3 rounded-l-none"
-          >
-            <Monitor className="h-4 w-4" />
-          </Button>
-        </div>
+        {mounted && (
+          <div className="flex items-center border rounded-md">
+            <Button
+              variant={theme === 'light' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setTheme('light')}
+              className="h-8 px-3 rounded-r-none border-r"
+            >
+              <Sun className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={theme === 'dark' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setTheme('dark')}
+              className="h-8 px-3 rounded-none border-r"
+            >
+              <Moon className="h-4 w-4" />
+            </Button>
+            <Button
+              variant={theme === 'system' ? 'default' : 'ghost'}
+              size="sm"
+              onClick={() => setTheme('system')}
+              className="h-8 px-3 rounded-l-none"
+            >
+              <Monitor className="h-4 w-4" />
+            </Button>
+          </div>
+        )}
 
         {/* Notifications */}
         <Popover>
@@ -267,14 +274,6 @@ export function Header() {
             <DropdownMenuItem onClick={() => window.location.href = '/profile'}>
               <UserCircle className="mr-2 h-4 w-4" />
               Profile
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => window.location.href = '/preferences'}>
-              <Settings className="mr-2 h-4 w-4" />
-              Preferences
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => window.location.href = '/security'}>
-              <Shield className="mr-2 h-4 w-4" />
-              Security
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>

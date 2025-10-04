@@ -4,60 +4,69 @@ import { User } from '@/models/User'
 
 export async function PUT(request: NextRequest) {
   try {
-    const userData = await request.json()
-    
-    // Check if MongoDB URI is configured
-    if (!process.env.MONGODB_URI) {
+    await connectDB()
+
+    const userId = request.headers.get('x-user-id')
+    const organizationId = request.headers.get('x-organization-id')
+
+    if (!userId || !organizationId) {
       return NextResponse.json(
-        { message: 'User settings updated successfully (demo mode)' },
-        { status: 200 }
+        { error: 'User not authenticated' },
+        { status: 401 }
       )
     }
-    
-    await connectDB()
-    
-    // Update the user's settings
-    const user = await User.findOneAndUpdate(
-      { email: userData.email }, // In a real app, this would be based on the authenticated user
-      {
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        timezone: userData.timezone,
-        language: userData.language,
-        currency: userData.currency,
-        preferences: {
-          theme: userData.theme,
-          sidebarCollapsed: userData.sidebarCollapsed,
-          notifications: userData.notifications
-        }
-      },
-      { new: true }
-    )
-    
+
+    const updates = await request.json()
+
+    // Find user
+    const user = await User.findOne({
+      _id: userId,
+      organization: organizationId
+    })
+
     if (!user) {
       return NextResponse.json(
         { error: 'User not found' },
         { status: 404 }
       )
     }
-    
+
+    // Update user fields
+    if (updates.firstName) user.firstName = updates.firstName
+    if (updates.lastName) user.lastName = updates.lastName
+    if (updates.timezone) user.timezone = updates.timezone
+    if (updates.language) user.language = updates.language
+
+    // Update preferences
+    if (updates.theme) user.preferences.theme = updates.theme
+    if (updates.sidebarCollapsed !== undefined) user.preferences.sidebarCollapsed = updates.sidebarCollapsed
+    if (updates.notifications) {
+      user.preferences.notifications = {
+        ...user.preferences.notifications,
+        ...updates.notifications
+      }
+    }
+
+    await user.save()
+
     return NextResponse.json({
-      message: 'User settings updated successfully',
-      user: {
+      success: true,
+      message: 'Profile updated successfully',
+      data: {
         id: user._id,
         firstName: user.firstName,
         lastName: user.lastName,
         email: user.email,
         timezone: user.timezone,
         language: user.language,
-        currency: user.currency,
         preferences: user.preferences
       }
     })
+
   } catch (error) {
-    console.error('User settings update failed:', error)
+    console.error('Update user settings error:', error)
     return NextResponse.json(
-      { error: 'Failed to update user settings' },
+      { error: 'Internal server error' },
       { status: 500 }
     )
   }

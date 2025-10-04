@@ -27,7 +27,8 @@ import {
   Bell,
   DollarSign,
   Sliders,
-  LogOut
+  LogOut,
+  BookOpen
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -91,7 +92,7 @@ const navigationItems = [
         id: 'tasks-backlog',
         label: 'Backlog',
         icon: List,
-        path: '/tasks/backlog',
+        path: '/backlog',
         permission: 'task:read'
       },
       {
@@ -107,7 +108,7 @@ const navigationItems = [
     id: 'team',
     label: 'Team',
     icon: Users,
-    path: '/team',
+    path: '/team/members',
     permission: 'team:read',
     children: [
       {
@@ -187,6 +188,13 @@ const navigationItems = [
     ]
   },
   {
+    id: 'docs',
+    label: 'Documentation',
+    icon: BookOpen,
+    path: '/docs',
+    permission: 'docs:read'
+  },
+  {
     id: 'settings',
     label: 'Settings',
     icon: Settings,
@@ -200,6 +208,27 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const pathname = usePathname()
   const { organization, loading } = useOrganization()
   const { theme, resolvedTheme } = useTheme()
+
+  // Auto-expand parent sections when child pages are active
+  useEffect(() => {
+    const activeParentIds: string[] = []
+    
+    navigationItems.forEach(item => {
+      if (item.children) {
+        const isChildActive = item.children.some(child => pathname === child.path)
+        if (isChildActive) {
+          activeParentIds.push(item.id)
+        }
+      }
+    })
+    
+    if (activeParentIds.length > 0) {
+      setExpandedItems(prev => {
+        const newExpanded = [...new Set([...prev, ...activeParentIds])]
+        return newExpanded
+      })
+    }
+  }, [pathname])
 
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => 

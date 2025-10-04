@@ -1,0 +1,206 @@
+import { NextRequest, NextResponse } from 'next/server'
+import connectDB from '@/lib/db'
+import { User } from '@/models/User'
+import { UserInvitation } from '@/models/UserInvitation'
+import { Organization } from '@/models/Organization'
+import { emailService } from '@/lib/email/EmailService'
+import crypto from 'crypto'
+
+export async function POST(request: NextRequest) {
+  try {
+    await connectDB()
+
+    const { email, role, firstName, lastName } = await request.json()
+
+    // Get user from headers (set by middleware)
+    const userId = request.headers.get('x-user-id')
+    const organizationId = request.headers.get('x-organization-id')
+
+    if (!userId || !organizationId) {
+      return NextResponse.json(
+        { error: 'User not authenticated' },
+        { status: 401 }
+      )
+    }
+
+    // Check if user has permission to invite members
+    const user = await User.findById(userId)
+    if (!user || !['admin', 'project_manager'].includes(user.role)) {
+      return NextResponse.json(
+        { error: 'Insufficient permissions' },
+        { status: 403 }
+      )
+    }
+
+    // Check if user already exists
+    const existingUser = await User.findOne({ 
+      email: email.toLowerCase(),
+      organization: organizationId 
+    })
+    
+    if (existingUser) {
+      return NextResponse.json(
+        { error: 'User already exists in this organization' },
+        { status: 400 }
+      )
+    }
+
+    // Check for pending invitation
+    const existingInvitation = await UserInvitation.findOne({
+      email: email.toLowerCase(),
+      organization: organizationId,
+      isAccepted: false,
+      expiresAt: { $gt: new Date() }
+    })
+
+    if (existingInvitation) {
+      return NextResponse.json(
+        { error: 'Invitation already sent to this email' },
+        { status: 400 }
+      )
+    }
+
+    // Generate invitation token
+    const token = crypto.randomBytes(32).toString('hex')
+
+    // Create invitation
+    const invitation = new UserInvitation({
+      email: email.toLowerCase(),
+      organization: organizationId,
+      invitedBy: userId,
+      role,
+      firstName,
+      lastName,
+      token,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 days
+    })
+
+    await invitation.save()
+
+    // Get organization details
+    const organization = await Organization.findById(organizationId)
+    const organizationName = organization?.name || 'Kanvaro'
+
+    // Send invitation email
+    const invitationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation?token=${token}`
+    
+    const emailHtml = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>You're Invited to Join ${organizationName}</title>
+        <style>
+            body {
+                font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+                line-height: 1.6;
+                color: #333;
+                max-width: 600px;
+                margin: 0 auto;
+                padding: 20px;
+                background-color: #f8fafc;
+            }
+            .container {
+                background: white;
+                border-radius: 8px;
+                padding: 40px;
+                box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            }
+            .header {
+                text-align: center;
+                margin-bottom: 30px;
+            }
+            .logo {
+                width: 60px;
+                height: 60px;
+                background: #3b82f6;
+                border-radius: 8px;
+                margin: 0 auto 20px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                color: white;
+                font-size: 24px;
+                font-weight: bold;
+            }
+            .button {
+                display: inline-block;
+                background: #3b82f6;
+                color: white;
+                padding: 12px 24px;
+                text-decoration: none;
+                border-radius: 6px;
+                font-weight: 500;
+                margin: 20px 0;
+            }
+            .footer {
+                margin-top: 30px;
+                padding-top: 20px;
+                border-top: 1px solid #e5e7eb;
+                text-align: center;
+                color: #6b7280;
+                font-size: 14px;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="logo">${organizationName.charAt(0).toUpperCase()}</div>
+                <h1>You're Invited to Join ${organizationName}</h1>
+            </div>
+
+            <p>You've been invited to join <strong>${organizationName}</strong> as a <strong>${role}</strong>.</p>
+            
+            <p>Click the button below to accept your invitation and set up your account:</p>
+
+            <div style="text-align: center;">
+                <a href="${invitationLink}" class="button">Accept Invitation</a>
+            </div>
+
+            <p><strong>This invitation will expire in 7 days.</strong></p>
+
+            <p>If you can't click the button above, copy and paste this link into your browser:</p>
+            <p style="word-break: break-all; color: #6b7280; font-size: 14px;">${invitationLink}</p>
+
+            <div class="footer">
+                <p>This invitation was sent by ${user.firstName} ${user.lastName}</p>
+                <p>If you have any questions, contact your team administrator</p>
+            </div>
+        </div>
+    </body>
+    </html>
+    `
+
+    const emailSent = await emailService.sendEmail({
+      to: email,
+      subject: `You're invited to join ${organizationName}`,
+      html: emailHtml
+    })
+
+    if (!emailSent) {
+      return NextResponse.json(
+        { error: 'Failed to send invitation email' },
+        { status: 500 }
+      )
+    }
+
+    return NextResponse.json({
+      success: true,
+      message: 'Invitation sent successfully',
+      data: {
+        email: invitation.email,
+        role: invitation.role,
+        expiresAt: invitation.expiresAt
+      }
+    })
+
+  } catch (error) {
+    console.error('Invitation error:', error)
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    )
+  }
+}
