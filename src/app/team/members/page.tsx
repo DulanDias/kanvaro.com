@@ -57,6 +57,7 @@ export default function MembersPage() {
   const [pendingInvitations, setPendingInvitations] = useState<PendingInvitation[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [authError, setAuthError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [roleFilter, setRoleFilter] = useState('all')
@@ -134,9 +135,16 @@ export default function MembersPage() {
 
       if (data.success) {
         setShowInviteModal(false)
-        fetchMembers()
+        setSuccess('Invitation sent successfully!')
+        setError('')
+        // Clear success message after 5 seconds
+        setTimeout(() => setSuccess(''), 5000)
+        // Refresh authentication state and then fetch members
+        await checkAuth()
+        await fetchMembers()
       } else {
         setError(data.error || 'Failed to send invitation')
+        setSuccess('')
       }
     } catch (err) {
       setError('Failed to send invitation')
@@ -259,6 +267,13 @@ export default function MembersPage() {
       {error && (
         <Alert variant="destructive">
           <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
+
+      {success && (
+        <Alert className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
+          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <AlertDescription className="text-green-800 dark:text-green-200">{success}</AlertDescription>
         </Alert>
       )}
 
