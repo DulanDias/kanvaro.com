@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Progress } from '@/components/ui/Progress'
+import { PasswordStrength } from '@/components/ui/PasswordStrength'
 
 interface AdminUserSetupProps {
   onNext: (data: any) => void
@@ -47,6 +48,16 @@ export const AdminUserSetup = ({ onNext, onBack, initialData }: AdminUserSetupPr
       newErrors.password = 'Password is required'
     } else if (formData.password.length < 8) {
       newErrors.password = 'Password must be at least 8 characters long'
+    } else {
+      // Enhanced password validation
+      const hasLowercase = /[a-z]/.test(formData.password)
+      const hasUppercase = /[A-Z]/.test(formData.password)
+      const hasNumber = /\d/.test(formData.password)
+      const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(formData.password)
+
+      if (!hasLowercase || !hasUppercase || !hasNumber || !hasSpecialChar) {
+        newErrors.password = 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'
+      }
     }
 
     if (!formData.confirmPassword) {
@@ -66,17 +77,6 @@ export const AdminUserSetup = ({ onNext, onBack, initialData }: AdminUserSetupPr
     }
   }
 
-  const getPasswordStrength = (password: string) => {
-    let strength = 0
-    if (password.length >= 8) strength++
-    if (/[A-Z]/.test(password)) strength++
-    if (/[a-z]/.test(password)) strength++
-    if (/[0-9]/.test(password)) strength++
-    if (/[^A-Za-z0-9]/.test(password)) strength++
-    return strength
-  }
-
-  const passwordStrength = getPasswordStrength(formData.password)
 
   return (
     <div className="space-y-8">
@@ -168,20 +168,7 @@ export const AdminUserSetup = ({ onNext, onBack, initialData }: AdminUserSetupPr
               <p className="text-sm text-red-600">{errors.password}</p>
             )}
             
-            {formData.password && (
-              <div className="space-y-2">
-                <Progress 
-                  value={(passwordStrength / 5) * 100} 
-                  className="h-2"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Password strength: {
-                    passwordStrength <= 2 ? 'Weak' :
-                    passwordStrength <= 3 ? 'Medium' : 'Strong'
-                  }
-                </p>
-              </div>
-            )}
+            <PasswordStrength password={formData.password} />
           </div>
 
           <div className="space-y-2">
