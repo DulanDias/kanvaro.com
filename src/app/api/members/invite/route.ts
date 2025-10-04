@@ -4,28 +4,29 @@ import { User } from '@/models/User'
 import { UserInvitation } from '@/models/UserInvitation'
 import { Organization } from '@/models/Organization'
 import { emailService } from '@/lib/email/EmailService'
+import { authenticateUser } from '@/lib/auth-utils'
 import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB()
 
-    const { email, role, firstName, lastName } = await request.json()
-
-    // Get user from headers (set by middleware)
-    const userId = request.headers.get('x-user-id')
-    const organizationId = request.headers.get('x-organization-id')
-
-    if (!userId || !organizationId) {
+    const authResult = await authenticateUser()
+    if ('error' in authResult) {
       return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 }
+        { error: authResult.error },
+        { status: authResult.status }
       )
     }
 
+    const { user } = authResult
+    const userId = user.id
+    const organizationId = user.organization
+
+    const { email, role, firstName, lastName } = await request.json()
+
     // Check if user has permission to invite members
-    const user = await User.findById(userId)
-    if (!user || !['admin', 'project_manager'].includes(user.role)) {
+    if (!['admin', 'project_manager'].includes(user.role)) {
       return NextResponse.json(
         { error: 'Insufficient permissions' },
         { status: 403 }
