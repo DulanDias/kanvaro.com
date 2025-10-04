@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/label'
 import { Alert } from '@/components/ui/alert'
+import { PasswordStrength } from '@/components/ui/PasswordStrength'
 import { Loader2, CheckCircle } from 'lucide-react'
 
 interface InvitationData {
@@ -76,6 +77,17 @@ function AcceptInvitationContent() {
 
     if (formData.password.length < 8) {
       setError('Password must be at least 8 characters long')
+      return
+    }
+
+    // Enhanced password validation
+    const hasLowercase = /[a-z]/.test(formData.password)
+    const hasUppercase = /[A-Z]/.test(formData.password)
+    const hasNumber = /\d/.test(formData.password)
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(formData.password)
+
+    if (!hasLowercase || !hasUppercase || !hasNumber || !hasSpecialChar) {
+      setError('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character')
       return
     }
 
@@ -220,8 +232,9 @@ function AcceptInvitationContent() {
                 required
                 minLength={8}
                 className="h-11"
-                placeholder="Minimum 8 characters"
+                placeholder="Create a strong password"
               />
+              <PasswordStrength password={formData.password} />
             </div>
 
             <div className="space-y-2">

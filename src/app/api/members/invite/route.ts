@@ -90,6 +90,9 @@ export async function POST(request: NextRequest) {
     // Get organization details
     const organization = await Organization.findById(organizationId)
     const organizationName = organization?.name || 'Kanvaro'
+    const organizationLogo = organization?.logo
+    const organizationDarkLogo = organization?.darkLogo
+    const logoMode = organization?.logoMode || 'both'
 
     // Send invitation email
     const invitationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation?token=${token}`
@@ -124,15 +127,30 @@ export async function POST(request: NextRequest) {
             .logo {
                 width: 60px;
                 height: 60px;
-                background: #3b82f6;
                 border-radius: 8px;
                 margin: 0 auto 20px;
                 display: flex;
                 align-items: center;
                 justify-content: center;
+                background: #f8fafc;
+                border: 1px solid #e5e7eb;
+            }
+            .logo img {
+                max-width: 100%;
+                max-height: 100%;
+                object-fit: contain;
+            }
+            .logo-fallback {
+                background: #3b82f6;
                 color: white;
                 font-size: 24px;
                 font-weight: bold;
+                width: 100%;
+                height: 100%;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 8px;
             }
             .button {
                 display: inline-block;
@@ -157,7 +175,12 @@ export async function POST(request: NextRequest) {
     <body>
         <div class="container">
             <div class="header">
-                <div class="logo">${organizationName.charAt(0).toUpperCase()}</div>
+                <div class="logo">
+                    ${organizationLogo ? 
+                        `<img src="${organizationLogo}" alt="${organizationName} Logo" style="max-width: 100%; max-height: 100%; object-fit: contain;" />` : 
+                        `<div class="logo-fallback">${organizationName.charAt(0).toUpperCase()}</div>`
+                    }
+                </div>
                 <h1>You're Invited to Join ${organizationName}</h1>
             </div>
 

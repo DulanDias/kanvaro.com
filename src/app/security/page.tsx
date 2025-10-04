@@ -10,6 +10,7 @@ import { Label } from '@/components/ui/label'
 import { Switch } from '@/components/ui/switch'
 import { Shield, Save, Loader2, AlertCircle, CheckCircle, Key, Smartphone, ShieldCheck } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { PasswordStrength } from '@/components/ui/PasswordStrength'
 
 export default function SecurityPage() {
   const [isLoading, setIsLoading] = useState(true)
@@ -97,6 +98,17 @@ export default function SecurityPage() {
 
     if (passwordForm.newPassword.length < 8) {
       setMessage({ type: 'error', text: 'Password must be at least 8 characters long' })
+      return
+    }
+
+    // Enhanced password validation
+    const hasLowercase = /[a-z]/.test(passwordForm.newPassword)
+    const hasUppercase = /[A-Z]/.test(passwordForm.newPassword)
+    const hasNumber = /\d/.test(passwordForm.newPassword)
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(passwordForm.newPassword)
+
+    if (!hasLowercase || !hasUppercase || !hasNumber || !hasSpecialChar) {
+      setMessage({ type: 'error', text: 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character' })
       return
     }
 
@@ -239,6 +251,7 @@ export default function SecurityPage() {
                     onChange={(e) => setPasswordForm({ ...passwordForm, newPassword: e.target.value })}
                     placeholder="Enter your new password"
                   />
+                  <PasswordStrength password={passwordForm.newPassword} />
                 </div>
 
                 <div className="space-y-2">
