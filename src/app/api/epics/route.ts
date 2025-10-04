@@ -1,32 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import { Epic } from '@/models/Epic'
-import { Project } from '@/models/Project'
+import { authenticateUser } from '@/lib/auth-utils'
 
 export async function GET(request: NextRequest) {
   try {
     await connectDB()
 
-    const userId = request.headers.get('x-user-id')
-    const organizationId = request.headers.get('x-organization-id')
-
-    if (!userId || !organizationId) {
+    const authResult = await authenticateUser()
+    if ('error' in authResult) {
       return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 }
+        { error: authResult.error },
+        { status: authResult.status }
       )
     }
 
+    const { user } = authResult
+    const userId = user.id
+    const organizationId = user.organization
+
     const { searchParams } = new URL(request.url)
-    const projectId = searchParams.get('projectId')
-    const status = searchParams.get('status')
-    const priority = searchParams.get('priority')
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '20')
+    const search = searchParams.get('search') || ''
+    const status = searchParams.get('status') || ''
+    const priority = searchParams.get('priority') || ''
 
     // Build filters
-    const filters: any = {}
+    const filters: any = { organization: organizationId }
     
-    if (projectId) {
-      filters.project = projectId
+    if (search) {
+      filters.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ]
     }
     
     if (status) {
@@ -37,15 +44,50 @@ export async function GET(request: NextRequest) {
       filters.priority = priority
     }
 
-    const epics = await Epic.find(filters)
+    // Get epics where user is assigned or creator
+    const epics = await Epic.find({
+      ...filters,
+      $or: [
+        { createdBy: userId },
+        { assignedTo: userId }
+      ]
+    })
       .populate('project', 'name')
-      .populate('createdBy', 'firstName lastName email')
       .populate('assignedTo', 'firstName lastName email')
-      .sort({ createdAt: -1 })
+      .populate('createdBy', 'firstName lastName email')
+      .sort({ priority: -1, createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+
+    const total = await Epic.countDocuments({
+      ...filters,
+      $or: [
+        { createdBy: userId },
+        { assignedTo: userId }
+      ]
+    })
+
+    // Calculate progress for each epic (this would typically come from stories)
+    const epicsWithProgress = epics.map(epic => ({
+      ...epic.toObject(),
+      progress: {
+        completionPercentage: 0,
+        storiesCompleted: 0,
+        totalStories: 0,
+        storyPointsCompleted: 0,
+        totalStoryPoints: 0
+      }
+    }))
 
     return NextResponse.json({
       success: true,
-      data: epics
+      data: epicsWithProgress,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
     })
 
   } catch (error) {
@@ -61,67 +103,52 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB()
 
-    const userId = request.headers.get('x-user-id')
-    const organizationId = request.headers.get('x-organization-id')
-
-    if (!userId || !organizationId) {
+    const authResult = await authenticateUser()
+    if ('error' in authResult) {
       return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 }
+        { error: authResult.error },
+        { status: authResult.status }
       )
     }
 
+    const { user } = authResult
+    const userId = user.id
+    const organizationId = user.organization
+
     const {
-      title,
+      name,
       description,
       project,
       assignedTo,
       priority,
-      storyPoints,
-      estimatedHours,
-      startDate,
       dueDate,
-      tags
+      estimatedHours,
+      storyPoints,
+      labels
     } = await request.json()
 
     // Validate required fields
-    if (!title || !project) {
+    if (!name || !project) {
       return NextResponse.json(
-        { error: 'Title and project are required' },
+        { error: 'Name and project are required' },
         { status: 400 }
-      )
-    }
-
-    // Verify project exists and user has access
-    const projectDoc = await Project.findOne({
-      _id: project,
-      organization: organizationId,
-      $or: [
-        { createdBy: userId },
-        { teamMembers: userId }
-      ]
-    })
-
-    if (!projectDoc) {
-      return NextResponse.json(
-        { error: 'Project not found or access denied' },
-        { status: 404 }
       )
     }
 
     // Create epic
     const epic = new Epic({
-      title,
+      name,
       description,
+      status: 'todo',
+      priority: priority || 'medium',
+      organization: organizationId,
       project,
       createdBy: userId,
-      assignedTo,
-      priority: priority || 'medium',
-      storyPoints,
-      estimatedHours,
-      startDate: startDate ? new Date(startDate) : undefined,
+      assignedTo: assignedTo || undefined,
       dueDate: dueDate ? new Date(dueDate) : undefined,
-      tags: tags || []
+      estimatedHours: estimatedHours || undefined,
+      storyPoints: storyPoints || undefined,
+      labels: labels || []
     })
 
     await epic.save()
@@ -129,8 +156,8 @@ export async function POST(request: NextRequest) {
     // Populate the created epic
     const populatedEpic = await Epic.findById(epic._id)
       .populate('project', 'name')
-      .populate('createdBy', 'firstName lastName email')
       .populate('assignedTo', 'firstName lastName email')
+      .populate('createdBy', 'firstName lastName email')
 
     return NextResponse.json({
       success: true,

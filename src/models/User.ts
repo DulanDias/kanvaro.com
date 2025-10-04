@@ -5,7 +5,7 @@ export interface IUser extends Document {
   lastName: string
   email: string
   password: string
-  role: 'admin' | 'project_manager' | 'team_member' | 'client' | 'viewer'
+  role: 'admin' | 'project_manager' | 'team_member' | 'client' | 'viewer' | 'account_manager'
   organization: mongoose.Types.ObjectId
   isActive: boolean
   avatar?: string
@@ -19,13 +19,25 @@ export interface IUser extends Document {
   passwordResetOtp?: string
   passwordResetExpiry?: Date
   passwordResetToken?: string
+  // Project-specific roles for fine-grained access control
+  projectRoles: {
+    project: mongoose.Types.ObjectId
+    role: 'project_manager' | 'project_member' | 'project_viewer' | 'project_client' | 'project_account_manager'
+    assignedBy: mongoose.Types.ObjectId
+    assignedAt: Date
+  }[]
   preferences: {
     theme: 'light' | 'dark' | 'system'
     sidebarCollapsed: boolean
+    dateFormat: string
+    timeFormat: '12h' | '24h'
     notifications: {
       email: boolean
       inApp: boolean
       push: boolean
+      taskReminders: boolean
+      projectUpdates: boolean
+      teamActivity: boolean
     }
   }
   createdAt: Date
@@ -39,7 +51,7 @@ const UserSchema = new Schema<IUser>({
   password: { type: String, required: true },
   role: { 
     type: String, 
-    enum: ['admin', 'project_manager', 'team_member', 'client', 'viewer'],
+    enum: ['admin', 'project_manager', 'team_member', 'client', 'viewer', 'account_manager'],
     default: 'team_member'
   },
   organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true },
@@ -55,13 +67,29 @@ const UserSchema = new Schema<IUser>({
   passwordResetOtp: String,
   passwordResetExpiry: Date,
   passwordResetToken: String,
+  // Project-specific roles
+  projectRoles: [{
+    project: { type: Schema.Types.ObjectId, ref: 'Project', required: true },
+    role: { 
+      type: String, 
+      enum: ['project_manager', 'project_member', 'project_viewer', 'project_client', 'project_account_manager'],
+      required: true 
+    },
+    assignedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    assignedAt: { type: Date, default: Date.now }
+  }],
   preferences: {
     theme: { type: String, enum: ['light', 'dark', 'system'], default: 'system' },
     sidebarCollapsed: { type: Boolean, default: false },
+    dateFormat: { type: String, default: 'MM/DD/YYYY' },
+    timeFormat: { type: String, enum: ['12h', '24h'], default: '12h' },
     notifications: {
       email: { type: Boolean, default: true },
       inApp: { type: Boolean, default: true },
-      push: { type: Boolean, default: false }
+      push: { type: Boolean, default: false },
+      taskReminders: { type: Boolean, default: true },
+      projectUpdates: { type: Boolean, default: true },
+      teamActivity: { type: Boolean, default: false }
     }
   }
 }, {

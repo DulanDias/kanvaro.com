@@ -2,160 +2,186 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { GravatarAvatar } from '@/components/ui/GravatarAvatar'
-import { Badge } from '@/components/ui/Badge'
-import { Clock, CheckCircle, Plus, MessageSquare } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
+import { CheckCircle, Plus, MessageSquare, Timer, ArrowRight, Activity, Users, TrendingUp } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
-const mockActivities = [
-  {
-    id: 1,
-    user: {
-      name: 'Sarah Wilson',
-      avatar: '/avatars/sarah.jpg',
-      initials: 'SW'
-    },
-    action: 'completed',
-    target: 'Update user interface components',
-    project: 'Website Redesign',
-    timestamp: '2 minutes ago',
-    type: 'task'
-  },
-  {
-    id: 2,
-    user: {
-      name: 'Mike Johnson',
-      avatar: '/avatars/mike.jpg',
-      initials: 'MJ'
-    },
-    action: 'created',
-    target: 'Database schema design',
-    project: 'Database Migration',
-    timestamp: '15 minutes ago',
-    type: 'task'
-  },
-  {
-    id: 3,
-    user: {
-      name: 'Emily Chen',
-      avatar: '/avatars/emily.jpg',
-      initials: 'EC'
-    },
-    action: 'commented',
-    target: 'API Integration project',
-    project: 'API Integration',
-    timestamp: '1 hour ago',
-    type: 'comment'
-  },
-  {
-    id: 4,
-    user: {
-      name: 'John Doe',
-      avatar: '/avatars/john.jpg',
-      initials: 'JD'
-    },
-    action: 'started',
-    target: 'Mobile App Development',
-    project: 'Mobile App Development',
-    timestamp: '2 hours ago',
-    type: 'project'
-  },
-  {
-    id: 5,
-    user: {
-      name: 'Alex Rodriguez',
-      avatar: '/avatars/alex.jpg',
-      initials: 'AR'
-    },
-    action: 'updated',
-    target: 'Payment integration status',
-    project: 'API Integration',
-    timestamp: '3 hours ago',
-    type: 'task'
-  }
-]
+interface TeamActivityProps {
+  activities?: any[]
+  isLoading?: boolean
+}
 
-const getActionIcon = (action: string, type: string) => {
+const getActionIcon = (action: string) => {
   if (action === 'completed') return CheckCircle
   if (action === 'created' || action === 'started') return Plus
   if (action === 'commented') return MessageSquare
-  if (action === 'updated') return Clock
-  return Clock
+  if (action === 'logged') return Timer
+  return Plus
 }
 
-const getActionColor = (action: string) => {
+const formatTimestamp = (timestamp: string) => {
+  const now = new Date()
+  const activityTime = new Date(timestamp)
+  const diffInMinutes = Math.floor((now.getTime() - activityTime.getTime()) / (1000 * 60))
+  
+  if (diffInMinutes < 1) return 'Just now'
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+  
+  const diffInHours = Math.floor(diffInMinutes / 60)
+  if (diffInHours < 24) return `${diffInHours}h ago`
+  
+  const diffInDays = Math.floor(diffInHours / 24)
+  if (diffInDays < 7) return `${diffInDays}d ago`
+  
+  return activityTime.toLocaleDateString()
+}
+
+const getActionText = (action: string) => {
   switch (action) {
-    case 'completed':
-      return 'text-green-600'
-    case 'created':
-    case 'started':
-      return 'text-blue-600'
-    case 'commented':
-      return 'text-purple-600'
-    case 'updated':
-      return 'text-orange-600'
-    default:
-      return 'text-gray-600'
+    case 'completed': return 'completed'
+    case 'created': return 'created'
+    case 'started': return 'started'
+    case 'commented': return 'commented on'
+    case 'logged': return 'logged time for'
+    case 'updated': return 'updated'
+    default: return action
   }
 }
 
-export function TeamActivity() {
+export function TeamActivity({ activities, isLoading }: TeamActivityProps) {
+  const router = useRouter()
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Team Activity</CardTitle>
+            <div className="h-8 w-20 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-3">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="flex items-center space-x-3 p-3 border rounded-lg">
+                <div className="h-8 w-8 bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <div className="h-4 w-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                    <div className="h-4 w-16 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                  </div>
+                  <div className="h-3 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+                </div>
+                <div className="h-4 w-12 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
+  if (!activities || activities.length === 0) {
+    return (
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle>Team Activity</CardTitle>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => router.push('/projects')}
+            >
+              View Projects
+              <ArrowRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="text-center py-8">
+            <div className="p-3 bg-muted/50 rounded-full w-12 h-12 mx-auto mb-4 flex items-center justify-center">
+              <Users className="h-6 w-6 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">No recent activity</h3>
+            <p className="text-muted-foreground mb-4">Team activity will appear here as members work on projects and tasks.</p>
+            <Button onClick={() => router.push('/projects')} className="gap-2">
+              <TrendingUp className="h-4 w-4" />
+              View Projects
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+    )
+  }
+
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Team Activity</CardTitle>
+        <div className="flex items-center justify-between">
+          <CardTitle>Team Activity</CardTitle>
+          <Button 
+            variant="outline" 
+            size="sm"
+            onClick={() => router.push('/activity')}
+          >
+            View All
+            <ArrowRight className="h-4 w-4 ml-1" />
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
-          {mockActivities.map((activity) => {
-            const ActionIcon = getActionIcon(activity.action, activity.type)
+        <div className="space-y-3">
+          {activities.map((activity, index) => {
+            const ActionIcon = getActionIcon(activity.action)
             
             return (
-              <div key={activity.id} className="flex items-start space-x-3">
-                <GravatarAvatar 
-                  user={{
-                    avatar: activity.user.avatar,
-                    firstName: activity.user.name.split(' ')[0],
-                    lastName: activity.user.name.split(' ')[1] || '',
-                    email: `${activity.user.name.toLowerCase().replace(' ', '.')}@example.com`
-                  }}
-                  size={32}
-                  className="h-8 w-8"
-                />
-                
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center space-x-2 mb-1">
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      {activity.user.name}
-                    </span>
-                    <span className={`text-sm ${getActionColor(activity.action)}`}>
-                      {activity.action}
-                    </span>
-                    <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {activity.target}
-                    </span>
-                  </div>
-                  
-                  <div className="flex items-center space-x-2">
-                    <Badge variant="outline" className="text-xs">
-                      {activity.project}
-                    </Badge>
-                    <span className="text-xs text-gray-500">
-                      {activity.timestamp}
-                    </span>
+              <div 
+                key={activity.id} 
+                className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+              >
+                <div className="relative">
+                  <GravatarAvatar 
+                    user={{
+                      avatar: activity.user.avatar,
+                      firstName: activity.user.firstName || activity.user.name?.split(' ')[0] || 'User',
+                      lastName: activity.user.lastName || activity.user.name?.split(' ')[1] || '',
+                      email: activity.user.email || `${activity.user.name?.toLowerCase().replace(' ', '.')}@example.com`
+                    }}
+                    size={32}
+                    className="h-8 w-8"
+                  />
+                  <div className="absolute -bottom-1 -right-1 p-1 bg-background border border-border rounded-full">
+                    <ActionIcon className="h-3 w-3 text-muted-foreground" />
                   </div>
                 </div>
                 
-                <div className={`p-1 rounded-full ${getActionColor(activity.action)}/10`}>
-                  <ActionIcon className={`h-3 w-3 ${getActionColor(activity.action)}`} />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <span className="text-sm font-medium text-foreground">
+                      {activity.user.firstName} {activity.user.lastName}
+                    </span>
+                    <span className="text-xs text-muted-foreground">
+                      {getActionText(activity.action)}
+                    </span>
+                  </div>
+                  
+                  <p className="text-xs text-muted-foreground truncate">
+                    {activity.target}
+                  </p>
+                  
+                  <div className="flex items-center space-x-2 mt-1">
+                    <span className="text-xs text-muted-foreground">
+                      {activity.project}
+                    </span>
+                    <span className="text-xs text-muted-foreground">•</span>
+                    <span className="text-xs text-muted-foreground">
+                      {formatTimestamp(activity.timestamp)}
+                    </span>
+                  </div>
                 </div>
               </div>
             )
           })}
-        </div>
-        
-        <div className="mt-4 pt-4 border-t">
-          <button className="text-sm text-primary hover:text-primary/80 font-medium">
-            View all activity
-          </button>
         </div>
       </CardContent>
     </Card>

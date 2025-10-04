@@ -2,40 +2,62 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import { Task } from '@/models/Task'
 import { Project } from '@/models/Project'
-import { Story } from '@/models/Story'
+import { User } from '@/models/User'
+import { authenticateUser } from '@/lib/auth-utils'
+import { PermissionService } from '@/lib/permissions/permission-service'
+import { Permission } from '@/lib/permissions/permission-definitions'
+import { notificationService } from '@/lib/notification-service'
 
 export async function GET(request: NextRequest) {
   try {
     await connectDB()
 
-    const userId = request.headers.get('x-user-id')
-    const organizationId = request.headers.get('x-organization-id')
-
-    if (!userId || !organizationId) {
+    const authResult = await authenticateUser()
+    if ('error' in authResult) {
       return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 }
+        { error: authResult.error },
+        { status: authResult.status }
       )
     }
 
+    const { user } = authResult
+    const userId = user.id
+    const organizationId = user.organization
+
     const { searchParams } = new URL(request.url)
-    const projectId = searchParams.get('projectId')
-    const storyId = searchParams.get('storyId')
-    const status = searchParams.get('status')
-    const priority = searchParams.get('priority')
-    const type = searchParams.get('type')
-    const assignedTo = searchParams.get('assignedTo')
-    const sprintId = searchParams.get('sprintId')
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '20')
+    const search = searchParams.get('search') || ''
+    const status = searchParams.get('status') || ''
+    const priority = searchParams.get('priority') || ''
+    const type = searchParams.get('type') || ''
+    const project = searchParams.get('project') || ''
+
+    // Check if user can view all tasks (admin permission)
+    const canViewAllTasks = await PermissionService.hasPermission(userId, Permission.TASK_READ)
 
     // Build filters
-    const filters: any = {}
-    
-    if (projectId) {
-      filters.project = projectId
+    const filters: any = { 
+      organization: organizationId
     }
     
-    if (storyId) {
-      filters.story = storyId
+    // If user can't view all tasks, filter by assigned tasks
+    if (!canViewAllTasks) {
+      filters.$or = [
+        { assignedTo: userId },
+        { createdBy: userId }
+      ]
+    }
+    
+    if (search) {
+      filters.$and = [
+        {
+          $or: [
+            { title: { $regex: search, $options: 'i' } },
+            { description: { $regex: search, $options: 'i' } }
+          ]
+        }
+      ]
     }
     
     if (status) {
@@ -50,26 +72,33 @@ export async function GET(request: NextRequest) {
       filters.type = type
     }
     
-    if (assignedTo) {
-      filters.assignedTo = assignedTo
-    }
-    
-    if (sprintId) {
-      filters.sprint = sprintId
+    if (project) {
+      filters.project = project
     }
 
+    // Get tasks assigned to or created by the user
     const tasks = await Task.find(filters)
       .populate('project', 'name')
-      .populate('story', 'title')
-      .populate('parentTask', 'title')
-      .populate('createdBy', 'firstName lastName email')
       .populate('assignedTo', 'firstName lastName email')
-      .populate('sprint', 'name')
+      .populate('createdBy', 'firstName lastName email')
+      .populate('story', 'title status')
+      .populate('sprint', 'name status')
+      .populate('parentTask', 'title')
       .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+
+    const total = await Task.countDocuments(filters)
 
     return NextResponse.json({
       success: true,
-      data: tasks
+      data: tasks,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
     })
 
   } catch (error) {
@@ -85,34 +114,41 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB()
 
-    const userId = request.headers.get('x-user-id')
-    const organizationId = request.headers.get('x-organization-id')
-
-    if (!userId || !organizationId) {
+    const authResult = await authenticateUser()
+    if ('error' in authResult) {
       return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 }
+        { error: authResult.error },
+        { status: authResult.status }
       )
     }
+
+    const { user } = authResult
+    const userId = user.id
 
     const {
       title,
       description,
+      status,
+      priority,
+      type,
       project,
       story,
       parentTask,
       assignedTo,
-      status,
-      priority,
-      type,
       storyPoints,
-      estimatedHours,
-      sprint,
-      startDate,
       dueDate,
-      labels,
-      dependencies
+      estimatedHours,
+      labels
     } = await request.json()
+
+    // Check if user can create tasks
+    const canCreateTask = await PermissionService.hasPermission(userId, Permission.TASK_CREATE, project)
+    if (!canCreateTask) {
+      return NextResponse.json(
+        { error: 'Insufficient permissions to create tasks' },
+        { status: 403 }
+      )
+    }
 
     // Validate required fields
     if (!title || !project) {
@@ -122,72 +158,23 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Verify project exists and user has access
-    const projectDoc = await Project.findOne({
-      _id: project,
-      organization: organizationId,
-      $or: [
-        { createdBy: userId },
-        { teamMembers: userId }
-      ]
-    })
-
-    if (!projectDoc) {
-      return NextResponse.json(
-        { error: 'Project not found or access denied' },
-        { status: 404 }
-      )
-    }
-
-    // Verify story exists if provided
-    if (story) {
-      const storyDoc = await Story.findOne({
-        _id: story,
-        project: project
-      })
-
-      if (!storyDoc) {
-        return NextResponse.json(
-          { error: 'Story not found' },
-          { status: 404 }
-        )
-      }
-    }
-
-    // Verify parent task exists if provided
-    if (parentTask) {
-      const parentTaskDoc = await Task.findOne({
-        _id: parentTask,
-        project: project
-      })
-
-      if (!parentTaskDoc) {
-        return NextResponse.json(
-          { error: 'Parent task not found' },
-          { status: 404 }
-        )
-      }
-    }
-
     // Create task
     const task = new Task({
       title,
       description,
-      project,
-      story,
-      parentTask,
-      createdBy: userId,
-      assignedTo,
       status: status || 'todo',
       priority: priority || 'medium',
       type: type || 'task',
-      storyPoints,
-      estimatedHours,
-      sprint,
-      startDate: startDate ? new Date(startDate) : undefined,
+      organization: user.organization,
+      project,
+      story: story || undefined,
+      parentTask: parentTask || undefined,
+      assignedTo: assignedTo || undefined,
+      createdBy: userId,
+      storyPoints: storyPoints || undefined,
       dueDate: dueDate ? new Date(dueDate) : undefined,
-      labels: labels || [],
-      dependencies: dependencies || []
+      estimatedHours: estimatedHours || undefined,
+      labels: labels || []
     })
 
     await task.save()
@@ -195,11 +182,31 @@ export async function POST(request: NextRequest) {
     // Populate the created task
     const populatedTask = await Task.findById(task._id)
       .populate('project', 'name')
-      .populate('story', 'title')
-      .populate('parentTask', 'title')
-      .populate('createdBy', 'firstName lastName email')
       .populate('assignedTo', 'firstName lastName email')
-      .populate('sprint', 'name')
+      .populate('createdBy', 'firstName lastName email')
+      .populate('story', 'title status')
+      .populate('sprint', 'name status')
+      .populate('parentTask', 'title')
+
+    // Send notification if task is assigned to someone
+    if (assignedTo && assignedTo !== userId) {
+      try {
+        const project = await Project.findById(project).select('name')
+        const createdByUser = await User.findById(userId).select('firstName lastName')
+        
+        await notificationService.notifyTaskUpdate(
+          task._id.toString(),
+          'assigned',
+          assignedTo,
+          user.organization,
+          title,
+          project?.name
+        )
+      } catch (notificationError) {
+        console.error('Failed to send task assignment notification:', notificationError)
+        // Don't fail the task creation if notification fails
+      }
+    }
 
     return NextResponse.json({
       success: true,

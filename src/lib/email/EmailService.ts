@@ -288,6 +288,221 @@ export class EmailService {
 </html>
     `
   }
+
+  generateTaskAssignmentEmail(
+    taskTitle: string,
+    projectName: string,
+    assignedBy: string,
+    dueDate?: string,
+    organizationName: string = 'Kanvaro'
+  ): string {
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Task Assignment - ${organizationName}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .task-icon {
+            width: 60px;
+            height: 60px;
+            background: #3b82f6;
+            border-radius: 8px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .task-details {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .button {
+            display: inline-block;
+            background: #3b82f6;
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="task-icon">T</div>
+            <h1>New Task Assignment</h1>
+        </div>
+
+        <p>You have been assigned a new task by ${assignedBy}.</p>
+        
+        <div class="task-details">
+            <h3 style="margin-top: 0;">${taskTitle}</h3>
+            <p><strong>Project:</strong> ${projectName}</p>
+            ${dueDate ? `<p><strong>Due Date:</strong> ${dueDate}</p>` : ''}
+        </div>
+
+        <div style="text-align: center;">
+            <a href="#" class="button">View Task</a>
+        </div>
+
+        <div class="footer">
+            <p>This email was sent by ${organizationName}</p>
+            <p>You can manage your notification preferences in your account settings</p>
+        </div>
+    </div>
+</body>
+</html>
+    `
+  }
+
+  generateProjectUpdateEmail(
+    projectName: string,
+    updateType: 'created' | 'updated' | 'deadline_approaching' | 'completed',
+    updatedBy: string,
+    organizationName: string = 'Kanvaro'
+  ): string {
+    const updateMessages = {
+      created: 'A new project has been created',
+      updated: 'A project has been updated',
+      deadline_approaching: 'A project deadline is approaching',
+      completed: 'A project has been completed'
+    }
+
+    const colors = {
+      created: '#10b981',
+      updated: '#3b82f6',
+      deadline_approaching: '#f59e0b',
+      completed: '#8b5cf6'
+    }
+
+    return `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Update - ${organizationName}</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f8fafc;
+        }
+        .container {
+            background: white;
+            border-radius: 8px;
+            padding: 40px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .project-icon {
+            width: 60px;
+            height: 60px;
+            background: ${colors[updateType]};
+            border-radius: 8px;
+            margin: 0 auto 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            font-weight: bold;
+        }
+        .project-details {
+            background: #f8fafc;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .button {
+            display: inline-block;
+            background: ${colors[updateType]};
+            color: white;
+            padding: 12px 24px;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 500;
+            margin: 20px 0;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <div class="project-icon">P</div>
+            <h1>${updateMessages[updateType]}</h1>
+        </div>
+
+        <p>${updateMessages[updateType]} by ${updatedBy}.</p>
+        
+        <div class="project-details">
+            <h3 style="margin-top: 0;">${projectName}</h3>
+        </div>
+
+        <div style="text-align: center;">
+            <a href="#" class="button">View Project</a>
+        </div>
+
+        <div class="footer">
+            <p>This email was sent by ${organizationName}</p>
+            <p>You can manage your notification preferences in your account settings</p>
+        </div>
+    </div>
+</body>
+</html>
+    `
+  }
 }
 
 export const emailService = EmailService.getInstance()

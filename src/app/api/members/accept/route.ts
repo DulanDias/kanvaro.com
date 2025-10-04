@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import { User } from '@/models/User'
 import { UserInvitation } from '@/models/UserInvitation'
+import { notificationService } from '@/lib/notification-service'
 import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
@@ -58,6 +59,29 @@ export async function POST(request: NextRequest) {
     invitation.isAccepted = true
     invitation.acceptedAt = new Date()
     await invitation.save()
+
+    // Send notification to organization members about new team member
+    try {
+      const organizationMembers = await User.find({ 
+        organization: invitation.organization._id,
+        _id: { $ne: user._id } // Exclude the new user
+      }).select('_id')
+      
+      const memberIds = organizationMembers.map(member => member._id.toString())
+      
+      if (memberIds.length > 0) {
+        await notificationService.notifyTeamUpdate(
+          'member_joined',
+          memberIds,
+          invitation.organization._id.toString(),
+          `${user.firstName} ${user.lastName}`,
+          `joined as ${invitation.role.replace(/_/g, ' ')}`
+        )
+      }
+    } catch (notificationError) {
+      console.error('Failed to send team update notifications:', notificationError)
+      // Don't fail the account creation if notification fails
+    }
 
     return NextResponse.json({
       success: true,

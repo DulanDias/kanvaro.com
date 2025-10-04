@@ -1,0 +1,300 @@
+'use client'
+
+import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
+import { MainLayout } from '@/components/layout/MainLayout'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
+import { Textarea } from '@/components/ui/textarea'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Alert, AlertDescription } from '@/components/ui/alert'
+import { 
+  ArrowLeft,
+  Save,
+  Loader2,
+  AlertTriangle,
+  Layers
+} from 'lucide-react'
+
+interface Project {
+  _id: string
+  name: string
+}
+
+export default function CreateEpicPage() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [authError, setAuthError] = useState('')
+  const [projects, setProjects] = useState<Project[]>([])
+
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    project: '',
+    assignedTo: '',
+    priority: 'medium',
+    dueDate: '',
+    estimatedHours: '',
+    storyPoints: '',
+    labels: ''
+  })
+
+  const checkAuth = useCallback(async () => {
+    try {
+      const response = await fetch('/api/auth/me')
+      
+      if (response.ok) {
+        setAuthError('')
+        await fetchProjects()
+      } else if (response.status === 401) {
+        const refreshResponse = await fetch('/api/auth/refresh', {
+          method: 'POST'
+        })
+        
+        if (refreshResponse.ok) {
+          setAuthError('')
+          await fetchProjects()
+        } else {
+          setAuthError('Session expired')
+          setTimeout(() => {
+            router.push('/login')
+          }, 2000)
+        }
+      } else {
+        router.push('/login')
+      }
+    } catch (error) {
+      console.error('Auth check failed:', error)
+      setAuthError('Authentication failed')
+      setTimeout(() => {
+        router.push('/login')
+      }, 2000)
+    }
+  }, [router])
+
+  useEffect(() => {
+    checkAuth()
+  }, [checkAuth])
+
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch('/api/projects')
+      const data = await response.json()
+
+      if (data.success && Array.isArray(data.data)) {
+        setProjects(data.data)
+      } else {
+        setProjects([])
+      }
+    } catch (err) {
+      console.error('Failed to fetch projects:', err)
+      setProjects([])
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setLoading(true)
+    setError('')
+
+    try {
+      const response = await fetch('/api/epics', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          ...formData,
+          estimatedHours: formData.estimatedHours ? parseInt(formData.estimatedHours) : undefined,
+          storyPoints: formData.storyPoints ? parseInt(formData.storyPoints) : undefined,
+          labels: formData.labels ? formData.labels.split(',').map(label => label.trim()) : []
+        })
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        router.push('/epics')
+      } else {
+        setError(data.error || 'Failed to create epic')
+      }
+    } catch (err) {
+      setError('Failed to create epic')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleChange = (field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      [field]: value
+    }))
+  }
+
+  if (authError) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <p className="text-destructive mb-4">{authError}</p>
+            <p className="text-muted-foreground">Redirecting to login...</p>
+          </div>
+        </div>
+      </MainLayout>
+    )
+  }
+
+  return (
+    <MainLayout>
+      <div className="space-y-6">
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" onClick={() => router.push('/epics')}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground flex items-center space-x-2">
+              <Layers className="h-8 w-8 text-purple-600" />
+              <span>Create New Epic</span>
+            </h1>
+            <p className="text-muted-foreground">Create a new epic for your project</p>
+          </div>
+        </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Epic Details</CardTitle>
+            <CardDescription>Fill in the details for your new epic</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-foreground">Name *</label>
+                    <Input
+                      value={formData.name}
+                      onChange={(e) => handleChange('name', e.target.value)}
+                      placeholder="Enter epic name"
+                      required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-foreground">Project *</label>
+                    <Select value={formData.project} onValueChange={(value) => handleChange('project', value)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a project" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.isArray(projects) && projects.map((project) => (
+                          <SelectItem key={project._id} value={project._id}>
+                            {project.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-foreground">Priority</label>
+                    <Select value={formData.priority} onValueChange={(value) => handleChange('priority', value)}>
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="low">Low</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="high">High</SelectItem>
+                        <SelectItem value="critical">Critical</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-foreground">Due Date</label>
+                    <Input
+                      type="date"
+                      value={formData.dueDate}
+                      onChange={(e) => handleChange('dueDate', e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="text-sm font-medium text-foreground">Estimated Hours</label>
+                    <Input
+                      type="number"
+                      value={formData.estimatedHours}
+                      onChange={(e) => handleChange('estimatedHours', e.target.value)}
+                      placeholder="Enter estimated hours"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-foreground">Story Points</label>
+                    <Input
+                      type="number"
+                      value={formData.storyPoints}
+                      onChange={(e) => handleChange('storyPoints', e.target.value)}
+                      placeholder="Enter story points"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-foreground">Labels</label>
+                    <Input
+                      value={formData.labels}
+                      onChange={(e) => handleChange('labels', e.target.value)}
+                      placeholder="Enter labels separated by commas"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-foreground">Description</label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) => handleChange('description', e.target.value)}
+                  placeholder="Enter epic description"
+                  rows={4}
+                />
+              </div>
+
+              <div className="flex justify-end space-x-4">
+                <Button type="button" variant="outline" onClick={() => router.push('/epics')}>
+                  Cancel
+                </Button>
+                <Button type="submit" disabled={loading}>
+                  {loading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Create Epic
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </MainLayout>
+  )
+}

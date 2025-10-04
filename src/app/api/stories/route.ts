@@ -3,20 +3,23 @@ import connectDB from '@/lib/db'
 import { Story } from '@/models/Story'
 import { Project } from '@/models/Project'
 import { Epic } from '@/models/Epic'
+import { authenticateUser } from '@/lib/auth-utils'
 
 export async function GET(request: NextRequest) {
   try {
     await connectDB()
 
-    const userId = request.headers.get('x-user-id')
-    const organizationId = request.headers.get('x-organization-id')
-
-    if (!userId || !organizationId) {
+    const authResult = await authenticateUser()
+    if ('error' in authResult) {
       return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 }
+        { error: authResult.error },
+        { status: authResult.status }
       )
     }
+
+    const { user } = authResult
+    const userId = user.id
+    const organizationId = user.organization
 
     const { searchParams } = new URL(request.url)
     const projectId = searchParams.get('projectId')
@@ -74,15 +77,17 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB()
 
-    const userId = request.headers.get('x-user-id')
-    const organizationId = request.headers.get('x-organization-id')
-
-    if (!userId || !organizationId) {
+    const authResult = await authenticateUser()
+    if ('error' in authResult) {
       return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 }
+        { error: authResult.error },
+        { status: authResult.status }
       )
     }
+
+    const { user } = authResult
+    const userId = user.id
+    const organizationId = user.organization
 
     const {
       title,

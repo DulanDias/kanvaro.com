@@ -12,9 +12,12 @@ import { Switch } from '@/components/ui/switch'
 import { Settings, Save, Loader2, AlertCircle, CheckCircle, Bell, Palette, Globe } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useCurrencies } from '@/hooks/useCurrencies'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
+import { NotificationTest } from '@/components/notifications/NotificationTest'
 
 export default function PreferencesPage() {
   const { currencies, loading: currenciesLoading, formatCurrencyDisplay } = useCurrencies(true)
+  const { isSupported, isSubscribed, permission, isLoading: pushLoading, toggleSubscription, showTestNotification } = usePushNotifications()
   const [isLoading, setIsLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [user, setUser] = useState<any>(null)
@@ -32,7 +35,6 @@ export default function PreferencesPage() {
     notifications: {
       email: true,
       push: true,
-      sms: false,
       taskReminders: true,
       projectUpdates: true,
       teamActivity: false
@@ -59,7 +61,6 @@ export default function PreferencesPage() {
           notifications: {
             email: userData.preferences?.notifications?.email ?? true,
             push: userData.preferences?.notifications?.push ?? true,
-            sms: userData.preferences?.notifications?.sms ?? false,
             taskReminders: userData.preferences?.notifications?.taskReminders ?? true,
             projectUpdates: userData.preferences?.notifications?.projectUpdates ?? true,
             teamActivity: userData.preferences?.notifications?.teamActivity ?? false
@@ -85,7 +86,6 @@ export default function PreferencesPage() {
             notifications: {
               email: refreshData.user.preferences?.notifications?.email ?? true,
               push: refreshData.user.preferences?.notifications?.push ?? true,
-              sms: refreshData.user.preferences?.notifications?.sms ?? false,
               taskReminders: refreshData.user.preferences?.notifications?.taskReminders ?? true,
               projectUpdates: refreshData.user.preferences?.notifications?.projectUpdates ?? true,
               teamActivity: refreshData.user.preferences?.notifications?.teamActivity ?? false
@@ -272,7 +272,7 @@ export default function PreferencesPage() {
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
                       {currenciesLoading ? (
-                        <SelectItem value="" disabled>Loading currencies...</SelectItem>
+                        <SelectItem value="loading" disabled>Loading currencies...</SelectItem>
                       ) : (
                         currencies.map((currency) => (
                           <SelectItem key={currency.code} value={currency.code}>
@@ -349,31 +349,36 @@ export default function PreferencesPage() {
                     <p className="text-sm text-muted-foreground">
                       Receive push notifications in your browser
                     </p>
+                    {!isSupported && (
+                      <p className="text-xs text-destructive">
+                        Push notifications are not supported in this browser
+                      </p>
+                    )}
+                    {permission === 'denied' && (
+                      <p className="text-xs text-destructive">
+                        Notification permission denied. Please enable in browser settings.
+                      </p>
+                    )}
                   </div>
-                  <Switch
-                    checked={formData.notifications.push}
-                    onCheckedChange={(checked) => setFormData({
-                      ...formData,
-                      notifications: { ...formData.notifications, push: checked }
-                    })}
-                  />
+                  <div className="flex items-center space-x-2">
+                    <Switch
+                      checked={isSubscribed}
+                      onCheckedChange={toggleSubscription}
+                      disabled={!isSupported || permission === 'denied' || isLoading}
+                    />
+                    {isSubscribed && (
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={showTestNotification}
+                        disabled={isLoading}
+                      >
+                        Test
+                      </Button>
+                    )}
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <div className="space-y-0.5">
-                    <Label>SMS Notifications</Label>
-                    <p className="text-sm text-muted-foreground">
-                      Receive notifications via SMS
-                    </p>
-                  </div>
-                  <Switch
-                    checked={formData.notifications.sms}
-                    onCheckedChange={(checked) => setFormData({
-                      ...formData,
-                      notifications: { ...formData.notifications, sms: checked }
-                    })}
-                  />
-                </div>
 
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
@@ -432,6 +437,9 @@ export default function PreferencesPage() {
               <AlertDescription>{message.text}</AlertDescription>
             </Alert>
           )}
+
+          {/* Notification Test Component */}
+          <NotificationTest />
 
           <div className="flex justify-end">
             <Button onClick={handleSave} disabled={saving} className="flex items-center gap-2">

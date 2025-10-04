@@ -32,7 +32,31 @@ export function OrganizationSettings() {
     defaultUserRole: 'team_member',
     timeTracking: {
       allowTimeTracking: true,
-      allowManualTimeSubmission: true
+      allowManualTimeSubmission: true,
+      requireApproval: false,
+      allowBillableTime: true,
+      defaultHourlyRate: 0,
+      maxDailyHours: 12,
+      maxWeeklyHours: 60,
+      maxSessionHours: 8,
+      allowOvertime: false,
+      requireDescription: true,
+      requireCategory: false,
+      allowFutureTime: false,
+      allowPastTime: true,
+      pastTimeLimitDays: 30,
+      roundingRules: {
+        enabled: false,
+        increment: 15,
+        roundUp: true
+      },
+      notifications: {
+        onTimerStart: false,
+        onTimerStop: true,
+        onOvertime: true,
+        onApprovalNeeded: true,
+        onTimeSubmitted: true
+      }
     }
   })
   
@@ -146,7 +170,31 @@ export function OrganizationSettings() {
         defaultUserRole: organization.settings?.defaultUserRole || 'team_member',
         timeTracking: {
           allowTimeTracking: organization.settings?.timeTracking?.allowTimeTracking ?? true,
-          allowManualTimeSubmission: organization.settings?.timeTracking?.allowManualTimeSubmission ?? true
+          allowManualTimeSubmission: organization.settings?.timeTracking?.allowManualTimeSubmission ?? true,
+          requireApproval: organization.settings?.timeTracking?.requireApproval ?? false,
+          allowBillableTime: organization.settings?.timeTracking?.allowBillableTime ?? true,
+          defaultHourlyRate: organization.settings?.timeTracking?.defaultHourlyRate ?? 0,
+          maxDailyHours: organization.settings?.timeTracking?.maxDailyHours ?? 12,
+          maxWeeklyHours: organization.settings?.timeTracking?.maxWeeklyHours ?? 60,
+          maxSessionHours: organization.settings?.timeTracking?.maxSessionHours ?? 8,
+          allowOvertime: organization.settings?.timeTracking?.allowOvertime ?? false,
+          requireDescription: organization.settings?.timeTracking?.requireDescription ?? true,
+          requireCategory: organization.settings?.timeTracking?.requireCategory ?? false,
+          allowFutureTime: organization.settings?.timeTracking?.allowFutureTime ?? false,
+          allowPastTime: organization.settings?.timeTracking?.allowPastTime ?? true,
+          pastTimeLimitDays: organization.settings?.timeTracking?.pastTimeLimitDays ?? 30,
+          roundingRules: {
+            enabled: organization.settings?.timeTracking?.roundingRules?.enabled ?? false,
+            increment: organization.settings?.timeTracking?.roundingRules?.increment ?? 15,
+            roundUp: organization.settings?.timeTracking?.roundingRules?.roundUp ?? true
+          },
+          notifications: {
+            onTimerStart: organization.settings?.timeTracking?.notifications?.onTimerStart ?? false,
+            onTimerStop: organization.settings?.timeTracking?.notifications?.onTimerStop ?? true,
+            onOvertime: organization.settings?.timeTracking?.notifications?.onOvertime ?? true,
+            onApprovalNeeded: organization.settings?.timeTracking?.notifications?.onApprovalNeeded ?? true,
+            onTimeSubmitted: organization.settings?.timeTracking?.notifications?.onTimeSubmitted ?? true
+          }
         }
       })
       
@@ -699,7 +747,7 @@ export function OrganizationSettings() {
           </div>
 
           {formData.timeTracking.allowTimeTracking && (
-            <div className="ml-6 pl-4 border-l-2 border-muted">
+            <div className="ml-6 pl-4 border-l-2 border-muted space-y-6">
               <div className="flex items-center justify-between">
                 <div className="space-y-0.5">
                   <Label>Allow Manual Time Submission</Label>
@@ -714,6 +762,360 @@ export function OrganizationSettings() {
                     timeTracking: { ...formData.timeTracking, allowManualTimeSubmission: checked }
                   })}
                 />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Require Approval</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Require manager approval for all time entries
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.timeTracking.requireApproval}
+                  onCheckedChange={(checked) => setFormData({ 
+                    ...formData, 
+                    timeTracking: { ...formData.timeTracking, requireApproval: checked }
+                  })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Allow Billable Time</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Enable billing and cost tracking for time entries
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.timeTracking.allowBillableTime}
+                  onCheckedChange={(checked) => setFormData({ 
+                    ...formData, 
+                    timeTracking: { ...formData.timeTracking, allowBillableTime: checked }
+                  })}
+                />
+              </div>
+
+              {formData.timeTracking.allowBillableTime && (
+                <div>
+                  <Label htmlFor="defaultHourlyRate">Default Hourly Rate ($)</Label>
+                  <Input
+                    id="defaultHourlyRate"
+                    type="number"
+                    value={formData.timeTracking.defaultHourlyRate}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      timeTracking: { ...formData.timeTracking, defaultHourlyRate: Number(e.target.value) }
+                    })}
+                    placeholder="0.00"
+                    step="0.01"
+                    min="0"
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="maxDailyHours">Max Daily Hours</Label>
+                  <Input
+                    id="maxDailyHours"
+                    type="number"
+                    value={formData.timeTracking.maxDailyHours}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      timeTracking: { ...formData.timeTracking, maxDailyHours: Number(e.target.value) }
+                    })}
+                    min="1"
+                    max="24"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="maxWeeklyHours">Max Weekly Hours</Label>
+                  <Input
+                    id="maxWeeklyHours"
+                    type="number"
+                    value={formData.timeTracking.maxWeeklyHours}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      timeTracking: { ...formData.timeTracking, maxWeeklyHours: Number(e.target.value) }
+                    })}
+                    min="1"
+                    max="168"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="maxSessionHours">Max Session Hours</Label>
+                  <Input
+                    id="maxSessionHours"
+                    type="number"
+                    value={formData.timeTracking.maxSessionHours}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      timeTracking: { ...formData.timeTracking, maxSessionHours: Number(e.target.value) }
+                    })}
+                    min="1"
+                    max="24"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Allow Overtime</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Allow time entries beyond daily/weekly limits
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.timeTracking.allowOvertime}
+                  onCheckedChange={(checked) => setFormData({ 
+                    ...formData, 
+                    timeTracking: { ...formData.timeTracking, allowOvertime: checked }
+                  })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Require Description</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Require description for all time entries
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.timeTracking.requireDescription}
+                  onCheckedChange={(checked) => setFormData({ 
+                    ...formData, 
+                    timeTracking: { ...formData.timeTracking, requireDescription: checked }
+                  })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Require Category</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Require category selection for time entries
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.timeTracking.requireCategory}
+                  onCheckedChange={(checked) => setFormData({ 
+                    ...formData, 
+                    timeTracking: { ...formData.timeTracking, requireCategory: checked }
+                  })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Allow Future Time</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Allow logging time for future dates
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.timeTracking.allowFutureTime}
+                  onCheckedChange={(checked) => setFormData({ 
+                    ...formData, 
+                    timeTracking: { ...formData.timeTracking, allowFutureTime: checked }
+                  })}
+                />
+              </div>
+
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Allow Past Time</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Allow logging time for past dates
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.timeTracking.allowPastTime}
+                  onCheckedChange={(checked) => setFormData({ 
+                    ...formData, 
+                    timeTracking: { ...formData.timeTracking, allowPastTime: checked }
+                  })}
+                />
+              </div>
+
+              {formData.timeTracking.allowPastTime && (
+                <div>
+                  <Label htmlFor="pastTimeLimitDays">Past Time Limit (Days)</Label>
+                  <Input
+                    id="pastTimeLimitDays"
+                    type="number"
+                    value={formData.timeTracking.pastTimeLimitDays}
+                    onChange={(e) => setFormData({ 
+                      ...formData, 
+                      timeTracking: { ...formData.timeTracking, pastTimeLimitDays: Number(e.target.value) }
+                    })}
+                    min="1"
+                    max="365"
+                  />
+                </div>
+              )}
+
+              <div className="space-y-4">
+                <h4 className="font-medium">Rounding Rules</h4>
+                <div className="flex items-center justify-between">
+                  <div className="space-y-0.5">
+                    <Label>Enable Rounding</Label>
+                    <p className="text-sm text-muted-foreground">
+                      Round time entries to specified increments
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData.timeTracking.roundingRules.enabled}
+                    onCheckedChange={(checked) => setFormData({ 
+                      ...formData, 
+                      timeTracking: { 
+                        ...formData.timeTracking, 
+                        roundingRules: { ...formData.timeTracking.roundingRules, enabled: checked }
+                      }
+                    })}
+                  />
+                </div>
+
+                {formData.timeTracking.roundingRules.enabled && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="roundingIncrement">Increment (minutes)</Label>
+                      <Input
+                        id="roundingIncrement"
+                        type="number"
+                        value={formData.timeTracking.roundingRules.increment}
+                        onChange={(e) => setFormData({ 
+                          ...formData, 
+                          timeTracking: { 
+                            ...formData.timeTracking, 
+                            roundingRules: { ...formData.timeTracking.roundingRules, increment: Number(e.target.value) }
+                          }
+                        })}
+                        min="1"
+                        max="60"
+                      />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-0.5">
+                        <Label>Round Up</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Round up instead of down
+                        </p>
+                      </div>
+                      <Switch
+                        checked={formData.timeTracking.roundingRules.roundUp}
+                        onCheckedChange={(checked) => setFormData({ 
+                          ...formData, 
+                          timeTracking: { 
+                            ...formData.timeTracking, 
+                            roundingRules: { ...formData.timeTracking.roundingRules, roundUp: checked }
+                          }
+                        })}
+                      />
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-4">
+                <h4 className="font-medium">Notifications</h4>
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Timer Start</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Notify when timer starts
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.timeTracking.notifications.onTimerStart}
+                      onCheckedChange={(checked) => setFormData({ 
+                        ...formData, 
+                        timeTracking: { 
+                          ...formData.timeTracking, 
+                          notifications: { ...formData.timeTracking.notifications, onTimerStart: checked }
+                        }
+                      })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Timer Stop</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Notify when timer stops
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.timeTracking.notifications.onTimerStop}
+                      onCheckedChange={(checked) => setFormData({ 
+                        ...formData, 
+                        timeTracking: { 
+                          ...formData.timeTracking, 
+                          notifications: { ...formData.timeTracking.notifications, onTimerStop: checked }
+                        }
+                      })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Overtime Alert</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Notify when overtime is logged
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.timeTracking.notifications.onOvertime}
+                      onCheckedChange={(checked) => setFormData({ 
+                        ...formData, 
+                        timeTracking: { 
+                          ...formData.timeTracking, 
+                          notifications: { ...formData.timeTracking.notifications, onOvertime: checked }
+                        }
+                      })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Approval Needed</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Notify when approval is needed
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.timeTracking.notifications.onApprovalNeeded}
+                      onCheckedChange={(checked) => setFormData({ 
+                        ...formData, 
+                        timeTracking: { 
+                          ...formData.timeTracking, 
+                          notifications: { ...formData.timeTracking.notifications, onApprovalNeeded: checked }
+                        }
+                      })}
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <div className="space-y-0.5">
+                      <Label>Time Submitted</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Notify when time is submitted
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.timeTracking.notifications.onTimeSubmitted}
+                      onCheckedChange={(checked) => setFormData({ 
+                        ...formData, 
+                        timeTracking: { 
+                          ...formData.timeTracking, 
+                          notifications: { ...formData.timeTracking.notifications, onTimeSubmitted: checked }
+                        }
+                      })}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
           )}

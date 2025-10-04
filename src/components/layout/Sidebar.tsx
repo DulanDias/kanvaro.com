@@ -7,6 +7,8 @@ import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { OrganizationLogo } from '@/components/ui/OrganizationLogo'
 import { useOrganization } from '@/hooks/useOrganization'
+import { PermissionGate } from '@/lib/permissions/permission-components'
+import { Permission } from '@/lib/permissions/permission-definitions'
 import { 
   ChevronLeft, 
   ChevronRight,
@@ -42,35 +44,35 @@ const navigationItems = [
     label: 'Dashboard',
     icon: LayoutDashboard,
     path: '/dashboard',
-    permission: 'dashboard:read'
+    permission: Permission.PROJECT_READ
   },
   {
     id: 'projects',
     label: 'Projects',
     icon: FolderOpen,
     path: '/projects',
-    permission: 'project:read',
+    permission: Permission.PROJECT_READ,
     children: [
       {
         id: 'projects-list',
         label: 'All Projects',
         icon: List,
         path: '/projects',
-        permission: 'project:read'
+        permission: Permission.PROJECT_READ
       },
       {
         id: 'projects-kanban',
         label: 'Kanban Board',
         icon: Columns,
-        path: '/projects/kanban',
-        permission: 'project:read'
+        path: '/kanban',
+        permission: Permission.KANBAN_READ
       },
       {
         id: 'projects-calendar',
         label: 'Calendar View',
         icon: Calendar,
-        path: '/projects/calendar',
-        permission: 'project:read'
+        path: '/calendar',
+        permission: Permission.CALENDAR_READ
       }
     ]
   },
@@ -79,29 +81,43 @@ const navigationItems = [
     label: 'Tasks',
     icon: CheckSquare,
     path: '/tasks',
-    permission: 'task:read',
+    permission: Permission.TASK_READ,
     children: [
       {
         id: 'tasks-my',
         label: 'My Tasks',
         icon: User,
-        path: '/tasks/my',
-        permission: 'task:read'
+        path: '/tasks',
+        permission: Permission.TASK_READ
       },
       {
         id: 'tasks-backlog',
         label: 'Backlog',
         icon: List,
         path: '/backlog',
-        permission: 'task:read'
+        permission: Permission.BACKLOG_READ
       },
       {
         id: 'tasks-sprints',
         label: 'Sprints',
         icon: Zap,
-        path: '/tasks/sprints',
-        permission: 'task:read'
-      }
+        path: '/sprints',
+        permission: Permission.SPRINT_READ
+      },
+      {
+        id: 'tasks-epics',
+        label: 'Epics',
+        icon: Columns,
+        path: '/epics',
+        permission: Permission.EPIC_READ
+      },
+      {
+        id: 'tasks-sprint-events',
+        label: 'Sprint Events',
+        icon: Calendar,
+        path: '/sprint-events',
+        permission: Permission.SPRINT_MANAGE
+      },
     ]
   },
   {
@@ -109,21 +125,21 @@ const navigationItems = [
     label: 'Team',
     icon: Users,
     path: '/team/members',
-    permission: 'team:read',
+    permission: Permission.TEAM_READ,
     children: [
       {
         id: 'team-members',
         label: 'Members',
         icon: Users,
         path: '/team/members',
-        permission: 'team:read'
+        permission: Permission.TEAM_READ
       },
       {
         id: 'team-roles',
         label: 'Roles & Permissions',
         icon: Shield,
         path: '/team/roles',
-        permission: 'user:manage_roles'
+        permission: Permission.USER_MANAGE_ROLES
       }
     ]
   },
@@ -132,28 +148,28 @@ const navigationItems = [
     label: 'Time Tracking',
     icon: Clock,
     path: '/time-tracking',
-    permission: 'time_tracking:read',
+    permission: Permission.TIME_TRACKING_READ,
     children: [
       {
         id: 'time-tracker',
         label: 'Timer',
         icon: Play,
         path: '/time-tracking/timer',
-        permission: 'time_tracking:create'
+        permission: Permission.TIME_TRACKING_CREATE
       },
       {
         id: 'time-logs',
         label: 'Time Logs',
         icon: Clock,
         path: '/time-tracking/logs',
-        permission: 'time_tracking:read'
+        permission: Permission.TIME_TRACKING_READ
       },
       {
         id: 'time-reports',
         label: 'Reports',
         icon: BarChart,
         path: '/time-tracking/reports',
-        permission: 'time_tracking:read'
+        permission: Permission.TIME_TRACKING_READ
       }
     ]
   },
@@ -162,28 +178,28 @@ const navigationItems = [
     label: 'Reports',
     icon: BarChart,
     path: '/reports',
-    permission: 'reporting:read',
+    permission: Permission.REPORTING_VIEW,
     children: [
       {
         id: 'reports-project',
         label: 'Project Reports',
         icon: FolderOpen,
         path: '/reports/projects',
-        permission: 'reporting:read'
+        permission: Permission.REPORTING_VIEW
       },
       {
         id: 'reports-financial',
         label: 'Financial Reports',
         icon: DollarSign,
         path: '/reports/financial',
-        permission: 'financial:read'
+        permission: Permission.FINANCIAL_READ
       },
       {
         id: 'reports-team',
         label: 'Team Reports',
         icon: Users,
         path: '/reports/team',
-        permission: 'reporting:read'
+        permission: Permission.REPORTING_VIEW
       }
     ]
   },
@@ -192,14 +208,14 @@ const navigationItems = [
     label: 'Documentation',
     icon: BookOpen,
     path: '/docs',
-    permission: 'docs:read'
+    permission: Permission.SETTINGS_READ
   },
   {
     id: 'settings',
     label: 'Settings',
     icon: Settings,
     path: '/settings',
-    permission: 'settings:read'
+    permission: Permission.SETTINGS_READ
   }
 ]
 
@@ -224,7 +240,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
     
     if (activeParentIds.length > 0) {
       setExpandedItems(prev => {
-        const newExpanded = [...new Set([...prev, ...activeParentIds])]
+        const newExpanded = Array.from(new Set([...prev, ...activeParentIds]))
         return newExpanded
       })
     }
@@ -347,56 +363,59 @@ function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpa
   const Icon = item.icon
 
   return (
-    <div className="space-y-1">
-      <Button
-        variant={isActive ? 'secondary' : 'ghost'}
-        className={cn(
-          'w-full justify-start',
-          collapsed ? 'px-2' : 'px-3',
-          isActive && 'bg-secondary text-secondary-foreground'
-        )}
-        onClick={() => {
-          if (hasChildren) {
-            onToggleExpanded(item.id)
-          } else {
-            window.location.href = item.path
-          }
-        }}
-      >
-        <Icon className={cn('h-4 w-4', collapsed ? 'mx-auto' : 'mr-2')} />
-        {!collapsed && (
-          <>
-            <span className="flex-1 text-left">{item.label}</span>
-            {hasChildren && (
-              <ChevronRight
-                className={cn(
-                  'h-4 w-4 transition-transform',
-                  isExpanded && 'rotate-90'
-                )}
-              />
-            )}
-          </>
-        )}
-      </Button>
+    <PermissionGate permission={item.permission}>
+      <div className="space-y-1">
+        <Button
+          variant={isActive ? 'secondary' : 'ghost'}
+          className={cn(
+            'w-full justify-start',
+            collapsed ? 'px-2' : 'px-3',
+            isActive && 'bg-secondary text-secondary-foreground'
+          )}
+          onClick={() => {
+            if (hasChildren) {
+              onToggleExpanded(item.id)
+            } else {
+              window.location.href = item.path
+            }
+          }}
+        >
+          <Icon className={cn('h-4 w-4', collapsed ? 'mx-auto' : 'mr-2')} />
+          {!collapsed && (
+            <>
+              <span className="flex-1 text-left">{item.label}</span>
+              {hasChildren && (
+                <ChevronRight
+                  className={cn(
+                    'h-4 w-4 transition-transform',
+                    isExpanded && 'rotate-90'
+                  )}
+                />
+              )}
+            </>
+          )}
+        </Button>
 
-      {/* Sub-navigation */}
-      {hasChildren && isExpanded && !collapsed && (
-        <div className="ml-4 space-y-1">
-          {item.children.map((child: any) => (
-            <Button
-              key={child.id}
-              variant={pathname === child.path ? 'secondary' : 'ghost'}
-              className="w-full justify-start text-sm"
-              onClick={() => {
-                window.location.href = child.path
-              }}
-            >
-              <child.icon className="mr-2 h-4 w-4" />
-              {child.label}
-            </Button>
-          ))}
-        </div>
-      )}
-    </div>
+        {/* Sub-navigation */}
+        {hasChildren && isExpanded && !collapsed && (
+          <div className="ml-4 space-y-1">
+            {item.children.map((child: any) => (
+              <PermissionGate key={child.id} permission={child.permission}>
+                <Button
+                  variant={pathname === child.path ? 'secondary' : 'ghost'}
+                  className="w-full justify-start text-sm"
+                  onClick={() => {
+                    window.location.href = child.path
+                  }}
+                >
+                  <child.icon className="mr-2 h-4 w-4" />
+                  {child.label}
+                </Button>
+              </PermissionGate>
+            ))}
+          </div>
+        )}
+      </div>
+    </PermissionGate>
   )
 }

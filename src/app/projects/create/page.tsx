@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -25,7 +25,14 @@ import {
   CheckCircle,
   AlertTriangle,
   Info,
-  Loader2
+  Loader2,
+  Search,
+  X,
+  Plus,
+  User,
+  Mail,
+  Shield,
+  UserPlus
 } from 'lucide-react'
 
 interface ProjectFormData {
@@ -79,6 +86,11 @@ export default function CreateProjectPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
+  const [availableMembers, setAvailableMembers] = useState<any[]>([])
+  const [memberSearchQuery, setMemberSearchQuery] = useState('')
+  const [clientSearchQuery, setClientSearchQuery] = useState('')
+  const [showMemberSearch, setShowMemberSearch] = useState(false)
+  const [showClientSearch, setShowClientSearch] = useState(false)
 
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
@@ -134,7 +146,7 @@ export default function CreateProjectPage() {
     }
   }
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (isDraft = false) => {
     try {
       setLoading(true)
       setError('')
@@ -144,16 +156,26 @@ export default function CreateProjectPage() {
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          isDraft
+        })
       })
 
       const data = await response.json()
 
       if (data.success) {
-        setSuccess('Project created successfully!')
-        setTimeout(() => {
-          router.push('/projects')
-        }, 2000)
+        if (isDraft) {
+          setSuccess('Project saved as draft!')
+          setTimeout(() => {
+            router.push('/projects')
+          }, 2000)
+        } else {
+          setSuccess('Project created successfully!')
+          setTimeout(() => {
+            router.push(`/projects/${data.data._id}`)
+          }, 2000)
+        }
       } else {
         setError(data.error || 'Failed to create project')
       }
@@ -165,6 +187,82 @@ export default function CreateProjectPage() {
   }
 
   const progress = (currentStep / steps.length) * 100
+
+  // Fetch available team members
+  const fetchAvailableMembers = async () => {
+    try {
+      const response = await fetch('/api/members')
+      const data = await response.json()
+      
+      if (data.success) {
+        setAvailableMembers(data.data.members)
+      }
+    } catch (error) {
+      console.error('Failed to fetch members:', error)
+    }
+  }
+
+  // Add team member
+  const addTeamMember = (member: any) => {
+    if (!formData.teamMembers.find(m => m === member._id)) {
+      setFormData(prev => ({
+        ...prev,
+        teamMembers: [...prev.teamMembers, member._id]
+      }))
+    }
+    setShowMemberSearch(false)
+    setMemberSearchQuery('')
+  }
+
+  // Remove team member
+  const removeTeamMember = (memberId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      teamMembers: prev.teamMembers.filter(m => m !== memberId)
+    }))
+  }
+
+  // Add client
+  const addClient = (member: any) => {
+    setFormData(prev => ({
+      ...prev,
+      clients: [member._id] // For now, only support one client
+    }))
+    setShowClientSearch(false)
+    setClientSearchQuery('')
+  }
+
+  // Remove client
+  const removeClient = (clientId: string) => {
+    setFormData(prev => ({
+      ...prev,
+      clients: prev.clients.filter(c => c !== clientId)
+    }))
+  }
+
+  // Filter members based on search
+  const filteredMembers = availableMembers.filter(member => {
+    const searchTerm = memberSearchQuery.toLowerCase()
+    return (
+      member.firstName.toLowerCase().includes(searchTerm) ||
+      member.lastName.toLowerCase().includes(searchTerm) ||
+      member.email.toLowerCase().includes(searchTerm)
+    )
+  })
+
+  const filteredClients = availableMembers.filter(member => {
+    const searchTerm = clientSearchQuery.toLowerCase()
+    return (
+      member.firstName.toLowerCase().includes(searchTerm) ||
+      member.lastName.toLowerCase().includes(searchTerm) ||
+      member.email.toLowerCase().includes(searchTerm)
+    )
+  }).filter(member => !formData.clients.find(c => c === member._id))
+
+  // Load members when component mounts
+  useEffect(() => {
+    fetchAvailableMembers()
+  }, [])
 
   return (
     <MainLayout>
@@ -390,9 +488,9 @@ export default function CreateProjectPage() {
                     </SelectTrigger>
                     <SelectContent className="max-h-60">
                       {currenciesLoading ? (
-                        <SelectItem value="" disabled>Loading currencies...</SelectItem>
+                        <SelectItem value="loading" disabled>Loading currencies...</SelectItem>
                       ) : currencies.length === 0 ? (
-                        <SelectItem value="" disabled>No currencies available</SelectItem>
+                        <SelectItem value="none" disabled>No currencies available</SelectItem>
                       ) : (
                         currencies.map((currency) => (
                           <SelectItem key={currency.code} value={currency.code}>
@@ -473,18 +571,234 @@ export default function CreateProjectPage() {
                 Assign team members and clients to your project
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label>Team Members</Label>
-                <div className="border rounded-lg p-4 min-h-[100px]">
-                  <p className="text-sm text-muted-foreground">Team member selection will be implemented here</p>
+            <CardContent className="space-y-6">
+              {/* Team Members Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-medium">Team Members</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowMemberSearch(!showMemberSearch)}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Add Members
+                  </Button>
                 </div>
+
+                {/* Selected Team Members */}
+                <div className="space-y-2">
+                  {formData.teamMembers.length > 0 ? (
+                    <div className="grid gap-2">
+                      {formData.teamMembers.map((memberId) => {
+                        const member = availableMembers.find(m => m._id === memberId)
+                        if (!member) return null
+                        return (
+                          <div key={memberId} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
+                                {member.firstName[0]}{member.lastName[0]}
+                              </div>
+                              <div>
+                                <p className="font-medium text-foreground">
+                                  {member.firstName} {member.lastName}
+                                </p>
+                                <p className="text-sm text-muted-foreground">{member.email}</p>
+                              </div>
+                              <Badge variant="outline" className="text-xs">
+                                {member.role}
+                              </Badge>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeTeamMember(memberId)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center">
+                      <Users className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">No team members assigned yet</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Member Search */}
+                {showMemberSearch && (
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search team members..."
+                        value={memberSearchQuery}
+                        onChange={(e) => setMemberSearchQuery(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    
+                    <div className="max-h-48 overflow-y-auto border rounded-lg">
+                      {filteredMembers.length > 0 ? (
+                        <div className="space-y-1 p-2">
+                          {filteredMembers
+                            .filter(member => !formData.teamMembers.find(m => m === member._id))
+                            .map((member) => (
+                            <div
+                              key={member._id}
+                              className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
+                              onClick={() => addTeamMember(member)}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
+                                  {member.firstName[0]}{member.lastName[0]}
+                                </div>
+                                <div>
+                                  <p className="font-medium text-foreground">
+                                    {member.firstName} {member.lastName}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">{member.email}</p>
+                                </div>
+                                <Badge variant="outline" className="text-xs">
+                                  {member.role}
+                                </Badge>
+                              </div>
+                              <Plus className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-4 text-center text-muted-foreground">
+                          <p className="text-sm">No members found</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
 
-              <div className="space-y-2">
-                <Label>Clients</Label>
-                <div className="border rounded-lg p-4 min-h-[100px]">
-                  <p className="text-sm text-muted-foreground">Client selection will be implemented here</p>
+              {/* Client Section */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <Label className="text-base font-medium">Client</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowClientSearch(!showClientSearch)}
+                  >
+                    <UserPlus className="h-4 w-4 mr-2" />
+                    Add Client
+                  </Button>
+                </div>
+
+                {/* Selected Client */}
+                <div className="space-y-2">
+                  {formData.clients.length > 0 ? (
+                    <div className="grid gap-2">
+                      {formData.clients.map((clientId) => {
+                        const client = availableMembers.find(c => c._id === clientId)
+                        if (!client) return null
+                        return (
+                          <div key={clientId} className="flex items-center justify-between p-3 border rounded-lg bg-muted/50">
+                            <div className="flex items-center space-x-3">
+                              <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
+                                {client.firstName[0]}{client.lastName[0]}
+                              </div>
+                              <div>
+                                <p className="font-medium text-foreground">
+                                  {client.firstName} {client.lastName}
+                                </p>
+                                <p className="text-sm text-muted-foreground">{client.email}</p>
+                              </div>
+                              <Badge variant="outline" className="text-xs">
+                                {client.role}
+                              </Badge>
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => removeClient(clientId)}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        )
+                      })}
+                    </div>
+                  ) : (
+                    <div className="border-2 border-dashed border-muted rounded-lg p-6 text-center">
+                      <User className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">No client assigned yet</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Client Search */}
+                {showClientSearch && (
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Search for client..."
+                        value={clientSearchQuery}
+                        onChange={(e) => setClientSearchQuery(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    
+                    <div className="max-h-48 overflow-y-auto border rounded-lg">
+                      {filteredClients.length > 0 ? (
+                        <div className="space-y-1 p-2">
+                          {filteredClients.map((member) => (
+                            <div
+                              key={member._id}
+                              className="flex items-center justify-between p-2 hover:bg-muted rounded cursor-pointer"
+                              onClick={() => addClient(member)}
+                            >
+                              <div className="flex items-center space-x-3">
+                                <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-sm font-medium">
+                                  {member.firstName[0]}{member.lastName[0]}
+                                </div>
+                                <div>
+                                  <p className="font-medium text-foreground">
+                                    {member.firstName} {member.lastName}
+                                  </p>
+                                  <p className="text-sm text-muted-foreground">{member.email}</p>
+                                </div>
+                                <Badge variant="outline" className="text-xs">
+                                  {member.role}
+                                </Badge>
+                              </div>
+                              <Plus className="h-4 w-4 text-muted-foreground" />
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="p-4 text-center text-muted-foreground">
+                          <p className="text-sm">No members found</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Summary */}
+              <div className="pt-4 border-t">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Team Members:</span>
+                  <span className="font-medium">{formData.teamMembers.length}</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Client:</span>
+                  <span className="font-medium">{formData.clients.length > 0 ? 'Assigned' : 'Not assigned'}</span>
                 </div>
               </div>
             </CardContent>
@@ -571,55 +885,317 @@ export default function CreateProjectPage() {
         </TabsContent>
 
         {/* Step 6: Review */}
-        <TabsContent value="6" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>Review Project</CardTitle>
-              <CardDescription>
-                Review all project details before creating
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <h4 className="font-medium mb-2 text-foreground">Basic Information</h4>
-                  <div className="space-y-1 text-sm text-foreground">
-                    <p><strong>Name:</strong> {formData.name}</p>
-                    <p><strong>Status:</strong> {formData.status}</p>
-                    <p><strong>Priority:</strong> {formData.priority}</p>
-                    <p><strong>Description:</strong> {formData.description || 'No description'}</p>
+        <TabsContent value="6" className="space-y-6">
+          <div className="grid gap-6 lg:grid-cols-3">
+            {/* Project Overview */}
+            <div className="lg:col-span-2 space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center space-x-2">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <span>Project Overview</span>
+                  </CardTitle>
+                  <CardDescription>
+                    Review all project details before creating
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Basic Information */}
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                      <h4 className="font-semibold text-foreground">Basic Information</h4>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Project Name</span>
+                          <span className="text-sm text-foreground font-medium">{formData.name || 'Not set'}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Status</span>
+                          <Badge className={formData.status === 'planning' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}>
+                            {formData.status}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Priority</span>
+                          <Badge className={formData.priority === 'high' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}>
+                            {formData.priority}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div>
+                          <span className="text-sm font-medium text-muted-foreground">Description</span>
+                          <p className="text-sm text-foreground mt-1">{formData.description || 'No description provided'}</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <h4 className="font-medium mb-2 text-foreground">Timeline</h4>
-                  <div className="space-y-1 text-sm text-foreground">
-                    <p><strong>Start Date:</strong> {formData.startDate || 'Not set'}</p>
-                    <p><strong>End Date:</strong> {formData.endDate || 'Not set'}</p>
+                  {/* Timeline */}
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                      <h4 className="font-semibold text-foreground">Timeline</h4>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Start Date</span>
+                          <span className="text-sm text-foreground">{formData.startDate ? new Date(formData.startDate).toLocaleDateString() : 'Not set'}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">End Date</span>
+                          <span className="text-sm text-foreground">{formData.endDate ? new Date(formData.endDate).toLocaleDateString() : 'Not set'}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        {formData.startDate && formData.endDate && (
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium text-muted-foreground">Duration</span>
+                            <span className="text-sm text-foreground">
+                              {Math.ceil((new Date(formData.endDate).getTime() - new Date(formData.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <h4 className="font-medium mb-2 text-foreground">Budget</h4>
-                  <div className="space-y-1 text-sm text-foreground">
-                    <p><strong>Total:</strong> {formData.budget.currency} {formData.budget.total}</p>
-                    <p><strong>Labor:</strong> {formData.budget.currency} {formData.budget.categories.labor}</p>
-                    <p><strong>Materials:</strong> {formData.budget.currency} {formData.budget.categories.materials}</p>
-                    <p><strong>Overhead:</strong> {formData.budget.currency} {formData.budget.categories.overhead}</p>
+                  {/* Budget */}
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-2">
+                      <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                      <h4 className="font-semibold text-foreground">Budget</h4>
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Total Budget</span>
+                          <span className="text-sm text-foreground font-semibold">{formData.budget.currency} {formData.budget.total.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Labor</span>
+                          <span className="text-sm text-foreground">{formData.budget.currency} {formData.budget.categories.labor.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Materials</span>
+                          <span className="text-sm text-foreground">{formData.budget.currency} {formData.budget.categories.materials.toLocaleString()}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Overhead</span>
+                          <span className="text-sm text-foreground">{formData.budget.currency} {formData.budget.categories.overhead.toLocaleString()}</span>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="text-sm text-muted-foreground">Budget Distribution</div>
+                        <div className="space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span>Labor</span>
+                            <span>{formData.budget.total > 0 ? Math.round((formData.budget.categories.labor / formData.budget.total) * 100) : 0}%</span>
+                          </div>
+                          <div className="w-full bg-gray-200 rounded-full h-2">
+                            <div 
+                              className="bg-blue-500 h-2 rounded-full"
+                              style={{ width: `${formData.budget.total > 0 ? (formData.budget.categories.labor / formData.budget.total) * 100 : 0}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
 
-                <div>
-                  <h4 className="font-medium mb-2 text-foreground">Settings</h4>
-                  <div className="space-y-1 text-sm text-foreground">
-                    <p><strong>Time Tracking:</strong> {formData.settings.allowTimeTracking ? 'Enabled' : 'Disabled'}</p>
-                    <p><strong>Expense Tracking:</strong> {formData.settings.allowExpenseTracking ? 'Enabled' : 'Disabled'}</p>
-                    <p><strong>Require Approval:</strong> {formData.settings.requireApproval ? 'Yes' : 'No'}</p>
+                 {/* Team Assignment */}
+                 <div className="space-y-4">
+                   <div className="flex items-center space-x-2">
+                     <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+                     <h4 className="font-semibold text-foreground">Team Assignment</h4>
+                   </div>
+                   <div className="grid gap-4 md:grid-cols-2">
+                     <div className="space-y-2">
+                       <div className="flex items-center justify-between">
+                         <span className="text-sm font-medium text-muted-foreground">Team Members</span>
+                         <span className="text-sm text-foreground font-medium">{formData.teamMembers.length}</span>
+                       </div>
+                       {formData.teamMembers.length > 0 && (
+                         <div className="space-y-1">
+                          {formData.teamMembers.slice(0, 3).map((memberId) => {
+                            const member = availableMembers.find(m => m._id === memberId)
+                            if (!member) return null
+                            return (
+                              <div key={memberId} className="flex items-center space-x-2 text-xs">
+                                <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs">
+                                  {member.firstName[0]}{member.lastName[0]}
+                                </div>
+                                <span className="text-foreground">{member.firstName} {member.lastName}</span>
+                                <Badge variant="outline" className="text-xs">{member.role}</Badge>
+                              </div>
+                            )
+                          })}
+                           {formData.teamMembers.length > 3 && (
+                             <div className="text-xs text-muted-foreground">
+                               +{formData.teamMembers.length - 3} more members
+                             </div>
+                           )}
+                         </div>
+                       )}
+                     </div>
+                     <div className="space-y-2">
+                       <div className="flex items-center justify-between">
+                         <span className="text-sm font-medium text-muted-foreground">Client</span>
+                         <span className="text-sm text-foreground font-medium">
+                           {formData.clients.length > 0 ? 'Assigned' : 'Not assigned'}
+                         </span>
+                       </div>
+                       {formData.clients.length > 0 && (
+                         <div className="space-y-1">
+                          {formData.clients.map((clientId) => {
+                            const client = availableMembers.find(c => c._id === clientId)
+                            if (!client) return null
+                            return (
+                              <div key={clientId} className="flex items-center space-x-2 text-xs">
+                                <div className="w-4 h-4 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs">
+                                  {client.firstName[0]}{client.lastName[0]}
+                                </div>
+                                <span className="text-foreground">{client.firstName} {client.lastName}</span>
+                                <Badge variant="outline" className="text-xs">{client.role}</Badge>
+                              </div>
+                            )
+                          })}
+                         </div>
+                       )}
+                     </div>
+                   </div>
+                 </div>
+
+                 {/* Settings */}
+                 <div className="space-y-4">
+                   <div className="flex items-center space-x-2">
+                     <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+                     <h4 className="font-semibold text-foreground">Settings</h4>
+                   </div>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Time Tracking</span>
+                          <Badge className={formData.settings.allowTimeTracking ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                            {formData.settings.allowTimeTracking ? 'Enabled' : 'Disabled'}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Expense Tracking</span>
+                          <Badge className={formData.settings.allowExpenseTracking ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'}>
+                            {formData.settings.allowExpenseTracking ? 'Enabled' : 'Disabled'}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Require Approval</span>
+                          <Badge className={formData.settings.requireApproval ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-800'}>
+                            {formData.settings.requireApproval ? 'Yes' : 'No'}
+                          </Badge>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="text-sm font-medium text-muted-foreground">Notifications</div>
+                        <div className="space-y-1 text-xs text-foreground">
+                          <div className="flex items-center justify-between">
+                            <span>Task Updates</span>
+                            <span>{formData.settings.notifications.taskUpdates ? '✓' : '✗'}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span>Budget Alerts</span>
+                            <span>{formData.settings.notifications.budgetAlerts ? '✓' : '✗'}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span>Deadline Reminders</span>
+                            <span>{formData.settings.notifications.deadlineReminders ? '✓' : '✗'}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Action Panel */}
+            <div className="space-y-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Ready to Create?</CardTitle>
+                  <CardDescription>
+                    Review your project details and choose your next step
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-3">
+                    <Button 
+                      onClick={() => handleSubmit(false)} 
+                      disabled={loading || !formData.name}
+                      className="w-full"
+                    >
+                      {loading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Creating...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Create Project
+                        </>
+                      )}
+                    </Button>
+                    
+                    <Button 
+                      variant="outline" 
+                      onClick={() => handleSubmit(true)} 
+                      disabled={loading}
+                      className="w-full"
+                    >
+                      <Save className="mr-2 h-4 w-4" />
+                      Save as Draft
+                    </Button>
+                  </div>
+
+                  <div className="pt-4 border-t">
+                    <div className="text-sm text-muted-foreground space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span>All required fields completed</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span>Project settings configured</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <CheckCircle className="h-4 w-4 text-green-600" />
+                        <span>Budget allocation set</span>
+                      </div>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader>
+                  <CardTitle>Quick Actions</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  <Button variant="ghost" size="sm" className="w-full justify-start">
+                    <ArrowLeft className="mr-2 h-4 w-4" />
+                    Back to Settings
+                  </Button>
+                  <Button variant="ghost" size="sm" className="w-full justify-start">
+                    <Settings className="mr-2 h-4 w-4" />
+                    Edit Details
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
 
@@ -634,28 +1210,12 @@ export default function CreateProjectPage() {
           Previous
         </Button>
 
-        <div className="flex items-center space-x-2">
-          {currentStep < steps.length ? (
-            <Button onClick={handleNext}>
-              Next
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
-          ) : (
-            <Button onClick={handleSubmit} disabled={loading}>
-              {loading ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating...
-                </>
-              ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" />
-                  Create Project
-                </>
-              )}
-            </Button>
-          )}
-        </div>
+        {currentStep < steps.length && (
+          <Button onClick={handleNext}>
+            Next
+            <ArrowRight className="h-4 w-4 ml-2" />
+          </Button>
+        )}
       </div>
       </div>
     </MainLayout>

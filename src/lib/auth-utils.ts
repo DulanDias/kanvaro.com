@@ -13,6 +13,19 @@ export interface AuthUser {
   role: string
 }
 
+export async function withAuth(request: any, handler: (user: AuthUser) => Promise<any>) {
+  const authResult = await authenticateUser()
+  
+  if ('error' in authResult) {
+    return new Response(JSON.stringify({ error: authResult.error }), { 
+      status: authResult.status,
+      headers: { 'Content-Type': 'application/json' }
+    })
+  }
+
+  return handler(authResult.user)
+}
+
 export async function authenticateUser(): Promise<{ user: AuthUser } | { error: string; status: number }> {
   try {
     await connectDB()

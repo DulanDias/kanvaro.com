@@ -16,128 +16,73 @@ import {
   Filter, 
   MoreHorizontal, 
   Calendar, 
-  Users, 
   Clock,
   CheckCircle,
   AlertTriangle,
   Pause,
   XCircle,
   Play,
-  Zap,
-  BookOpen,
-  CheckSquare,
+  Loader2,
+  User,
   Target,
-  Loader2
+  Zap,
+  BarChart3,
+  List,
+  Kanban,
+  ArrowUp,
+  ArrowDown,
+  Star
 } from 'lucide-react'
 
-interface Epic {
+interface BacklogItem {
   _id: string
   title: string
   description: string
-  status: 'backlog' | 'in_progress' | 'completed' | 'cancelled'
+  type: 'epic' | 'story' | 'task'
   priority: 'low' | 'medium' | 'high' | 'critical'
-  storyPoints?: number
-  estimatedHours?: number
-  actualHours?: number
-  startDate?: string
-  dueDate?: string
-  tags: string[]
+  status: 'backlog' | 'sprint' | 'in_progress' | 'done'
   project: {
+    _id: string
     name: string
-  }
-  createdBy: {
-    firstName: string
-    lastName: string
   }
   assignedTo?: {
     firstName: string
     lastName: string
+    email: string
   }
-  createdAt: string
-}
-
-interface Story {
-  _id: string
-  title: string
-  description: string
-  acceptanceCriteria: string[]
-  status: 'backlog' | 'in_progress' | 'completed' | 'cancelled'
-  priority: 'low' | 'medium' | 'high' | 'critical'
+  createdBy: {
+    firstName: string
+    lastName: string
+    email: string
+  }
   storyPoints?: number
-  estimatedHours?: number
-  actualHours?: number
-  startDate?: string
   dueDate?: string
-  tags: string[]
-  project: {
+  estimatedHours?: number
+  labels: string[]
+  sprint?: {
+    _id: string
     name: string
   }
   epic?: {
-    title: string
-  }
-  createdBy: {
-    firstName: string
-    lastName: string
-  }
-  assignedTo?: {
-    firstName: string
-    lastName: string
-  }
-  sprint?: {
+    _id: string
     name: string
   }
   createdAt: string
-}
-
-interface Task {
-  _id: string
-  title: string
-  description: string
-  status: 'todo' | 'in_progress' | 'review' | 'testing' | 'done' | 'cancelled'
-  priority: 'low' | 'medium' | 'high' | 'critical'
-  type: 'bug' | 'feature' | 'improvement' | 'task' | 'subtask'
-  storyPoints?: number
-  estimatedHours?: number
-  actualHours?: number
-  startDate?: string
-  dueDate?: string
-  labels: string[]
-  project: {
-    name: string
-  }
-  story?: {
-    title: string
-  }
-  parentTask?: {
-    title: string
-  }
-  createdBy: {
-    firstName: string
-    lastName: string
-  }
-  assignedTo?: {
-    firstName: string
-    lastName: string
-  }
-  sprint?: {
-    name: string
-  }
-  createdAt: string
+  updatedAt: string
 }
 
 export default function BacklogPage() {
   const router = useRouter()
-  const [epics, setEpics] = useState<Epic[]>([])
-  const [stories, setStories] = useState<Story[]>([])
-  const [tasks, setTasks] = useState<Task[]>([])
+  const [backlogItems, setBacklogItems] = useState<BacklogItem[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [authError, setAuthError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [priorityFilter, setPriorityFilter] = useState('')
-  const [projectFilter, setProjectFilter] = useState('')
-  const [activeTab, setActiveTab] = useState('epics')
+  const [typeFilter, setTypeFilter] = useState('all')
+  const [priorityFilter, setPriorityFilter] = useState('all')
+  const [statusFilter, setStatusFilter] = useState('all')
+  const [sortBy, setSortBy] = useState('priority')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   const checkAuth = useCallback(async () => {
     try {
@@ -145,7 +90,7 @@ export default function BacklogPage() {
       
       if (response.ok) {
         setAuthError('')
-        await fetchData()
+        await fetchBacklogItems()
       } else if (response.status === 401) {
         const refreshResponse = await fetch('/api/auth/refresh', {
           method: 'POST'
@@ -153,7 +98,7 @@ export default function BacklogPage() {
         
         if (refreshResponse.ok) {
           setAuthError('')
-          await fetchData()
+          await fetchBacklogItems()
         } else {
           setAuthError('Session expired')
           setTimeout(() => {
@@ -176,100 +121,92 @@ export default function BacklogPage() {
     checkAuth()
   }, [checkAuth])
 
-  const fetchData = async () => {
+  const fetchBacklogItems = async () => {
     try {
       setLoading(true)
-      
-      const [epicsRes, storiesRes, tasksRes] = await Promise.all([
-        fetch('/api/epics'),
-        fetch('/api/stories'),
-        fetch('/api/tasks')
-      ])
+      const response = await fetch('/api/backlog')
+      const data = await response.json()
 
-      const [epicsData, storiesData, tasksData] = await Promise.all([
-        epicsRes.json(),
-        storiesRes.json(),
-        tasksRes.json()
-      ])
-
-      if (epicsData.success) setEpics(epicsData.data)
-      if (storiesData.success) setStories(storiesData.data)
-      if (tasksData.success) setTasks(tasksData.data)
-
+      if (data.success) {
+        setBacklogItems(data.data)
+      } else {
+        setError(data.error || 'Failed to fetch backlog items')
+      }
     } catch (err) {
-      setError('Failed to fetch backlog data')
+      setError('Failed to fetch backlog items')
     } finally {
       setLoading(false)
     }
   }
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'backlog': return 'bg-gray-100 text-gray-800'
-      case 'in_progress': return 'bg-blue-100 text-blue-800'
-      case 'completed': return 'bg-green-100 text-green-800'
-      case 'cancelled': return 'bg-red-100 text-red-800'
-      case 'todo': return 'bg-gray-100 text-gray-800'
-      case 'review': return 'bg-yellow-100 text-yellow-800'
-      case 'testing': return 'bg-purple-100 text-purple-800'
-      case 'done': return 'bg-green-100 text-green-800'
-      default: return 'bg-gray-100 text-gray-800'
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'epic': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+      case 'story': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+      case 'task': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
     }
   }
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'low': return 'bg-gray-100 text-gray-800'
-      case 'medium': return 'bg-blue-100 text-blue-800'
-      case 'high': return 'bg-orange-100 text-orange-800'
-      case 'critical': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'low': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+      case 'medium': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+      case 'high': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+      case 'critical': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
     }
   }
 
-  const getTypeColor = (type: string) => {
-    switch (type) {
-      case 'bug': return 'bg-red-100 text-red-800'
-      case 'feature': return 'bg-green-100 text-green-800'
-      case 'improvement': return 'bg-blue-100 text-blue-800'
-      case 'task': return 'bg-gray-100 text-gray-800'
-      case 'subtask': return 'bg-purple-100 text-purple-800'
-      default: return 'bg-gray-100 text-gray-800'
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'backlog': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+      case 'sprint': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+      case 'in_progress': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+      case 'done': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
     }
   }
 
-  const filteredEpics = epics.filter(epic => {
-    const matchesSearch = !searchQuery || 
-      epic.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      epic.description.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const matchesStatus = !statusFilter || epic.status === statusFilter
-    const matchesPriority = !priorityFilter || epic.priority === priorityFilter
+  const filteredAndSortedItems = backlogItems
+    .filter(item => {
+      const matchesSearch = !searchQuery || 
+        item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        item.project.name.toLowerCase().includes(searchQuery.toLowerCase())
+      
+      const matchesType = typeFilter === 'all' || item.type === typeFilter
+      const matchesPriority = priorityFilter === 'all' || item.priority === priorityFilter
+      const matchesStatus = statusFilter === 'all' || item.status === statusFilter
 
-    return matchesSearch && matchesStatus && matchesPriority
-  })
-
-  const filteredStories = stories.filter(story => {
-    const matchesSearch = !searchQuery || 
-      story.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      story.description.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const matchesStatus = !statusFilter || story.status === statusFilter
-    const matchesPriority = !priorityFilter || story.priority === priorityFilter
-
-    return matchesSearch && matchesStatus && matchesPriority
-  })
-
-  const filteredTasks = tasks.filter(task => {
-    const matchesSearch = !searchQuery || 
-      task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      task.description.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const matchesStatus = !statusFilter || task.status === statusFilter
-    const matchesPriority = !priorityFilter || task.priority === priorityFilter
-
-    return matchesSearch && matchesStatus && matchesPriority
-  })
+      return matchesSearch && matchesType && matchesPriority && matchesStatus
+    })
+    .sort((a, b) => {
+      let comparison = 0
+      
+      switch (sortBy) {
+        case 'priority':
+          const priorityOrder = { critical: 4, high: 3, medium: 2, low: 1 }
+          comparison = (priorityOrder[b.priority as keyof typeof priorityOrder] || 0) - 
+                      (priorityOrder[a.priority as keyof typeof priorityOrder] || 0)
+          break
+        case 'title':
+          comparison = a.title.localeCompare(b.title)
+          break
+        case 'created':
+          comparison = new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          break
+        case 'dueDate':
+          const aDate = a.dueDate ? new Date(a.dueDate).getTime() : Infinity
+          const bDate = b.dueDate ? new Date(b.dueDate).getTime() : Infinity
+          comparison = aDate - bDate
+          break
+        default:
+          comparison = 0
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison
+    })
 
   if (loading) {
     return (
@@ -300,263 +237,189 @@ export default function BacklogPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Backlog</h1>
-          <p className="text-gray-600">Manage your epics, stories, and tasks</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold text-foreground">Product Backlog</h1>
+            <p className="text-muted-foreground">Manage your product backlog and sprint planning</p>
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button variant="outline" onClick={() => router.push('/epics/create')}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Epic
+            </Button>
+            <Button onClick={() => router.push('/stories/create')}>
+              <Plus className="h-4 w-4 mr-2" />
+              New Story
+            </Button>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline">
-            <Plus className="h-4 w-4 mr-2" />
-            New Epic
-          </Button>
-          <Button variant="outline">
-            <Plus className="h-4 w-4 mr-2" />
-            New Story
-          </Button>
-          <Button>
-            <Plus className="h-4 w-4 mr-2" />
-            New Task
-          </Button>
-        </div>
-      </div>
 
-      {error && (
-        <Alert variant="destructive">
-          <AlertTriangle className="h-4 w-4" />
-          <AlertDescription>{error}</AlertDescription>
-        </Alert>
-      )}
+        {error && (
+          <Alert variant="destructive">
+            <AlertTriangle className="h-4 w-4" />
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
 
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-          <Input
-            placeholder="Search backlog..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All Status</SelectItem>
-            <SelectItem value="backlog">Backlog</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="completed">Completed</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Filter by priority" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="">All Priority</SelectItem>
-            <SelectItem value="low">Low</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-            <SelectItem value="critical">Critical</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="epics">
-            <Target className="h-4 w-4 mr-2" />
-            Epics ({filteredEpics.length})
-          </TabsTrigger>
-          <TabsTrigger value="stories">
-            <BookOpen className="h-4 w-4 mr-2" />
-            Stories ({filteredStories.length})
-          </TabsTrigger>
-          <TabsTrigger value="tasks">
-            <CheckSquare className="h-4 w-4 mr-2" />
-            Tasks ({filteredTasks.length})
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="epics" className="space-y-4">
-          <div className="grid gap-4">
-            {filteredEpics.map((epic) => (
-              <Card key={epic._id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="font-medium">{epic.title}</h3>
-                        <Badge className={getStatusColor(epic.status)}>
-                          {epic.status.replace('_', ' ')}
-                        </Badge>
-                        <Badge className={getPriorityColor(epic.priority)}>
-                          {epic.priority}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">
-                        {epic.description || 'No description'}
-                      </p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <div className="flex items-center space-x-1">
-                          <Target className="h-4 w-4" />
-                          <span>{epic.project.name}</span>
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>Backlog Items</CardTitle>
+                <CardDescription>
+                  {filteredAndSortedItems.length} item{filteredAndSortedItems.length !== 1 ? 's' : ''} found
+                </CardDescription>
+              </div>
+              <div className="flex items-center space-x-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                  <Input
+                    placeholder="Search backlog..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 w-64"
+                  />
+                </div>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="epic">Epics</SelectItem>
+                    <SelectItem value="story">Stories</SelectItem>
+                    <SelectItem value="task">Tasks</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Priority</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="backlog">Backlog</SelectItem>
+                    <SelectItem value="sprint">Sprint</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="done">Done</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={sortBy} onValueChange={setSortBy}>
+                  <SelectTrigger className="w-32">
+                    <SelectValue placeholder="Sort by" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="priority">Priority</SelectItem>
+                    <SelectItem value="title">Title</SelectItem>
+                    <SelectItem value="created">Created</SelectItem>
+                    <SelectItem value="dueDate">Due Date</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                >
+                  {sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                </Button>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {filteredAndSortedItems.map((item) => (
+                <Card key={item._id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4">
+                        <div className="flex-1">
+                          <div className="flex items-center space-x-2 mb-2">
+                            <h3 className="font-medium text-foreground">{item.title}</h3>
+                            <Badge className={getTypeColor(item.type)}>
+                              {item.type}
+                            </Badge>
+                            <Badge className={getPriorityColor(item.priority)}>
+                              {item.priority}
+                            </Badge>
+                            <Badge className={getStatusColor(item.status)}>
+                              {item.status.replace('_', ' ')}
+                            </Badge>
+                            {item.epic && (
+                              <Badge variant="outline" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                                {item.epic.name}
+                              </Badge>
+                            )}
+                            {item.sprint && (
+                              <Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                                {item.sprint.name}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground mb-2">
+                            {item.description || 'No description'}
+                          </p>
+                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
+                            <div className="flex items-center space-x-1">
+                              <Target className="h-4 w-4" />
+                              <span>{item.project.name}</span>
+                            </div>
+                            {item.dueDate && (
+                              <div className="flex items-center space-x-1">
+                                <Calendar className="h-4 w-4" />
+                                <span>Due {new Date(item.dueDate).toLocaleDateString()}</span>
+                              </div>
+                            )}
+                            {item.storyPoints && (
+                              <div className="flex items-center space-x-1">
+                                <BarChart3 className="h-4 w-4" />
+                                <span>{item.storyPoints} points</span>
+                              </div>
+                            )}
+                            {item.estimatedHours && (
+                              <div className="flex items-center space-x-1">
+                                <Clock className="h-4 w-4" />
+                                <span>{item.estimatedHours}h estimated</span>
+                              </div>
+                            )}
+                            {item.labels.length > 0 && (
+                              <div className="flex items-center space-x-1">
+                                <Star className="h-4 w-4" />
+                                <span>{item.labels.join(', ')}</span>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                        {epic.storyPoints && (
-                          <div className="flex items-center space-x-1">
-                            <Zap className="h-4 w-4" />
-                            <span>{epic.storyPoints} pts</span>
-                          </div>
-                        )}
-                        {epic.assignedTo && (
-                          <div className="flex items-center space-x-1">
-                            <Users className="h-4 w-4" />
-                            <span>{epic.assignedTo.firstName} {epic.assignedTo.lastName}</span>
-                          </div>
-                        )}
-                        {epic.dueDate && (
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="h-4 w-4" />
-                            <span>Due {new Date(epic.dueDate).toLocaleDateString()}</span>
-                          </div>
-                        )}
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <div className="text-right">
+                          {item.assignedTo && (
+                            <div className="text-sm text-muted-foreground">
+                              {item.assignedTo.firstName} {item.assignedTo.lastName}
+                            </div>
+                          )}
+                        </div>
+                        <Button variant="ghost" size="sm">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
                       </div>
                     </div>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="stories" className="space-y-4">
-          <div className="grid gap-4">
-            {filteredStories.map((story) => (
-              <Card key={story._id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="font-medium">{story.title}</h3>
-                        <Badge className={getStatusColor(story.status)}>
-                          {story.status.replace('_', ' ')}
-                        </Badge>
-                        <Badge className={getPriorityColor(story.priority)}>
-                          {story.priority}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">
-                        {story.description || 'No description'}
-                      </p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <div className="flex items-center space-x-1">
-                          <BookOpen className="h-4 w-4" />
-                          <span>{story.project.name}</span>
-                        </div>
-                        {story.epic && (
-                          <div className="flex items-center space-x-1">
-                            <Target className="h-4 w-4" />
-                            <span>{story.epic.title}</span>
-                          </div>
-                        )}
-                        {story.storyPoints && (
-                          <div className="flex items-center space-x-1">
-                            <Zap className="h-4 w-4" />
-                            <span>{story.storyPoints} pts</span>
-                          </div>
-                        )}
-                        {story.assignedTo && (
-                          <div className="flex items-center space-x-1">
-                            <Users className="h-4 w-4" />
-                            <span>{story.assignedTo.firstName} {story.assignedTo.lastName}</span>
-                          </div>
-                        )}
-                        {story.sprint && (
-                          <div className="flex items-center space-x-1">
-                            <Zap className="h-4 w-4" />
-                            <span>{story.sprint.name}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="tasks" className="space-y-4">
-          <div className="grid gap-4">
-            {filteredTasks.map((task) => (
-              <Card key={task._id} className="hover:shadow-md transition-shadow">
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center space-x-2 mb-2">
-                        <h3 className="font-medium">{task.title}</h3>
-                        <Badge className={getStatusColor(task.status)}>
-                          {task.status.replace('_', ' ')}
-                        </Badge>
-                        <Badge className={getPriorityColor(task.priority)}>
-                          {task.priority}
-                        </Badge>
-                        <Badge className={getTypeColor(task.type)}>
-                          {task.type}
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-gray-600 mb-3">
-                        {task.description || 'No description'}
-                      </p>
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <div className="flex items-center space-x-1">
-                          <CheckSquare className="h-4 w-4" />
-                          <span>{task.project.name}</span>
-                        </div>
-                        {task.story && (
-                          <div className="flex items-center space-x-1">
-                            <BookOpen className="h-4 w-4" />
-                            <span>{task.story.title}</span>
-                          </div>
-                        )}
-                        {task.storyPoints && (
-                          <div className="flex items-center space-x-1">
-                            <Zap className="h-4 w-4" />
-                            <span>{task.storyPoints} pts</span>
-                          </div>
-                        )}
-                        {task.assignedTo && (
-                          <div className="flex items-center space-x-1">
-                            <Users className="h-4 w-4" />
-                            <span>{task.assignedTo.firstName} {task.assignedTo.lastName}</span>
-                          </div>
-                        )}
-                        {task.sprint && (
-                          <div className="flex items-center space-x-1">
-                            <Zap className="h-4 w-4" />
-                            <span>{task.sprint.name}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                    <Button variant="ghost" size="sm">
-                      <MoreHorizontal className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </TabsContent>
-      </Tabs>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </MainLayout>
   )

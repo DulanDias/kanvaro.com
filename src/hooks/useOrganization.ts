@@ -18,6 +18,34 @@ interface Organization {
     allowSelfRegistration?: boolean
     requireEmailVerification?: boolean
     defaultUserRole?: string
+    timeTracking?: {
+      allowTimeTracking?: boolean
+      allowManualTimeSubmission?: boolean
+      requireApproval?: boolean
+      allowBillableTime?: boolean
+      defaultHourlyRate?: number
+      maxDailyHours?: number
+      maxWeeklyHours?: number
+      maxSessionHours?: number
+      allowOvertime?: boolean
+      requireDescription?: boolean
+      requireCategory?: boolean
+      allowFutureTime?: boolean
+      allowPastTime?: boolean
+      pastTimeLimitDays?: number
+      roundingRules?: {
+        enabled?: boolean
+        increment?: number
+        roundUp?: boolean
+      }
+      notifications?: {
+        onTimerStart?: boolean
+        onTimerStop?: boolean
+        onOvertime?: boolean
+        onApprovalNeeded?: boolean
+        onTimeSubmitted?: boolean
+      }
+    }
   }
   emailConfig?: {
     provider: 'smtp' | 'azure' | 'sendgrid' | 'mailgun'

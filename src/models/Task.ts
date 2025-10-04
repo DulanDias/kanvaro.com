@@ -6,6 +6,7 @@ export interface ITask extends Document {
   status: 'todo' | 'in_progress' | 'review' | 'testing' | 'done' | 'cancelled'
   priority: 'low' | 'medium' | 'high' | 'critical'
   type: 'bug' | 'feature' | 'improvement' | 'task' | 'subtask'
+  organization: mongoose.Types.ObjectId
   project: mongoose.Types.ObjectId
   story?: mongoose.Types.ObjectId
   parentTask?: mongoose.Types.ObjectId
@@ -63,6 +64,11 @@ const TaskSchema = new Schema<ITask>({
     type: String,
     enum: ['bug', 'feature', 'improvement', 'task', 'subtask'],
     default: 'task'
+  },
+  organization: {
+    type: Schema.Types.ObjectId,
+    ref: 'Organization',
+    required: true
   },
   project: {
     type: Schema.Types.ObjectId,
@@ -134,6 +140,7 @@ const TaskSchema = new Schema<ITask>({
 })
 
 // Indexes
+TaskSchema.index({ organization: 1 })
 TaskSchema.index({ project: 1 })
 TaskSchema.index({ story: 1 })
 TaskSchema.index({ parentTask: 1 })
@@ -143,8 +150,11 @@ TaskSchema.index({ sprint: 1 })
 TaskSchema.index({ status: 1 })
 TaskSchema.index({ priority: 1 })
 TaskSchema.index({ type: 1 })
+TaskSchema.index({ organization: 1, status: 1 })
 TaskSchema.index({ project: 1, status: 1 })
 TaskSchema.index({ sprint: 1, status: 1 })
 TaskSchema.index({ assignedTo: 1, status: 1 })
+TaskSchema.index({ organization: 1, assignedTo: 1 })
+TaskSchema.index({ organization: 1, createdBy: 1 })
 
 export const Task = mongoose.models.Task || mongoose.model<ITask>('Task', TaskSchema)

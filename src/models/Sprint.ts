@@ -12,7 +12,10 @@ export interface ISprint extends Document {
   actualEndDate?: Date
   goal?: string
   velocity?: number
+  plannedVelocity?: number
+  actualVelocity?: number
   capacity: number // Total team capacity in hours
+  actualCapacity?: number // Actual capacity used
   stories: mongoose.Types.ObjectId[]
   tasks: mongoose.Types.ObjectId[]
   createdAt: Date
@@ -63,9 +66,21 @@ const SprintSchema = new Schema<ISprint>({
     type: Number,
     min: 0
   },
+  plannedVelocity: {
+    type: Number,
+    min: 0
+  },
+  actualVelocity: {
+    type: Number,
+    min: 0
+  },
   capacity: {
     type: Number,
     required: true,
+    min: 0
+  },
+  actualCapacity: {
+    type: Number,
     min: 0
   },
   stories: [{

@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import { Project } from '@/models/Project'
+import { User } from '@/models/User'
 import { authenticateUser } from '@/lib/auth-utils'
+import { PermissionService } from '@/lib/permissions/permission-service'
+import { Permission } from '@/lib/permissions/permission-definitions'
+import { notificationService } from '@/lib/notification-service'
 
 export async function GET(request: NextRequest) {
   try {
@@ -19,6 +23,9 @@ export async function GET(request: NextRequest) {
     const userId = user.id
     const organizationId = user.organization
 
+    // Check if user can view all projects (admin permission)
+    const canViewAllProjects = await PermissionService.hasPermission(userId, Permission.PROJECT_VIEW_ALL)
+    
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
@@ -39,14 +46,18 @@ export async function GET(request: NextRequest) {
       filters.status = status
     }
 
-    // Get projects where user is creator or team member
-    const projects = await Project.find({
-      ...filters,
-      $or: [
+    let projectQuery: any = { ...filters }
+    
+    // If user can't view all projects, filter by access
+    if (!canViewAllProjects) {
+      projectQuery.$or = [
         { createdBy: userId },
-        { teamMembers: userId }
+        { teamMembers: userId },
+        { client: userId }
       ]
-    })
+    }
+
+    const projects = await Project.find(projectQuery)
       .populate('createdBy', 'firstName lastName email')
       .populate('teamMembers', 'firstName lastName email')
       .populate('client', 'firstName lastName email')
@@ -54,13 +65,7 @@ export async function GET(request: NextRequest) {
       .skip((page - 1) * limit)
       .limit(limit)
 
-    const total = await Project.countDocuments({
-      ...filters,
-      $or: [
-        { createdBy: userId },
-        { teamMembers: userId }
-      ]
-    })
+    const total = await Project.countDocuments(projectQuery)
 
     return NextResponse.json({
       success: true,
@@ -98,6 +103,15 @@ export async function POST(request: NextRequest) {
     const userId = user.id
     const organizationId = user.organization
 
+    // Check if user can create projects
+    const canCreateProject = await PermissionService.hasPermission(userId, Permission.PROJECT_CREATE)
+    if (!canCreateProject) {
+      return NextResponse.json(
+        { error: 'Insufficient permissions to create projects' },
+        { status: 403 }
+      )
+    }
+
     const {
       name,
       description,
@@ -109,11 +123,13 @@ export async function POST(request: NextRequest) {
       teamMembers,
       clients,
       settings,
-      tags
+      tags,
+      customFields,
+      isDraft
     } = await request.json()
 
-    // Validate required fields
-    if (!name || !startDate) {
+    // Validate required fields (only if not a draft)
+    if (!isDraft && (!name || !startDate)) {
       return NextResponse.json(
         { error: 'Name and start date are required' },
         { status: 400 }
@@ -122,15 +138,15 @@ export async function POST(request: NextRequest) {
 
     // Create project
     const project = new Project({
-      name,
+      name: name || 'Untitled Project',
       description,
       status: status || 'planning',
-      priority: priority || 'medium',
+      isDraft: isDraft || false,
       organization: organizationId,
       createdBy: userId,
       teamMembers: teamMembers || [],
       client: clients?.[0], // For now, only support one client
-      startDate: new Date(startDate),
+      startDate: startDate ? new Date(startDate) : new Date(),
       endDate: endDate ? new Date(endDate) : undefined,
       budget: budget ? {
         total: budget.total || 0,
@@ -153,7 +169,8 @@ export async function POST(request: NextRequest) {
           deadlineReminders: settings?.notifications?.deadlineReminders ?? true
         }
       },
-      tags: tags || []
+      tags: tags || [],
+      customFields: customFields || {}
     })
 
     await project.save()
@@ -163,6 +180,25 @@ export async function POST(request: NextRequest) {
       .populate('createdBy', 'firstName lastName email')
       .populate('teamMembers', 'firstName lastName email')
       .populate('client', 'firstName lastName email')
+
+    // Send notifications to team members
+    if (teamMembers && teamMembers.length > 0) {
+      try {
+        const createdByUser = await User.findById(userId).select('firstName lastName')
+        const createdByName = createdByUser ? `${createdByUser.firstName} ${createdByUser.lastName}` : 'Someone'
+        
+        await notificationService.notifyProjectUpdate(
+          project._id.toString(),
+          'created',
+          teamMembers,
+          organizationId,
+          name || 'Untitled Project'
+        )
+      } catch (notificationError) {
+        console.error('Failed to send project creation notifications:', notificationError)
+        // Don't fail the project creation if notification fails
+      }
+    }
 
     return NextResponse.json({
       success: true,

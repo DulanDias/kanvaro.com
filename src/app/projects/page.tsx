@@ -11,6 +11,9 @@ import { GravatarAvatar } from '@/components/ui/GravatarAvatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { PermissionGate, PermissionButton } from '@/lib/permissions/permission-components'
+import { Permission } from '@/lib/permissions/permission-definitions'
+import { PageContent } from '@/components/ui/PageContent'
 import { 
   Plus, 
   Search, 
@@ -25,8 +28,13 @@ import {
   Pause,
   XCircle,
   Play,
-  Loader2
+  Loader2,
+  Settings,
+  Edit,
+  Trash2,
+  Eye
 } from 'lucide-react'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/DropdownMenu'
 
 interface Project {
   _id: string
@@ -34,6 +42,7 @@ interface Project {
   description: string
   status: 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled'
   priority: 'low' | 'medium' | 'high' | 'critical'
+  isDraft: boolean
   startDate: string
   endDate?: string
   budget?: {
@@ -130,6 +139,23 @@ export default function ProjectsPage() {
     }
   }
 
+  const handleDeleteProject = async (projectId: string) => {
+    try {
+      const response = await fetch(`/api/projects/${projectId}`, {
+        method: 'DELETE'
+      })
+      const data = await response.json()
+
+      if (data.success) {
+        setProjects(projects.filter(p => p._id !== projectId))
+      } else {
+        setError(data.error || 'Failed to delete project')
+      }
+    } catch (err) {
+      setError('Failed to delete project')
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'planning': return 'bg-blue-100 text-blue-800'
@@ -201,16 +227,20 @@ export default function ProjectsPage() {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <PageContent>
+        <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Projects</h1>
           <p className="text-muted-foreground">Manage and track your projects</p>
         </div>
-        <Button onClick={() => router.push('/projects/create')}>
+        <PermissionButton 
+          permission={Permission.PROJECT_CREATE}
+          onClick={() => router.push('/projects/create')}
+        >
           <Plus className="h-4 w-4 mr-2" />
           New Project
-        </Button>
+        </PermissionButton>
       </div>
 
       {error && (
@@ -277,18 +307,74 @@ export default function ProjectsPage() {
             <TabsContent value="grid" className="space-y-4">
               <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 {filteredProjects.map((project) => (
-                  <Card key={project._id} className="hover:shadow-md transition-shadow cursor-pointer">
+                  <Card 
+                    key={project._id} 
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => router.push(`/projects/${project._id}`)}
+                  >
                     <CardHeader>
                       <div className="flex items-start justify-between">
                         <div className="space-y-1">
-                          <CardTitle className="text-lg">{project.name}</CardTitle>
+                          <div className="flex items-center space-x-2">
+                            <CardTitle className="text-lg">{project.name}</CardTitle>
+                            {project.isDraft && (
+                              <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                Draft
+                              </Badge>
+                            )}
+                          </div>
                           <CardDescription className="line-clamp-2">
                             {project.description || 'No description'}
                           </CardDescription>
                         </div>
-                        <Button variant="ghost" size="sm">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/projects/${project._id}`)
+                            }}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Project
+                            </DropdownMenuItem>
+                            <PermissionGate permission={Permission.PROJECT_UPDATE} projectId={project._id}>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation()
+                                router.push(`/projects/${project._id}?tab=settings`)
+                              }}>
+                                <Settings className="h-4 w-4 mr-2" />
+                                Settings
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation()
+                                router.push(`/projects/${project._id}?tab=edit`)
+                              }}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Project
+                              </DropdownMenuItem>
+                            </PermissionGate>
+                            <PermissionGate permission={Permission.PROJECT_DELETE} projectId={project._id}>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  // Handle delete with confirmation
+                                  if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+                                    handleDeleteProject(project._id)
+                                  }
+                                }}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Project
+                              </DropdownMenuItem>
+                            </PermissionGate>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -348,13 +434,22 @@ export default function ProjectsPage() {
             <TabsContent value="list" className="space-y-4">
               <div className="space-y-4">
                 {filteredProjects.map((project) => (
-                  <Card key={project._id} className="hover:shadow-md transition-shadow">
+                  <Card 
+                    key={project._id} 
+                    className="hover:shadow-md transition-shadow cursor-pointer"
+                    onClick={() => router.push(`/projects/${project._id}`)}
+                  >
                     <CardContent className="p-4">
                       <div className="flex items-center justify-between">
                         <div className="flex items-center space-x-4">
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-2">
                               <h3 className="font-medium">{project.name}</h3>
+                              {project.isDraft && (
+                                <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                                  Draft
+                                </Badge>
+                              )}
                               <Badge className={getStatusColor(project.status)}>
                                 {getStatusIcon(project.status)}
                                 <span className="ml-1">{project.status.replace('_', ' ')}</span>
@@ -394,9 +489,54 @@ export default function ProjectsPage() {
                               />
                             </div>
                           </div>
-                          <Button variant="ghost" size="sm">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm">
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation()
+                                router.push(`/projects/${project._id}`)
+                              }}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Project
+                              </DropdownMenuItem>
+                              <PermissionGate permission={Permission.PROJECT_UPDATE} projectId={project._id}>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/projects/${project._id}?tab=settings`)
+                                }}>
+                                  <Settings className="h-4 w-4 mr-2" />
+                                  Settings
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/projects/${project._id}?tab=edit`)
+                                }}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Project
+                                </DropdownMenuItem>
+                              </PermissionGate>
+                              <PermissionGate permission={Permission.PROJECT_DELETE} projectId={project._id}>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    // Handle delete with confirmation
+                                    if (confirm('Are you sure you want to delete this project? This action cannot be undone.')) {
+                                      handleDeleteProject(project._id)
+                                    }
+                                  }}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Project
+                                </DropdownMenuItem>
+                              </PermissionGate>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                     </CardContent>
@@ -406,8 +546,9 @@ export default function ProjectsPage() {
             </TabsContent>
           </Tabs>
         </CardContent>
-      </Card>
-      </div>
+        </Card>
+        </div>
+      </PageContent>
     </MainLayout>
   )
 }

@@ -5,6 +5,7 @@ import { UserInvitation } from '@/models/UserInvitation'
 import { Organization } from '@/models/Organization'
 import { emailService } from '@/lib/email/EmailService'
 import { authenticateUser } from '@/lib/auth-utils'
+import { notificationService } from '@/lib/notification-service'
 import crypto from 'crypto'
 
 export async function POST(request: NextRequest) {
@@ -184,7 +185,7 @@ export async function POST(request: NextRequest) {
                 <h1>You're Invited to Join ${organizationName}</h1>
             </div>
 
-            <p>You've been invited to join <strong>${organizationName}</strong> as a <strong>${role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong>.</p>
+            <p>You've been invited to join <strong>${organizationName}</strong> as a <strong>${role.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}</strong>.</p>
             
             <p>Click the button below to accept your invitation and set up your account:</p>
 
@@ -217,6 +218,34 @@ export async function POST(request: NextRequest) {
         { error: 'Failed to send invitation email' },
         { status: 500 }
       )
+    }
+
+    // Send notification to organization admins about the invitation
+    try {
+      const admins = await User.find({ 
+        organization: organizationId, 
+        role: 'admin' 
+      }).select('_id')
+      
+      const adminIds = admins.map(admin => admin._id.toString())
+      
+      if (adminIds.length > 0) {
+        await notificationService.createBulkNotifications(adminIds, organizationId, {
+          type: 'invitation',
+          title: 'New Team Member Invitation',
+          message: `${inviterUser.firstName} ${inviterUser.lastName} invited ${firstName || email} to join as ${role.replace(/_/g, ' ')}`,
+          data: {
+            entityType: 'user',
+            action: 'created',
+            priority: 'low'
+          },
+          sendEmail: false,
+          sendPush: false
+        })
+      }
+    } catch (notificationError) {
+      console.error('Failed to send invitation notifications:', notificationError)
+      // Don't fail the invitation if notification fails
     }
 
     return NextResponse.json({

@@ -36,10 +36,13 @@ export async function PUT(request: NextRequest) {
     if (updates.lastName) user.lastName = updates.lastName
     if (updates.timezone) user.timezone = updates.timezone
     if (updates.language) user.language = updates.language
+    if (updates.currency) user.currency = updates.currency
 
     // Update preferences
     if (updates.theme) user.preferences.theme = updates.theme
     if (updates.sidebarCollapsed !== undefined) user.preferences.sidebarCollapsed = updates.sidebarCollapsed
+    if (updates.dateFormat) user.preferences.dateFormat = updates.dateFormat
+    if (updates.timeFormat) user.preferences.timeFormat = updates.timeFormat
     if (updates.notifications) {
       user.preferences.notifications = {
         ...user.preferences.notifications,

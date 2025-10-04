@@ -1,47 +1,88 @@
 import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db'
 import { Sprint } from '@/models/Sprint'
-import { Project } from '@/models/Project'
+import { authenticateUser } from '@/lib/auth-utils'
 
 export async function GET(request: NextRequest) {
   try {
     await connectDB()
 
-    const userId = request.headers.get('x-user-id')
-    const organizationId = request.headers.get('x-organization-id')
-
-    if (!userId || !organizationId) {
+    const authResult = await authenticateUser()
+    if ('error' in authResult) {
       return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 }
+        { error: authResult.error },
+        { status: authResult.status }
       )
     }
 
+    const { user } = authResult
+    const userId = user.id
+    const organizationId = user.organization
+
     const { searchParams } = new URL(request.url)
-    const projectId = searchParams.get('projectId')
-    const status = searchParams.get('status')
+    const page = parseInt(searchParams.get('page') || '1')
+    const limit = parseInt(searchParams.get('limit') || '20')
+    const search = searchParams.get('search') || ''
+    const status = searchParams.get('status') || ''
 
     // Build filters
-    const filters: any = {}
+    const filters: any = { organization: organizationId }
     
-    if (projectId) {
-      filters.project = projectId
+    if (search) {
+      filters.$or = [
+        { name: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } }
+      ]
     }
     
     if (status) {
       filters.status = status
     }
 
-    const sprints = await Sprint.find(filters)
+    // Get sprints where user is team member or creator
+    const sprints = await Sprint.find({
+      ...filters,
+      $or: [
+        { createdBy: userId },
+        { teamMembers: userId }
+      ]
+    })
       .populate('project', 'name')
       .populate('createdBy', 'firstName lastName email')
-      .populate('stories', 'title storyPoints')
-      .populate('tasks', 'title storyPoints')
-      .sort({ startDate: -1 })
+      .populate('teamMembers', 'firstName lastName email')
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+
+    const total = await Sprint.countDocuments({
+      ...filters,
+      $or: [
+        { createdBy: userId },
+        { teamMembers: userId }
+      ]
+    })
+
+    // Calculate progress for each sprint (this would typically come from tasks)
+    const sprintsWithProgress = sprints.map(sprint => ({
+      ...sprint.toObject(),
+      progress: {
+        completionPercentage: 0,
+        tasksCompleted: 0,
+        totalTasks: 0,
+        storyPointsCompleted: 0,
+        totalStoryPoints: 0
+      }
+    }))
 
     return NextResponse.json({
       success: true,
-      data: sprints
+      data: sprintsWithProgress,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages: Math.ceil(total / limit)
+      }
     })
 
   } catch (error) {
@@ -57,15 +98,17 @@ export async function POST(request: NextRequest) {
   try {
     await connectDB()
 
-    const userId = request.headers.get('x-user-id')
-    const organizationId = request.headers.get('x-organization-id')
-
-    if (!userId || !organizationId) {
+    const authResult = await authenticateUser()
+    if ('error' in authResult) {
       return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 }
+        { error: authResult.error },
+        { status: authResult.status }
       )
     }
+
+    const { user } = authResult
+    const userId = user.id
+    const organizationId = user.organization
 
     const {
       name,
@@ -75,42 +118,13 @@ export async function POST(request: NextRequest) {
       endDate,
       goal,
       capacity,
-      stories,
-      tasks
+      teamMembers
     } = await request.json()
 
     // Validate required fields
-    if (!name || !project || !startDate || !endDate || !capacity) {
+    if (!name || !project || !startDate || !endDate) {
       return NextResponse.json(
-        { error: 'Name, project, start date, end date, and capacity are required' },
-        { status: 400 }
-      )
-    }
-
-    // Verify project exists and user has access
-    const projectDoc = await Project.findOne({
-      _id: project,
-      organization: organizationId,
-      $or: [
-        { createdBy: userId },
-        { teamMembers: userId }
-      ]
-    })
-
-    if (!projectDoc) {
-      return NextResponse.json(
-        { error: 'Project not found or access denied' },
-        { status: 404 }
-      )
-    }
-
-    // Validate dates
-    const start = new Date(startDate)
-    const end = new Date(endDate)
-    
-    if (start >= end) {
-      return NextResponse.json(
-        { error: 'Start date must be before end date' },
+        { error: 'Name, project, start date, and end date are required' },
         { status: 400 }
       )
     }
@@ -119,14 +133,16 @@ export async function POST(request: NextRequest) {
     const sprint = new Sprint({
       name,
       description,
+      status: 'planning',
+      organization: organizationId,
       project,
       createdBy: userId,
-      startDate: start,
-      endDate: end,
-      goal,
-      capacity,
-      stories: stories || [],
-      tasks: tasks || []
+      teamMembers: teamMembers || [],
+      startDate: new Date(startDate),
+      endDate: new Date(endDate),
+      goal: goal || '',
+      capacity: capacity || 0,
+      velocity: 0
     })
 
     await sprint.save()
@@ -135,8 +151,7 @@ export async function POST(request: NextRequest) {
     const populatedSprint = await Sprint.findById(sprint._id)
       .populate('project', 'name')
       .populate('createdBy', 'firstName lastName email')
-      .populate('stories', 'title storyPoints')
-      .populate('tasks', 'title storyPoints')
+      .populate('teamMembers', 'firstName lastName email')
 
     return NextResponse.json({
       success: true,

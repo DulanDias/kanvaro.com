@@ -19,6 +19,30 @@ export interface IOrganization extends Document {
     timeTracking: {
       allowTimeTracking: boolean
       allowManualTimeSubmission: boolean
+      requireApproval: boolean
+      allowBillableTime: boolean
+      defaultHourlyRate?: number
+      maxDailyHours: number
+      maxWeeklyHours: number
+      maxSessionHours: number
+      allowOvertime: boolean
+      requireDescription: boolean
+      requireCategory: boolean
+      allowFutureTime: boolean
+      allowPastTime: boolean
+      pastTimeLimitDays: number
+      roundingRules: {
+        enabled: boolean
+        increment: number
+        roundUp: boolean
+      }
+      notifications: {
+        onTimerStart: boolean
+        onTimerStop: boolean
+        onOvertime: boolean
+        onApprovalNeeded: boolean
+        onTimeSubmitted: boolean
+      }
     }
   }
   billing: {
@@ -80,7 +104,31 @@ const OrganizationSchema = new Schema<IOrganization>({
     projectTemplates: [{ type: Schema.Types.ObjectId, ref: 'ProjectTemplate' }],
     timeTracking: {
       allowTimeTracking: { type: Boolean, default: true },
-      allowManualTimeSubmission: { type: Boolean, default: true }
+      allowManualTimeSubmission: { type: Boolean, default: true },
+      requireApproval: { type: Boolean, default: false },
+      allowBillableTime: { type: Boolean, default: true },
+      defaultHourlyRate: { type: Number, min: 0 },
+      maxDailyHours: { type: Number, default: 12, min: 1, max: 24 },
+      maxWeeklyHours: { type: Number, default: 60, min: 1, max: 168 },
+      maxSessionHours: { type: Number, default: 8, min: 1, max: 24 },
+      allowOvertime: { type: Boolean, default: false },
+      requireDescription: { type: Boolean, default: true },
+      requireCategory: { type: Boolean, default: false },
+      allowFutureTime: { type: Boolean, default: false },
+      allowPastTime: { type: Boolean, default: true },
+      pastTimeLimitDays: { type: Number, default: 30, min: 1, max: 365 },
+      roundingRules: {
+        enabled: { type: Boolean, default: false },
+        increment: { type: Number, default: 15, min: 1, max: 60 },
+        roundUp: { type: Boolean, default: true }
+      },
+      notifications: {
+        onTimerStart: { type: Boolean, default: false },
+        onTimerStop: { type: Boolean, default: true },
+        onOvertime: { type: Boolean, default: true },
+        onApprovalNeeded: { type: Boolean, default: true },
+        onTimeSubmitted: { type: Boolean, default: true }
+      }
     }
   },
   billing: {

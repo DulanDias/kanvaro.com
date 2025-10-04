@@ -22,7 +22,7 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
   })
 
   return (
-    <Card>
+    <Card className="border-0">
       <CardContent className="p-6">
         <div className="flex items-center justify-between">
           <div>
