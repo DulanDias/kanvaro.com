@@ -177,6 +177,27 @@ export default function MembersPage() {
     }
   }
 
+  const handleCancelInvitation = async (invitationId: string) => {
+    try {
+      const response = await fetch(`/api/members/cancel-invitation?invitationId=${invitationId}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setSuccess('Invitation cancelled successfully!')
+        setError('')
+        setTimeout(() => setSuccess(''), 5000)
+        fetchMembers()
+      } else {
+        setError(data.error || 'Failed to cancel invitation')
+      }
+    } catch (err) {
+      setError('Failed to cancel invitation')
+    }
+  }
+
   const handleRemoveMember = async (memberId: string) => {
     if (!confirm('Are you sure you want to remove this member?')) {
       return
@@ -424,6 +445,15 @@ export default function MembersPage() {
                     <div className="flex items-center space-x-2">
                       <Clock className="h-4 w-4 text-yellow-500" />
                       <span className="text-sm text-muted-foreground">Pending</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleCancelInvitation(invitation._id)}
+                        className="ml-2 text-destructive hover:text-destructive"
+                      >
+                        <XCircle className="h-4 w-4 mr-1" />
+                        Cancel
+                      </Button>
                     </div>
                   </div>
                 ))}

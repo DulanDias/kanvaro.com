@@ -33,6 +33,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get full user details for email template
+    const inviterUser = await User.findById(userId)
+    if (!inviterUser) {
+      return NextResponse.json(
+        { error: 'User not found' },
+        { status: 404 }
+      )
+    }
+
     // Check if user already exists
     const existingUser = await User.findOne({ 
       email: email.toLowerCase(),
@@ -152,7 +161,7 @@ export async function POST(request: NextRequest) {
                 <h1>You're Invited to Join ${organizationName}</h1>
             </div>
 
-            <p>You've been invited to join <strong>${organizationName}</strong> as a <strong>${role}</strong>.</p>
+            <p>You've been invited to join <strong>${organizationName}</strong> as a <strong>${role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</strong>.</p>
             
             <p>Click the button below to accept your invitation and set up your account:</p>
 
@@ -166,7 +175,7 @@ export async function POST(request: NextRequest) {
             <p style="word-break: break-all; color: #6b7280; font-size: 14px;">${invitationLink}</p>
 
             <div class="footer">
-                <p>This invitation was sent by ${user.firstName} ${user.lastName}</p>
+                <p>This invitation was sent by ${inviterUser.firstName} ${inviterUser.lastName}</p>
                 <p>If you have any questions, contact your team administrator</p>
             </div>
         </div>
