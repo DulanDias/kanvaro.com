@@ -11,9 +11,11 @@ import { Switch } from '@/components/ui/switch'
 import { useOrganization } from '@/hooks/useOrganization'
 import { Building2, Upload, Save, AlertCircle, X, Users, UserCheck, Building, Crown } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useCurrencies } from '@/hooks/useCurrencies'
 
 export function OrganizationSettings() {
   const { organization, loading } = useOrganization()
+  const { currencies, loading: currenciesLoading, formatCurrencyDisplay } = useCurrencies(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
   
@@ -27,7 +29,11 @@ export function OrganizationSettings() {
     size: 'small' as 'startup' | 'small' | 'medium' | 'enterprise',
     allowSelfRegistration: false,
     requireEmailVerification: true,
-    defaultUserRole: 'team_member'
+    defaultUserRole: 'team_member',
+    timeTracking: {
+      allowTimeTracking: true,
+      allowManualTimeSubmission: true
+    }
   })
   
   const [logo, setLogo] = useState<File | null>(null)
@@ -43,9 +49,7 @@ export function OrganizationSettings() {
     'Asia/Kolkata', 'Australia/Sydney'
   ]
 
-  const currencies = [
-    'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', 'BRL'
-  ]
+  // Currencies are now loaded from database via useCurrencies hook
 
   const languages = [
     { code: 'en', name: 'English' },
@@ -139,7 +143,11 @@ export function OrganizationSettings() {
         size: organization.size || 'small',
         allowSelfRegistration: organization.settings?.allowSelfRegistration || false,
         requireEmailVerification: organization.settings?.requireEmailVerification || true,
-        defaultUserRole: organization.settings?.defaultUserRole || 'team_member'
+        defaultUserRole: organization.settings?.defaultUserRole || 'team_member',
+        timeTracking: {
+          allowTimeTracking: organization.settings?.timeTracking?.allowTimeTracking ?? true,
+          allowManualTimeSubmission: organization.settings?.timeTracking?.allowManualTimeSubmission ?? true
+        }
       })
       
       // Set logo previews if they exist
@@ -487,10 +495,16 @@ export function OrganizationSettings() {
                 <SelectTrigger>
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
-                <SelectContent>
-                  {currencies.map((currency) => (
-                    <SelectItem key={currency} value={currency}>{currency}</SelectItem>
-                  ))}
+                <SelectContent className="max-h-60">
+                  {currenciesLoading ? (
+                    <SelectItem value="" disabled>Loading currencies...</SelectItem>
+                  ) : (
+                    currencies.map((currency) => (
+                      <SelectItem key={currency.code} value={currency.code}>
+                        {formatCurrencyDisplay(currency)}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
@@ -657,6 +671,52 @@ export function OrganizationSettings() {
               </SelectContent>
             </Select>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Time Tracking Settings</CardTitle>
+          <CardDescription>
+            Configure global time tracking settings for your organization.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="space-y-0.5">
+              <Label>Allow Time Tracking</Label>
+              <p className="text-sm text-muted-foreground">
+                Enable time tracking across all projects in your organization
+              </p>
+            </div>
+            <Switch
+              checked={formData.timeTracking.allowTimeTracking}
+              onCheckedChange={(checked) => setFormData({ 
+                ...formData, 
+                timeTracking: { ...formData.timeTracking, allowTimeTracking: checked }
+              })}
+            />
+          </div>
+
+          {formData.timeTracking.allowTimeTracking && (
+            <div className="ml-6 pl-4 border-l-2 border-muted">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label>Allow Manual Time Submission</Label>
+                  <p className="text-sm text-muted-foreground">
+                    Allow team members to submit time entries manually after completing tasks
+                  </p>
+                </div>
+                <Switch
+                  checked={formData.timeTracking.allowManualTimeSubmission}
+                  onCheckedChange={(checked) => setFormData({ 
+                    ...formData, 
+                    timeTracking: { ...formData.timeTracking, allowManualTimeSubmission: checked }
+                  })}
+                />
+              </div>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>

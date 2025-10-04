@@ -11,8 +11,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch'
 import { Settings, Save, Loader2, AlertCircle, CheckCircle, Bell, Palette, Globe } from 'lucide-react'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { useCurrencies } from '@/hooks/useCurrencies'
 
 export default function PreferencesPage() {
+  const { currencies, loading: currenciesLoading, formatCurrencyDisplay } = useCurrencies(true)
   const [isLoading, setIsLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [user, setUser] = useState<any>(null)
@@ -268,12 +270,16 @@ export default function PreferencesPage() {
                     <SelectTrigger>
                       <SelectValue placeholder="Select currency" />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USD">USD - US Dollar</SelectItem>
-                      <SelectItem value="EUR">EUR - Euro</SelectItem>
-                      <SelectItem value="GBP">GBP - British Pound</SelectItem>
-                      <SelectItem value="JPY">JPY - Japanese Yen</SelectItem>
-                      <SelectItem value="CAD">CAD - Canadian Dollar</SelectItem>
+                    <SelectContent className="max-h-60">
+                      {currenciesLoading ? (
+                        <SelectItem value="" disabled>Loading currencies...</SelectItem>
+                      ) : (
+                        currencies.map((currency) => (
+                          <SelectItem key={currency.code} value={currency.code}>
+                            {formatCurrencyDisplay(currency)}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>

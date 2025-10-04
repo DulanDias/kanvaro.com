@@ -144,6 +144,7 @@ export async function POST(request: NextRequest) {
       } : undefined,
       settings: {
         allowTimeTracking: settings?.allowTimeTracking ?? true,
+        allowManualTimeSubmission: settings?.allowManualTimeSubmission ?? true,
         allowExpenseTracking: settings?.allowExpenseTracking ?? true,
         requireApproval: settings?.requireApproval ?? false,
         notifications: {

@@ -22,6 +22,7 @@ export interface IProject extends Document {
   }
   settings: {
     allowTimeTracking: boolean
+    allowManualTimeSubmission: boolean
     allowExpenseTracking: boolean
     requireApproval: boolean
     notifications: {
@@ -60,6 +61,7 @@ const ProjectSchema = new Schema<IProject>({
   },
   settings: {
     allowTimeTracking: { type: Boolean, default: true },
+    allowManualTimeSubmission: { type: Boolean, default: true },
     allowExpenseTracking: { type: Boolean, default: true },
     requireApproval: { type: Boolean, default: false },
     notifications: {

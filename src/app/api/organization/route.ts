@@ -23,7 +23,11 @@ export async function GET() {
           allowSelfRegistration: false,
           requireEmailVerification: true,
           defaultUserRole: 'team_member',
-          projectTemplates: []
+          projectTemplates: [],
+          timeTracking: {
+            allowTimeTracking: true,
+            allowManualTimeSubmission: true
+          }
         },
         billing: {
           plan: 'free',
@@ -101,7 +105,9 @@ export async function PUT(request: NextRequest) {
         size: updateData.size,
         'settings.allowSelfRegistration': updateData.allowSelfRegistration,
         'settings.requireEmailVerification': updateData.requireEmailVerification,
-        'settings.defaultUserRole': updateData.defaultUserRole
+        'settings.defaultUserRole': updateData.defaultUserRole,
+        'settings.timeTracking.allowTimeTracking': updateData.timeTracking?.allowTimeTracking,
+        'settings.timeTracking.allowManualTimeSubmission': updateData.timeTracking?.allowManualTimeSubmission
       },
       { new: true, upsert: true }
     )

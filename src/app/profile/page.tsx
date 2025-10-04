@@ -9,7 +9,7 @@ import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar'
+import { GravatarAvatar } from '@/components/ui/GravatarAvatar'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { useOrganization } from '@/hooks/useOrganization'
@@ -256,12 +256,16 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center space-x-4">
-                <Avatar className="h-20 w-20">
-                  <AvatarImage src={profile?.avatar} />
-                  <AvatarFallback className="text-lg">
-                    {profile?.firstName?.charAt(0)}{profile?.lastName?.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
+                <GravatarAvatar 
+                  user={{
+                    avatar: profile?.avatar,
+                    firstName: profile?.firstName,
+                    lastName: profile?.lastName,
+                    email: profile?.email
+                  }}
+                  size={80}
+                  className="h-20 w-20"
+                />
                 <div>
                   <Button variant="outline" size="sm">
                     Change Avatar

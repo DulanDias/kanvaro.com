@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar'
+import { GravatarAvatar } from '@/components/ui/GravatarAvatar'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
@@ -361,12 +361,13 @@ export default function MembersPage() {
                 {filteredMembers.map((member) => (
                   <div key={member._id} className="flex items-center justify-between p-4 border rounded-lg">
                     <div className="flex items-center space-x-4">
-                      <Avatar>
-                        <AvatarImage src="" />
-                        <AvatarFallback>
-                          {member.firstName.charAt(0)}{member.lastName.charAt(0)}
-                        </AvatarFallback>
-                      </Avatar>
+                      <GravatarAvatar 
+                        user={{
+                          firstName: member.firstName,
+                          lastName: member.lastName,
+                          email: member.email
+                        }}
+                      />
                       <div>
                         <div className="flex items-center space-x-2">
                           <h3 className="font-medium">{member.firstName} {member.lastName}</h3>

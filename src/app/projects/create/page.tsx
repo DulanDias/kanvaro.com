@@ -13,6 +13,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/Badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Progress } from '@/components/ui/Progress'
+import { useCurrencies } from '@/hooks/useCurrencies'
 import { 
   ArrowLeft, 
   ArrowRight, 
@@ -56,6 +57,7 @@ interface ProjectFormData {
   // Settings
   settings: {
     allowTimeTracking: boolean
+    allowManualTimeSubmission: boolean
     allowExpenseTracking: boolean
     requireApproval: boolean
     notifications: {
@@ -72,6 +74,7 @@ interface ProjectFormData {
 
 export default function CreateProjectPage() {
   const router = useRouter()
+  const { currencies, loading: currenciesLoading, formatCurrencyDisplay, error: currenciesError } = useCurrencies(true)
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -97,6 +100,7 @@ export default function CreateProjectPage() {
     clients: [],
     settings: {
       allowTimeTracking: true,
+      allowManualTimeSubmission: true,
       allowExpenseTracking: true,
       requireApproval: false,
       notifications: {
@@ -374,6 +378,9 @@ export default function CreateProjectPage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="currency">Currency</Label>
+                  {currenciesError && (
+                    <div className="text-red-500 text-sm">Error loading currencies: {currenciesError}</div>
+                  )}
                   <Select value={formData.budget.currency} onValueChange={(value) => setFormData(prev => ({ 
                     ...prev, 
                     budget: { ...prev.budget, currency: value }
@@ -381,12 +388,18 @@ export default function CreateProjectPage() {
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USD">USD</SelectItem>
-                      <SelectItem value="EUR">EUR</SelectItem>
-                      <SelectItem value="GBP">GBP</SelectItem>
-                      <SelectItem value="CAD">CAD</SelectItem>
-                      <SelectItem value="AUD">AUD</SelectItem>
+                    <SelectContent className="max-h-60">
+                      {currenciesLoading ? (
+                        <SelectItem value="" disabled>Loading currencies...</SelectItem>
+                      ) : currencies.length === 0 ? (
+                        <SelectItem value="" disabled>No currencies available</SelectItem>
+                      ) : (
+                        currencies.map((currency) => (
+                          <SelectItem key={currency.code} value={currency.code}>
+                            {formatCurrencyDisplay(currency)}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
@@ -503,6 +516,25 @@ export default function CreateProjectPage() {
                     }))}
                   />
                 </div>
+
+                {formData.settings.allowTimeTracking && (
+                  <div className="ml-6 pl-4 border-l-2 border-muted">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <Label>Allow Manual Time Submission</Label>
+                        <p className="text-sm text-muted-foreground">Allow team members to submit time entries manually after completing tasks</p>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={formData.settings.allowManualTimeSubmission}
+                        onChange={(e) => setFormData(prev => ({ 
+                          ...prev, 
+                          settings: { ...prev.settings, allowManualTimeSubmission: e.target.checked }
+                        }))}
+                      />
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-center justify-between">
                   <div>

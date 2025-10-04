@@ -1,7 +1,7 @@
 'use client'
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar'
+import { GravatarAvatar } from '@/components/ui/GravatarAvatar'
 import { Badge } from '@/components/ui/Badge'
 import { Clock, CheckCircle, Plus, MessageSquare } from 'lucide-react'
 
@@ -110,10 +110,16 @@ export function TeamActivity() {
             
             return (
               <div key={activity.id} className="flex items-start space-x-3">
-                <Avatar className="h-8 w-8">
-                  <AvatarImage src={activity.user.avatar} alt={activity.user.name} />
-                  <AvatarFallback>{activity.user.initials}</AvatarFallback>
-                </Avatar>
+                <GravatarAvatar 
+                  user={{
+                    avatar: activity.user.avatar,
+                    firstName: activity.user.name.split(' ')[0],
+                    lastName: activity.user.name.split(' ')[1] || '',
+                    email: `${activity.user.name.toLowerCase().replace(' ', '.')}@example.com`
+                  }}
+                  size={32}
+                  className="h-8 w-8"
+                />
                 
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center space-x-2 mb-1">

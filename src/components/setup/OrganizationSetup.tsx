@@ -8,6 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Badge } from '@/components/ui/Badge'
+import { useCurrencies } from '@/hooks/useCurrencies'
 
 interface OrganizationSetupProps {
   onNext: (data: any) => void
@@ -16,6 +17,8 @@ interface OrganizationSetupProps {
 }
 
 export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationSetupProps) => {
+  const { currencies, loading: currenciesLoading, formatCurrencyDisplay } = useCurrencies(true)
+  
   const [formData, setFormData] = useState({
     name: initialData?.name || '',
     domain: initialData?.domain || '',
@@ -38,9 +41,7 @@ export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationS
     'Asia/Kolkata', 'Australia/Sydney'
   ]
 
-  const currencies = [
-    'USD', 'EUR', 'GBP', 'JPY', 'CAD', 'AUD', 'CHF', 'CNY', 'INR', 'BRL'
-  ]
+  // Currencies are now loaded from database via useCurrencies hook
 
   const languages = [
     { code: 'en', name: 'English' },
@@ -415,10 +416,16 @@ export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationS
                 <SelectTrigger>
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
-                <SelectContent>
-                  {currencies.map((currency) => (
-                    <SelectItem key={currency} value={currency}>{currency}</SelectItem>
-                  ))}
+                <SelectContent className="max-h-60">
+                  {currenciesLoading ? (
+                    <SelectItem value="" disabled>Loading currencies...</SelectItem>
+                  ) : (
+                    currencies.map((currency) => (
+                      <SelectItem key={currency.code} value={currency.code}>
+                        {formatCurrencyDisplay(currency)}
+                      </SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>

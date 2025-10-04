@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Alert, AlertDescription } from '@/components/ui/alert'
 import { Upload, Image as ImageIcon, CheckCircle, Loader2 } from 'lucide-react'
+import { useCurrencies } from '@/hooks/useCurrencies'
 
 interface OrganizationData {
   _id: string
@@ -25,6 +26,7 @@ interface OrganizationData {
 }
 
 export default function OrganizationSettingsPage() {
+  const { currencies, loading: currenciesLoading, formatCurrencyDisplay } = useCurrencies(true)
   const [organization, setOrganization] = useState<OrganizationData | null>(null)
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -235,12 +237,16 @@ export default function OrganizationSettingsPage() {
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="USD">USD ($)</SelectItem>
-                      <SelectItem value="EUR">EUR (€)</SelectItem>
-                      <SelectItem value="GBP">GBP (£)</SelectItem>
-                      <SelectItem value="CAD">CAD (C$)</SelectItem>
-                      <SelectItem value="AUD">AUD (A$)</SelectItem>
+                    <SelectContent className="max-h-60">
+                      {currenciesLoading ? (
+                        <SelectItem value="" disabled>Loading currencies...</SelectItem>
+                      ) : (
+                        currencies.map((currency) => (
+                          <SelectItem key={currency.code} value={currency.code}>
+                            {formatCurrencyDisplay(currency)}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
