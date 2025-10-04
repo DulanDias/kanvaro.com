@@ -591,7 +591,7 @@ export function OrganizationSettings() {
           </div>
 
           {message && (
-            <Alert className={message.type === 'error' ? 'border-red-200 bg-red-50' : 'border-green-200 bg-green-50'}>
+            <Alert variant={message.type === 'error' ? 'destructive' : 'default'}>
               <AlertCircle className="h-4 w-4" />
               <AlertDescription>{message.text}</AlertDescription>
             </Alert>
