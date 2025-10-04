@@ -1,0 +1,141 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Light theme - High contrast, accessible colors */
+    --background: 0 0% 100%; /* Pure white */
+    --foreground: 0 0% 0%; /* Pure black */
+    --card: 0 0% 100%; /* Pure white */
+    --card-foreground: 0 0% 0%; /* Pure black */
+    --popover: 0 0% 100%; /* Pure white */
+    --popover-foreground: 0 0% 0%; /* Pure black */
+    --primary: 0 0% 0%; /* Pure black for primary actions */
+    --primary-foreground: 0 0% 100%; /* Pure white text on primary */
+    --secondary: 0 0% 96%; /* Very light gray */
+    --secondary-foreground: 0 0% 0%; /* Pure black */
+    --muted: 0 0% 96%; /* Very light gray */
+    --muted-foreground: 0 0% 45%; /* Dark gray for muted text */
+    --accent: 0 0% 96%; /* Very light gray */
+    --accent-foreground: 0 0% 0%; /* Pure black */
+    --destructive: 0 84% 60%; /* High contrast red for destructive actions */
+    --destructive-foreground: 0 0% 100%; /* White text on destructive */
+    --border: 0 0% 90%; /* Light gray borders */
+    --input: 0 0% 96%; /* Light gray input backgrounds */
+    --ring: 0 0% 0%; /* Black focus rings */
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    /* Dark theme - High contrast, accessible colors */
+    --background: 0 0% 8%; /* Very dark gray */
+    --foreground: 0 0% 100%; /* Pure white */
+    --card: 0 0% 8%; /* Very dark gray */
+    --card-foreground: 0 0% 100%; /* Pure white */
+    --popover: 0 0% 8%; /* Very dark gray */
+    --popover-foreground: 0 0% 100%; /* Pure white */
+    --primary: 0 0% 100%; /* Pure white for primary actions */
+    --primary-foreground: 0 0% 0%; /* Black text on primary */
+    --secondary: 0 0% 15%; /* Dark gray */
+    --secondary-foreground: 0 0% 100%; /* Pure white */
+    --muted: 0 0% 15%; /* Dark gray */
+    --muted-foreground: 0 0% 70%; /* Light gray for muted text */
+    --accent: 0 0% 15%; /* Dark gray */
+    --accent-foreground: 0 0% 100%; /* Pure white */
+    --destructive: 0 84% 60%; /* High contrast red for destructive actions */
+    --destructive-foreground: 0 0% 100%; /* White text on destructive */
+    --border: 0 0% 20%; /* Dark gray borders */
+    --input: 0 0% 15%; /* Dark gray input backgrounds */
+    --ring: 0 0% 100%; /* White focus rings */
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: hsl(var(--muted));
+}
+
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--muted-foreground));
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--primary));
+}
+
+/* Loading animation */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+/* Setup wizard specific styles - Modern accessible design */
+.setup-wizard {
+  background: hsl(var(--background));
+  min-height: 100vh;
+}
+
+/* Responsive progress steps */
+@media (max-width: 1024px) {
+  .progress-steps {
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .progress-steps li {
+    flex: 1 1 calc(50% - 0.5rem);
+    min-width: 150px;
+  }
+  
+  .progress-steps .connector-line {
+    display: none;
+  }
+}
+
+@media (max-width: 768px) {
+  .progress-steps {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+  
+  .progress-steps li {
+    flex-direction: row;
+    width: 100%;
+    max-width: none;
+  }
+  
+  .progress-steps .connector-line {
+    display: none;
+  }
+}
+
+/* Ensure proper connector line positioning */
+.progress-steps li:not(:last-child) .connector-line {
+  position: absolute;
+  top: 24px;
+  left: calc(50% + 24px);
+  width: calc(100% - 48px);
+  height: 2px;
+  z-index: 1;
+}

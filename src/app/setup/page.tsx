@@ -1,0 +1,129 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { Database, User, Building, Mail, CheckCircle } from 'lucide-react'
+import { ProgressSteps } from '@/components/setup/ProgressSteps'
+import { DatabaseConfig } from '@/components/setup/DatabaseConfig'
+import { AdminUserSetup } from '@/components/setup/AdminUserSetup'
+import { OrganizationSetup } from '@/components/setup/OrganizationSetup'
+import { EmailConfig } from '@/components/setup/EmailConfig'
+import { SetupComplete } from '@/components/setup/SetupComplete'
+
+const setupSteps = [
+  { id: 'database', title: 'Database', icon: Database },
+  { id: 'admin', title: 'Admin Account', icon: User },
+  { id: 'organization', title: 'Organization', icon: Building },
+  { id: 'email', title: 'Email Settings', icon: Mail },
+  { id: 'complete', title: 'Finish Setup', icon: CheckCircle },
+]
+
+export default function SetupPage() {
+  const [currentStep, setCurrentStep] = useState('database')
+  const [setupData, setSetupData] = useState<any>({})
+  const [isLoading, setIsLoading] = useState(false)
+  const router = useRouter()
+
+  const handleNext = (stepData: any) => {
+    setSetupData({ ...setupData, ...stepData })
+    
+    const stepIndex = setupSteps.findIndex(step => step.id === currentStep)
+    if (stepIndex < setupSteps.length - 1) {
+      setCurrentStep(setupSteps[stepIndex + 1].id)
+    }
+  }
+
+  const handleBack = () => {
+    const stepIndex = setupSteps.findIndex(step => step.id === currentStep)
+    if (stepIndex > 0) {
+      setCurrentStep(setupSteps[stepIndex - 1].id)
+    }
+  }
+
+  const handleComplete = async () => {
+    setIsLoading(true)
+    try {
+      const response = await fetch('/api/setup/complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(setupData),
+      })
+
+      if (response.ok) {
+        const result = await response.json()
+        if (result.success) {
+          // Setup completed successfully, redirect to dashboard
+          router.push('/dashboard')
+        } else {
+          throw new Error(result.error || 'Setup completion failed')
+        }
+      } else {
+        const errorData = await response.json()
+        console.error('Setup completion API error:', errorData)
+        throw new Error(errorData.details || errorData.error || 'Setup completion failed')
+      }
+    } catch (error) {
+      console.error('Setup completion error:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      alert(`Setup completion failed: ${errorMessage}\n\nPlease check the browser console for more details.`)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+
+  const renderCurrentStep = () => {
+    switch (currentStep) {
+      case 'database':
+        return <DatabaseConfig onNext={handleNext} initialData={setupData.database} />
+      case 'admin':
+        return <AdminUserSetup onNext={handleNext} onBack={handleBack} initialData={setupData.admin} />
+      case 'organization':
+        return <OrganizationSetup onNext={handleNext} onBack={handleBack} initialData={setupData.organization} />
+      case 'email':
+        return <EmailConfig onNext={handleNext} onBack={handleBack} initialData={setupData.email} />
+      case 'complete':
+        return <SetupComplete onComplete={handleComplete} onBack={handleBack} setupData={setupData} isLoading={isLoading} />
+      default:
+        return <DatabaseConfig onNext={handleNext} initialData={setupData.database} />
+    }
+  }
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-8">
+        <div className="max-w-6xl mx-auto">
+          {/* Main Content Layout */}
+          <div className="flex gap-8">
+            {/* Left Sidebar - Progress Steps */}
+            <div className="w-64 flex-shrink-0">
+              <div className="sticky top-8">
+                {/* Header Section - Left Aligned */}
+                <div className="mb-6">
+                  <h1 className="text-2xl font-bold text-foreground mb-2">
+                    Welcome to Kanvaro
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    Let's configure your Kanvaro instance with a few simple steps. 
+                    This will only take a few minutes.
+                  </p>
+                </div>
+                
+                {/* Progress Steps */}
+                <ProgressSteps 
+                  steps={setupSteps} 
+                  currentStep={currentStep}
+                />
+              </div>
+            </div>
+            
+            {/* Right Content Area */}
+            <div className="flex-1 min-w-0">
+              {renderCurrentStep()}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
