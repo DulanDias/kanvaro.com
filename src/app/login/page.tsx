@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
@@ -17,8 +17,16 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [successMessage, setSuccessMessage] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { organization, loading: orgLoading } = useOrganization()
+
+  useEffect(() => {
+    if (searchParams.get('message') === 'setup-completed') {
+      setSuccessMessage('Setup completed successfully! Please log in with your admin credentials.')
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -90,6 +98,11 @@ export default function LoginPage() {
             </CardHeader>
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-4">
+                {successMessage && (
+                  <Alert>
+                    <AlertDescription>{successMessage}</AlertDescription>
+                  </Alert>
+                )}
                 {error && (
                   <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>

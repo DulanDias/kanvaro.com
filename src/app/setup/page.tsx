@@ -67,8 +67,8 @@ export default function SetupPage() {
       if (response.ok) {
         const result = await response.json()
         if (result.success) {
-          // Setup completed successfully, redirect to dashboard
-          router.push('/dashboard')
+          // Setup completed successfully, redirect to login page
+          router.push('/login?message=setup-completed')
         } else {
           throw new Error(result.error || 'Setup completion failed')
         }

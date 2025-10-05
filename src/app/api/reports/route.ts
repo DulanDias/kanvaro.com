@@ -9,6 +9,7 @@ import { BurnRate } from '@/models/BurnRate'
 import { SprintEvent } from '@/models/SprintEvent'
 import { authenticateUser } from '@/lib/auth-utils'
 import { hasPermission } from '@/lib/permissions/permission-utils'
+import { Permission } from '@/lib/permissions/permission-definitions'
 
 export async function GET(req: NextRequest) {
   try {
@@ -30,7 +31,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Check if user has access to this project
-    const hasAccess = await hasPermission(authResult.user.id, 'REPORTING_VIEW', projectId)
+    const hasAccess = await hasPermission(authResult.user.id, Permission.REPORTING_VIEW, projectId)
     if (!hasAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
@@ -44,22 +45,22 @@ export async function GET(req: NextRequest) {
 
     switch (reportType) {
       case 'overview':
-        reportData = await generateOverviewReport(projectId, startDate, endDate)
+        reportData = await generateOverviewReport(projectId, startDate || undefined, endDate || undefined)
         break
       case 'budget':
-        reportData = await generateBudgetReport(projectId, startDate, endDate)
+        reportData = await generateBudgetReport(projectId, startDate || undefined, endDate || undefined)
         break
       case 'burn-rate':
-        reportData = await generateBurnRateReport(projectId, startDate, endDate)
+        reportData = await generateBurnRateReport(projectId, startDate || undefined, endDate || undefined)
         break
       case 'velocity':
-        reportData = await generateVelocityReport(projectId, startDate, endDate)
+        reportData = await generateVelocityReport(projectId, startDate || undefined, endDate || undefined)
         break
       case 'sprint':
-        reportData = await generateSprintReport(projectId, startDate, endDate)
+        reportData = await generateSprintReport(projectId, startDate || undefined, endDate || undefined)
         break
       case 'team-performance':
-        reportData = await generateTeamPerformanceReport(projectId, startDate, endDate)
+        reportData = await generateTeamPerformanceReport(projectId, startDate || undefined, endDate || undefined)
         break
       default:
         return NextResponse.json({ error: 'Invalid report type' }, { status: 400 })

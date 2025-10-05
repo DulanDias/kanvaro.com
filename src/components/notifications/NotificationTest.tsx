@@ -229,7 +229,7 @@ export function NotificationTest() {
             <div className="space-y-2">
               {notifications.slice(0, 5).map((notification) => (
                 <div
-                  key={notification._id.toString()}
+                  key={(notification._id as any).toString()}
                   className={`flex items-start justify-between p-3 rounded-lg border ${
                     !notification.isRead ? 'bg-primary/5 border-primary/20' : 'bg-muted/30'
                   }`}
@@ -255,7 +255,7 @@ export function NotificationTest() {
                         variant="ghost"
                         size="sm"
                         className="h-6 w-6 p-0"
-                        onClick={() => markAsRead(notification._id.toString())}
+                        onClick={() => markAsRead((notification._id as any).toString())}
                       >
                         <CheckCircle className="h-3 w-3" />
                       </Button>
@@ -264,7 +264,7 @@ export function NotificationTest() {
                       variant="ghost"
                       size="sm"
                       className="h-6 w-6 p-0"
-                      onClick={() => deleteNotification(notification._id.toString())}
+                      onClick={() => deleteNotification((notification._id as any).toString())}
                     >
                       <XCircle className="h-3 w-3" />
                     </Button>

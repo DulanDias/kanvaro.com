@@ -1,3 +1,14 @@
+---
+slug: "concepts/architecture"
+title: "System Architecture"
+summary: "Technical architecture overview covering the full-stack JavaScript design, database schema, API structure, and deployment considerations."
+visibility: "public"
+audiences: ["admin", "project_manager", "self_host_admin"]
+category: "concepts"
+order: 40
+updated: "2025-01-04"
+---
+
 # Kanvaro - System Architecture
 
 ## Overview

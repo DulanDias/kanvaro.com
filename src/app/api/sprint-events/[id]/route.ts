@@ -4,6 +4,7 @@ import { SprintEvent } from '@/models/SprintEvent'
 import { Sprint } from '@/models/Sprint'
 import { authenticateUser } from '@/lib/auth-utils'
 import { hasPermission } from '@/lib/permissions/permission-utils'
+import { Permission } from '@/lib/permissions/permission-definitions'
 
 export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
   try {
@@ -25,7 +26,7 @@ export async function GET(req: NextRequest, { params }: { params: { id: string }
     }
 
     // Check if user has access to this project
-    const hasAccess = await hasPermission(authResult.user.id, 'PROJECT_READ', sprintEvent.project._id.toString())
+    const hasAccess = await hasPermission(authResult.user.id, Permission.PROJECT_READ, sprintEvent.project._id.toString())
     if (!hasAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
@@ -66,7 +67,7 @@ export async function PUT(req: NextRequest, { params }: { params: { id: string }
     }
 
     // Check if user has permission to manage sprints for this project
-    const hasAccess = await hasPermission(authResult.user.id, 'SPRINT_MANAGE', sprintEvent.project.toString())
+    const hasAccess = await hasPermission(authResult.user.id, Permission.SPRINT_MANAGE, sprintEvent.project.toString())
     if (!hasAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
@@ -113,7 +114,7 @@ export async function DELETE(req: NextRequest, { params }: { params: { id: strin
     }
 
     // Check if user has permission to manage sprints for this project
-    const hasAccess = await hasPermission(authResult.user.id, 'SPRINT_MANAGE', sprintEvent.project.toString())
+    const hasAccess = await hasPermission(authResult.user.id, Permission.SPRINT_MANAGE, sprintEvent.project.toString())
     if (!hasAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }

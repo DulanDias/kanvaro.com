@@ -1,3 +1,14 @@
+---
+slug: "concepts/user-flows"
+title: "User Flow Documentation"
+summary: "Complete user journey documentation covering onboarding, project creation, task management, time tracking, financial management, and team collaboration workflows."
+visibility: "public"
+audiences: ["admin", "project_manager", "team_member", "client", "viewer"]
+category: "concepts"
+order: 20
+updated: "2025-01-04"
+---
+
 # Kanvaro - User Flow Documentation
 
 ## Overview

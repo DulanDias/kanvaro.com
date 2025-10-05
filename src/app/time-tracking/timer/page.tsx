@@ -133,7 +133,7 @@ export default function TimerPage() {
     }
 
     try {
-      const response = await fetch(`/api/tasks?project=${projectId}&assignedTo=${user.id || user._id}`)
+      const response = await fetch(`/api/tasks?project=${projectId}&assignedTo=${user._id}`)
       const data = await response.json()
 
       if (data.success && Array.isArray(data.data)) {
@@ -299,7 +299,7 @@ export default function TimerPage() {
             {/* Timer Component */}
             {selectedProject && (
               <Timer
-                userId={user.id || user._id}
+                userId={user._id}
                 organizationId={user.organization}
                 projectId={selectedProject}
                 taskId={selectedTask || undefined}

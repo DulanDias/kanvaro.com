@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
 import { 
   PieChart, 
   Pie, 
@@ -203,7 +203,7 @@ export function BudgetChart({ data, title = "Budget Breakdown", description }: B
           {/* Chart */}
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              {renderChart()}
+              {renderChart() || <div>No chart data available</div>}
             </ResponsiveContainer>
           </div>
 

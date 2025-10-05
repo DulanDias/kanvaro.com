@@ -18,6 +18,15 @@ export interface ISprint extends Document {
   actualCapacity?: number // Actual capacity used
   stories: mongoose.Types.ObjectId[]
   tasks: mongoose.Types.ObjectId[]
+  attachments: {
+    name: string
+    url: string
+    size: number
+    type: string
+    uploadedBy: mongoose.Types.ObjectId
+    uploadedAt: Date
+  }[]
+  archived: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -90,7 +99,16 @@ const SprintSchema = new Schema<ISprint>({
   tasks: [{
     type: Schema.Types.ObjectId,
     ref: 'Task'
-  }]
+  }],
+  attachments: [{
+    name: { type: String, required: true },
+    url: { type: String, required: true },
+    size: { type: Number, required: true },
+    type: { type: String, required: true },
+    uploadedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    uploadedAt: { type: Date, default: Date.now }
+  }],
+  archived: { type: Boolean, default: false }
 }, {
   timestamps: true
 })
@@ -102,5 +120,7 @@ SprintSchema.index({ status: 1 })
 SprintSchema.index({ startDate: 1 })
 SprintSchema.index({ endDate: 1 })
 SprintSchema.index({ project: 1, status: 1 })
+SprintSchema.index({ archived: 1 })
+SprintSchema.index({ project: 1, archived: 1 })
 
 export const Sprint = mongoose.models.Sprint || mongoose.model<ISprint>('Sprint', SprintSchema)

@@ -7,6 +7,8 @@ import { authenticateUser } from '@/lib/auth-utils'
 import { PermissionService } from '@/lib/permissions/permission-service'
 import { Permission } from '@/lib/permissions/permission-definitions'
 import { notificationService } from '@/lib/notification-service'
+import { cache, invalidateCache } from '@/lib/redis'
+import crypto from 'crypto'
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,18 +29,25 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '20')
+    const after = searchParams.get('after')
     const search = searchParams.get('search') || ''
     const status = searchParams.get('status') || ''
     const priority = searchParams.get('priority') || ''
     const type = searchParams.get('type') || ''
     const project = searchParams.get('project') || ''
 
+    // Use cursor pagination if 'after' is provided, otherwise fallback to skip/limit
+    const useCursorPagination = !!after
+    const PAGE_SIZE = Math.min(limit, 100)
+    const sort = { createdAt: -1 as const }
+
     // Check if user can view all tasks (admin permission)
     const canViewAllTasks = await PermissionService.hasPermission(userId, Permission.TASK_READ)
 
     // Build filters
     const filters: any = { 
-      organization: organizationId
+      organization: organizationId,
+      archived: false
     }
     
     // If user can't view all tasks, filter by assigned tasks
@@ -49,15 +58,20 @@ export async function GET(request: NextRequest) {
       ]
     }
     
+    // Optimized search: use text index for longer queries, regex for short ones
     if (search) {
-      filters.$and = [
-        {
-          $or: [
-            { title: { $regex: search, $options: 'i' } },
-            { description: { $regex: search, $options: 'i' } }
-          ]
-        }
-      ]
+      if (search.length >= 3) {
+        filters.$text = { $search: search }
+      } else {
+        filters.$and = [
+          {
+            $or: [
+              { title: { $regex: search, $options: 'i' } },
+              { description: { $regex: search, $options: 'i' } }
+            ]
+          }
+        ]
+      }
     }
     
     if (status) {
@@ -76,29 +90,64 @@ export async function GET(request: NextRequest) {
       filters.project = project
     }
 
-    // Get tasks assigned to or created by the user
-    const tasks = await Task.find(filters)
-      .populate('project', 'name')
-      .populate('assignedTo', 'firstName lastName email')
-      .populate('createdBy', 'firstName lastName email')
-      .populate('story', 'title status')
-      .populate('sprint', 'name status')
-      .populate('parentTask', 'title')
-      .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
+    // Add cursor filter for cursor pagination
+    if (useCursorPagination && after) {
+      filters.createdAt = { $lt: new Date(after) }
+    }
 
-    const total = await Task.countDocuments(filters)
+    // Create cache key
+    const filterHash = crypto.createHash('md5').update(JSON.stringify(filters)).digest('hex')
+    const cacheKey = `tasks:v2:org:${organizationId}:user:${userId}:f:${filterHash}:after:${after || 'null'}:l:${PAGE_SIZE}`
+
+    // Use Redis cache with 30s TTL
+    const result = await cache(cacheKey, 30, async () => {
+      // Define fields to project (only what we need for list/kanban)
+      const fields = 'title status priority type project position labels createdAt updatedAt assignedTo createdBy storyPoints dueDate estimatedHours actualHours'
+
+      let query = Task.find(filters, fields)
+        .populate('project', 'name')
+        .populate('assignedTo', 'firstName lastName email')
+        .populate('createdBy', 'firstName lastName email')
+        .sort(sort)
+        .lean()
+
+      if (useCursorPagination) {
+        // Cursor pagination: fetch one extra to determine if there are more
+        const items = await query.limit(PAGE_SIZE + 1)
+        const hasMore = items.length > PAGE_SIZE
+        const data = hasMore ? items.slice(0, PAGE_SIZE) : items
+        const nextCursor = hasMore ? data[data.length - 1].createdAt.toISOString() : null
+        
+        return {
+          data,
+          pagination: {
+            nextCursor,
+            pageSize: PAGE_SIZE,
+            hasMore
+          }
+        }
+      } else {
+        // Legacy skip/limit pagination
+        const skip = (page - 1) * PAGE_SIZE
+        const items = await query.skip(skip).limit(PAGE_SIZE)
+        const total = await Task.countDocuments(filters)
+        
+        return {
+          data: items,
+          pagination: {
+            page,
+            limit: PAGE_SIZE,
+            total,
+            totalPages: Math.ceil(total / PAGE_SIZE)
+          }
+        }
+      }
+    })
 
     return NextResponse.json({
       success: true,
-      data: tasks,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit)
-      }
+      data: result.data,
+      pagination: result.pagination
     })
 
   } catch (error) {
@@ -158,11 +207,19 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Get the next position for this project/status combination
+    const taskStatus = status || 'todo'
+    const maxPosition = await Task.findOne(
+      { project, status: taskStatus },
+      { position: 1 }
+    ).sort({ position: -1 })
+    const nextPosition = maxPosition ? maxPosition.position + 1 : 0
+
     // Create task
     const task = new Task({
       title,
       description,
-      status: status || 'todo',
+      status: taskStatus,
       priority: priority || 'medium',
       type: type || 'task',
       organization: user.organization,
@@ -174,10 +231,14 @@ export async function POST(request: NextRequest) {
       storyPoints: storyPoints || undefined,
       dueDate: dueDate ? new Date(dueDate) : undefined,
       estimatedHours: estimatedHours || undefined,
-      labels: labels || []
+      labels: labels || [],
+      position: nextPosition
     })
 
     await task.save()
+
+    // Invalidate tasks cache for this organization
+    await invalidateCache(`tasks:*:org:${user.organization}:*`)
 
     // Populate the created task
     const populatedTask = await Task.findById(task._id)
@@ -191,7 +252,7 @@ export async function POST(request: NextRequest) {
     // Send notification if task is assigned to someone
     if (assignedTo && assignedTo !== userId) {
       try {
-        const project = await Project.findById(project).select('name')
+        const projectDoc = await Project.findById(project).select('name')
         const createdByUser = await User.findById(userId).select('firstName lastName')
         
         await notificationService.notifyTaskUpdate(
@@ -200,7 +261,7 @@ export async function POST(request: NextRequest) {
           assignedTo,
           user.organization,
           title,
-          project?.name
+          projectDoc?.name
         )
       } catch (notificationError) {
         console.error('Failed to send task assignment notification:', notificationError)

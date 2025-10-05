@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Plus, FolderOpen, CheckSquare, Users, Clock, BarChart3, ArrowRight } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { usePermissions } from '@/lib/permissions/permission-context'
 import { Permission } from '@/lib/permissions/permission-definitions'
 
@@ -60,12 +60,7 @@ const quickActions: QuickAction[] = [
 ]
 
 export function QuickActions() {
-  const router = useRouter()
   const { hasAnyPermission } = usePermissions()
-
-  const handleActionClick = (href: string) => {
-    router.push(href)
-  }
 
   // Filter actions based on user permissions
   const availableActions = quickActions.filter(action => 
@@ -83,12 +78,15 @@ export function QuickActions() {
             const Icon = action.icon
             
             return (
-              <Button
+              <Link
                 key={index}
-                variant="ghost"
-                className="h-auto p-4 justify-start hover:bg-gray-50 dark:hover:bg-gray-800"
-                onClick={() => handleActionClick(action.href)}
+                href={action.href}
+                prefetch={true}
               >
+                <Button
+                  variant="ghost"
+                  className="h-auto p-4 justify-start hover:bg-gray-50 dark:hover:bg-gray-800 w-full"
+                >
                 <div className={`p-2 rounded-lg ${action.color} mr-3`}>
                   <Icon className="h-4 w-4 text-white" />
                 </div>
@@ -100,21 +98,23 @@ export function QuickActions() {
                     {action.description}
                   </div>
                 </div>
-              </Button>
+                </Button>
+              </Link>
             )
           })}
         </div>
         
         <div className="mt-4 pt-4 border-t">
-          <Button 
-            variant="outline" 
-            className="w-full"
-            onClick={() => router.push('/projects')}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            View All Projects
-            <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
+          <Link href="/projects" prefetch={true}>
+            <Button 
+              variant="outline" 
+              className="w-full"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              View All Projects
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </Link>
         </div>
       </CardContent>
     </Card>

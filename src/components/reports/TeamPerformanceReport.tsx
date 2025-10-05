@@ -1,9 +1,9 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
+import { Progress } from '@/components/ui/Progress'
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/Avatar'
 import { 
   BarChart, 
   Bar, 

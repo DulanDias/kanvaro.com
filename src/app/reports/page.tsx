@@ -2,11 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useParams } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { MainLayout } from '@/components/layout/MainLayout'
+import { PageWrapper } from '@/components/layout/PageWrapper'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import { Progress } from '@/components/ui/Progress'
 import { 
   DollarSign, 
   TrendingUp, 
@@ -88,22 +90,28 @@ export default function ReportsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </MainLayout>
     )
   }
 
   if (!reportData) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">No report data available</p>
-      </div>
+      <MainLayout>
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">No report data available</p>
+        </div>
+      </MainLayout>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <MainLayout>
+      <PageWrapper>
+        <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -226,9 +234,15 @@ export default function ReportsPage() {
         </TabsContent>
 
         <TabsContent value="team">
-          <TeamPerformanceReport projectId={projectId} />
+          <TeamPerformanceReport 
+            members={[]} 
+            productivityTrends={[]} 
+            filters={{}} 
+          />
         </TabsContent>
       </Tabs>
-    </div>
+        </div>
+      </PageWrapper>
+    </MainLayout>
   )
 }

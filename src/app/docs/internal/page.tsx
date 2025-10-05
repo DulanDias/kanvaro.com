@@ -1,348 +1,226 @@
-'use client'
+import { redirect } from 'next/navigation';
+import Link from 'next/link';
+import { authenticateUser } from '@/lib/auth-utils';
+import { DocsLoader } from '@/lib/docs/loader';
+import { DocsLayout } from '@/components/docs/DocsLayout';
+import { Category, Audience } from '@/lib/docs/types';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Button } from '@/components/ui/Button';
 
-import { useState } from 'react'
-import { MainLayout } from '@/components/layout/MainLayout'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { 
-  BookOpen, 
-  Search, 
-  Users, 
-  FolderOpen, 
-  CheckSquare, 
-  Clock,
-  BarChart,
-  Settings,
-  UserPlus,
-  Shield,
-  Zap,
-  Play,
-  Bell,
-  DollarSign
-} from 'lucide-react'
+interface PageProps {
+  searchParams: {
+    audience?: string;
+    category?: string;
+    search?: string;
+  };
+}
 
-const documentationSections = [
-  {
-    id: 'getting-started',
-    title: 'Getting Started',
-    description: 'Learn the basics of using Kanvaro',
-    icon: BookOpen,
-    articles: [
-      {
-        title: 'Welcome to Kanvaro',
-        description: 'Introduction to the platform and its features',
-        readTime: '5 min read'
-      },
-      {
-        title: 'Your First Project',
-        description: 'Step-by-step guide to creating your first project',
-        readTime: '10 min read'
-      },
-      {
-        title: 'Understanding the Dashboard',
-        description: 'Navigate the main dashboard and understand key metrics',
-        readTime: '8 min read'
-      }
-    ]
-  },
-  {
-    id: 'team-management',
-    title: 'Team Management',
-    description: 'Manage your team members and permissions',
-    icon: Users,
-    articles: [
-      {
-        title: 'Inviting Team Members',
-        description: 'How to invite new members to your organization',
-        readTime: '5 min read'
-      },
-      {
-        title: 'Managing Roles and Permissions',
-        description: 'Understanding and configuring user roles',
-        readTime: '12 min read'
-      },
-      {
-        title: 'User Profiles and Settings',
-        description: 'Managing user profiles and personal settings',
-        readTime: '7 min read'
-      }
-    ]
-  },
-  {
-    id: 'project-management',
-    title: 'Project Management',
-    description: 'Create and manage projects effectively',
-    icon: FolderOpen,
-    articles: [
-      {
-        title: 'Creating Projects',
-        description: 'Complete guide to project creation and setup',
-        readTime: '15 min read'
-      },
-      {
-        title: 'Project Templates',
-        description: 'Using and creating project templates',
-        readTime: '8 min read'
-      },
-      {
-        title: 'Project Settings and Configuration',
-        description: 'Advanced project configuration options',
-        readTime: '10 min read'
-      },
-      {
-        title: 'Project Assignment and Team Management',
-        description: 'Assigning team members to projects',
-        readTime: '6 min read'
-      }
-    ]
-  },
-  {
-    id: 'task-management',
-    title: 'Task Management',
-    description: 'Organize and track your work',
-    icon: CheckSquare,
-    articles: [
-      {
-        title: 'Creating Tasks and Subtasks',
-        description: 'How to create and organize tasks',
-        readTime: '8 min read'
-      },
-      {
-        title: 'Epics and Stories',
-        description: 'Understanding agile methodology in Kanvaro',
-        readTime: '12 min read'
-      },
-      {
-        title: 'Sprint Planning',
-        description: 'Setting up and managing sprints',
-        readTime: '15 min read'
-      },
-      {
-        title: 'Kanban and List Views',
-        description: 'Using different views to manage your work',
-        readTime: '10 min read'
-      }
-    ]
-  },
-  {
-    id: 'time-tracking',
-    title: 'Time Tracking',
-    description: 'Track time and generate reports',
-    icon: Clock,
-    articles: [
-      {
-        title: 'Using the Timer',
-        description: 'How to use the built-in timer for time tracking',
-        readTime: '5 min read'
-      },
-      {
-        title: 'Manual Time Entry',
-        description: 'Adding time entries manually',
-        readTime: '6 min read'
-      },
-      {
-        title: 'Time Reports and Analytics',
-        description: 'Understanding time tracking reports',
-        readTime: '10 min read'
-      }
-    ]
-  },
-  {
-    id: 'reports-analytics',
-    title: 'Reports & Analytics',
-    description: 'Generate insights and reports',
-    icon: BarChart,
-    articles: [
-      {
-        title: 'Project Reports',
-        description: 'Creating and understanding project reports',
-        readTime: '12 min read'
-      },
-      {
-        title: 'Team Performance Analytics',
-        description: 'Analyzing team productivity and performance',
-        readTime: '15 min read'
-      },
-      {
-        title: 'Financial Reports',
-        description: 'Budget tracking and financial reporting',
-        readTime: '10 min read'
-      }
-    ]
-  },
-  {
-    id: 'settings-configuration',
-    title: 'Settings & Configuration',
-    description: 'Configure your organization and preferences',
-    icon: Settings,
-    articles: [
-      {
-        title: 'Organization Settings',
-        description: 'Configuring your organization details',
-        readTime: '8 min read'
-      },
-      {
-        title: 'Email Configuration',
-        description: 'Setting up email notifications and SMTP',
-        readTime: '12 min read'
-      },
-      {
-        title: 'Database Configuration',
-        description: 'Database setup and management',
-        readTime: '15 min read'
-      },
-      {
-        title: 'Security Settings',
-        description: 'Configuring security and access controls',
-        readTime: '10 min read'
-      }
-    ]
+const categoryLabels: Record<Category, string> = {
+  concepts: 'Concepts',
+  'how-to': 'How-to Guides',
+  tutorial: 'Tutorials',
+  reference: 'Reference',
+  operations: 'Operations',
+  'self-hosting': 'Self-hosting'
+};
+
+const audienceLabels: Record<Audience, string> = {
+  admin: 'Admin',
+  project_manager: 'Project Manager',
+  team_member: 'Team Member',
+  client: 'Client',
+  viewer: 'Viewer',
+  self_host_admin: 'Self-host Admin'
+};
+
+export default async function InternalDocsIndex({ searchParams }: PageProps) {
+  // Authenticate user
+  const auth = await authenticateUser();
+  
+  if ('error' in auth) {
+    redirect('/login?redirect=/docs/internal');
   }
-]
 
-export default function InternalDocsPage() {
-  const [searchQuery, setSearchQuery] = useState('')
-  const [selectedSection, setSelectedSection] = useState('getting-started')
+  const { audience, category, search } = searchParams;
+  
+  const docs = await DocsLoader.getDocsByFilter({
+    visibility: 'internal',
+    audience: audience as Audience,
+    category: category as Category,
+    search
+  });
 
-  const filteredSections = documentationSections.map(section => ({
-    ...section,
-    articles: section.articles.filter(article =>
-      article.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      article.description.toLowerCase().includes(searchQuery.toLowerCase())
-    )
-  })).filter(section => section.articles.length > 0)
+  const categories = await DocsLoader.getCategories('internal');
+  const audiences = await DocsLoader.getAudiences('internal');
 
   return (
-    <MainLayout>
-      <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Internal Documentation</h1>
-          <p className="text-muted-foreground">Comprehensive guides for using Kanvaro effectively</p>
-        </div>
-      </div>
-
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search documentation..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-        <Badge variant="outline" className="px-3 py-1">
-          {filteredSections.reduce((total, section) => total + section.articles.length, 0)} articles
-        </Badge>
-      </div>
-
-      <Tabs value={selectedSection} onValueChange={setSelectedSection} className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4 lg:grid-cols-7">
-          <TabsTrigger value="getting-started">Getting Started</TabsTrigger>
-          <TabsTrigger value="team-management">Team</TabsTrigger>
-          <TabsTrigger value="project-management">Projects</TabsTrigger>
-          <TabsTrigger value="task-management">Tasks</TabsTrigger>
-          <TabsTrigger value="time-tracking">Time</TabsTrigger>
-          <TabsTrigger value="reports-analytics">Reports</TabsTrigger>
-          <TabsTrigger value="settings-configuration">Settings</TabsTrigger>
-        </TabsList>
-
-        {filteredSections.map((section) => (
-          <TabsContent key={section.id} value={section.id} className="space-y-4">
+    <DocsLayout
+      visibility="internal"
+      initialAudience={audience as Audience}
+      initialCategory={category as Category}
+      initialSearch={search}
+    >
+      <div className="max-w-4xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-foreground mb-4">
+            Internal Documentation
+          </h1>
+          <p className="text-lg text-muted-foreground mb-6">
+            Advanced guides, operations runbooks, and configuration matrices for administrators and technical teams.
+          </p>
+          
+          {/* Quick stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
             <Card>
-              <CardHeader>
-                <div className="flex items-center space-x-3">
-                  <div className="p-2 bg-primary/10 rounded-lg">
-                    <section.icon className="h-6 w-6 text-primary" />
-                  </div>
-                  <div>
-                    <CardTitle>{section.title}</CardTitle>
-                    <CardDescription>{section.description}</CardDescription>
-                  </div>
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                  {section.articles.map((article, index) => (
-                    <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
-                      <CardContent className="p-4">
-                        <h3 className="font-semibold text-foreground mb-2">{article.title}</h3>
-                        <p className="text-sm text-muted-foreground mb-3">{article.description}</p>
-                        <div className="flex items-center justify-between">
-                          <Badge variant="secondary" className="text-xs">
-                            {article.readTime}
-                          </Badge>
-                          <Button variant="ghost" size="sm">
-                            Read More
-                          </Button>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+              <CardContent className="p-4">
+                <div className="text-2xl font-bold text-destructive">{docs.length}</div>
+                <div className="text-sm text-muted-foreground">Internal Documents</div>
               </CardContent>
             </Card>
-          </TabsContent>
-        ))}
-      </Tabs>
-
-      {/* Quick Start Guide */}
-      <Card className="bg-gradient-to-r from-primary/5 to-primary/10 border-primary/20">
-        <CardHeader>
-          <CardTitle className="flex items-center space-x-2">
-            <Zap className="h-5 w-5 text-primary" />
-            <span>Quick Start Guide</span>
-          </CardTitle>
-          <CardDescription>
-            Get up and running with Kanvaro in just a few steps
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-            <div className="flex items-center space-x-3 p-3 bg-card rounded-lg">
-              <div className="p-2 bg-green-500/10 rounded-full">
-                <UserPlus className="h-4 w-4 text-green-600" />
-              </div>
-              <div>
-                <h4 className="font-medium text-sm text-foreground">1. Invite Team</h4>
-                <p className="text-xs text-muted-foreground">Add your team members</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3 p-3 bg-card rounded-lg">
-              <div className="p-2 bg-blue-500/10 rounded-full">
-                <FolderOpen className="h-4 w-4 text-blue-600" />
-              </div>
-              <div>
-                <h4 className="font-medium text-sm text-foreground">2. Create Project</h4>
-                <p className="text-xs text-muted-foreground">Set up your first project</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3 p-3 bg-card rounded-lg">
-              <div className="p-2 bg-purple-500/10 rounded-full">
-                <CheckSquare className="h-4 w-4 text-purple-600" />
-              </div>
-              <div>
-                <h4 className="font-medium text-sm text-foreground">3. Add Tasks</h4>
-                <p className="text-xs text-muted-foreground">Break down your work</p>
-              </div>
-            </div>
-            <div className="flex items-center space-x-3 p-3 bg-card rounded-lg">
-              <div className="p-2 bg-orange-500/10 rounded-full">
-                <Play className="h-4 w-4 text-orange-600" />
-              </div>
-              <div>
-                <h4 className="font-medium text-sm text-foreground">4. Start Tracking</h4>
-                <p className="text-xs text-muted-foreground">Track time and progress</p>
-              </div>
-            </div>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-2xl font-bold text-orange-600">{Object.keys(categories).length}</div>
+                <div className="text-sm text-muted-foreground">Categories</div>
+              </CardContent>
+            </Card>
+            <Card>
+              <CardContent className="p-4">
+                <div className="text-2xl font-bold text-purple-600">{Object.keys(audiences).length}</div>
+                <div className="text-sm text-muted-foreground">Audiences</div>
+              </CardContent>
+            </Card>
           </div>
-        </CardContent>
-      </Card>
+        </div>
+
+        {/* Categories */}
+        {Object.entries(categories).map(([categoryKey, categoryDocs]) => {
+          if (categoryDocs.length === 0) return null;
+
+          return (
+            <div key={categoryKey} className="mb-12">
+              <h2 className="text-2xl font-semibold text-foreground mb-4">
+                {categoryLabels[categoryKey as Category]}
+              </h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {categoryDocs.map((doc) => (
+                  <Card key={doc.slug} className="hover:shadow-md transition-shadow">
+                    <Link href={`/docs/internal/${doc.slug}`} target="_blank" rel="noopener noreferrer">
+                      <CardHeader>
+                        <CardTitle className="text-lg">{doc.title}</CardTitle>
+                        <CardDescription className="line-clamp-3">
+                          {doc.summary}
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex items-center justify-between">
+                          <div className="flex space-x-2">
+                            {doc.audiences.slice(0, 2).map(audience => (
+                              <Badge key={audience} variant="secondary">
+                                {audienceLabels[audience]}
+                              </Badge>
+                            ))}
+                            {doc.audiences.length > 2 && (
+                              <span className="text-xs text-muted-foreground">
+                                +{doc.audiences.length - 2} more
+                              </span>
+                            )}
+                          </div>
+                          <span className="text-xs text-muted-foreground">
+                            {new Date(doc.updated).toISOString().split('T')[0]}
+                          </span>
+                        </div>
+                      </CardContent>
+                    </Link>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          );
+        })}
+
+        {/* No results */}
+        {docs.length === 0 && (
+          <div className="text-center py-12">
+            <div className="text-muted-foreground mb-4">
+              <svg className="mx-auto h-16 w-16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-medium text-foreground mb-2">No internal documentation found</h3>
+            <p className="text-muted-foreground mb-4">
+              Try adjusting your filters or search query to find what you're looking for.
+            </p>
+            <Button asChild>
+              <Link href="/docs/internal">
+                View All Internal Documentation
+              </Link>
+            </Button>
+          </div>
+        )}
+
+        {/* Operations Quick Access */}
+        <Card className="mt-16 bg-destructive/5 border-destructive/20">
+          <CardHeader>
+            <CardTitle className="text-2xl text-foreground">
+              Operations Quick Access
+            </CardTitle>
+            <CardDescription>
+              Critical operational guides for system administrators and technical teams.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Card className="hover:shadow-md transition-shadow">
+                <Link href="/docs/internal/operations/deployment" target="_blank" rel="noopener noreferrer">
+                  <CardContent className="flex items-center p-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-destructive/10 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-destructive" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-sm font-medium text-foreground">Deployment Guide</h3>
+                      <p className="text-sm text-muted-foreground">Production deployment procedures</p>
+                    </div>
+                  </CardContent>
+                </Link>
+              </Card>
+              
+              <Card className="hover:shadow-md transition-shadow">
+                <Link href="/docs/internal/operations/monitoring" target="_blank" rel="noopener noreferrer">
+                  <CardContent className="flex items-center p-4">
+                    <div className="flex-shrink-0">
+                      <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <svg className="w-5 h-5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="ml-4">
+                      <h3 className="text-sm font-medium text-foreground">System Monitoring</h3>
+                      <p className="text-sm text-muted-foreground">Health checks and monitoring setup</p>
+                    </div>
+                  </CardContent>
+                </Link>
+              </Card>
+            </div>
+          </CardContent>
+        </Card>
       </div>
-    </MainLayout>
-  )
+    </DocsLayout>
+  );
 }
+
+export const metadata = {
+  title: 'Internal Documentation - Kanvaro',
+  description: 'Advanced guides, operations runbooks, and configuration matrices for administrators and technical teams.',
+  openGraph: {
+    title: 'Kanvaro Internal Documentation',
+    description: 'Advanced guides, operations runbooks, and configuration matrices for administrators and technical teams.',
+    type: 'website',
+  },
+};

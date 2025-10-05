@@ -1,3 +1,14 @@
+---
+slug: "concepts/features"
+title: "Features Specification"
+summary: "Comprehensive overview of all Kanvaro features including project management, task tracking, team collaboration, financial management, and more."
+visibility: "public"
+audiences: ["admin", "project_manager", "team_member", "client", "viewer", "self_host_admin"]
+category: "concepts"
+order: 10
+updated: "2025-01-04"
+---
+
 # Kanvaro - Features Specification
 
 ## Overview

@@ -25,6 +25,8 @@ interface CreateTaskModalProps {
   onClose: () => void
   projectId: string
   onTaskCreated: () => void
+  defaultStatus?: string
+  availableStatuses?: Array<{ key: string; title: string }>
 }
 
 interface User {
@@ -41,7 +43,7 @@ interface Subtask {
   isCompleted: boolean
 }
 
-export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCreated }: CreateTaskModalProps) {
+export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCreated, defaultStatus, availableStatuses }: CreateTaskModalProps) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [users, setUsers] = useState<User[]>([])
@@ -50,7 +52,7 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    status: 'todo',
+    status: defaultStatus || 'todo',
     priority: 'medium',
     type: 'task',
     assignedTo: '',
@@ -138,7 +140,7 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
         setFormData({
           title: '',
           description: '',
-          status: 'todo',
+          status: defaultStatus || 'todo',
           priority: 'medium',
           type: 'task',
           assignedTo: '',
@@ -213,11 +215,21 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="todo">To Do</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="review">Review</SelectItem>
-                    <SelectItem value="testing">Testing</SelectItem>
-                    <SelectItem value="done">Done</SelectItem>
+                    {availableStatuses ? (
+                      availableStatuses.map((status) => (
+                        <SelectItem key={status.key} value={status.key}>
+                          {status.title}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <>
+                        <SelectItem value="todo">To Do</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="review">Review</SelectItem>
+                        <SelectItem value="testing">Testing</SelectItem>
+                        <SelectItem value="done">Done</SelectItem>
+                      </>
+                    )}
                   </SelectContent>
                 </Select>
               </div>

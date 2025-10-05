@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import { Progress } from '@/components/ui/Progress'
 import { 
   Calendar, 
   Clock, 
@@ -187,7 +187,7 @@ export function SprintReport({ projectId }: SprintReportProps) {
   }
 
   const filteredEvents = selectedSprint 
-    ? data.sprintEvents.filter(event => event.sprint === selectedSprint)
+    ? data.sprintEvents.filter(event => (event as any).sprint === selectedSprint)
     : data.sprintEvents
 
   return (
@@ -308,7 +308,7 @@ export function SprintReport({ projectId }: SprintReportProps) {
                   <div className="space-y-3">
                     <p className="text-sm font-medium">Sprint Events</p>
                     {filteredEvents
-                      .filter(event => event.sprint === sprint._id)
+                      .filter(event => (event as any).sprint === sprint._id)
                       .map((event) => (
                         <div key={event._id} className="border rounded-lg p-3 space-y-2">
                           <div className="flex items-center justify-between">

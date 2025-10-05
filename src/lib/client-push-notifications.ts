@@ -86,7 +86,7 @@ export class ClientPushNotificationService {
       // Create new subscription
       const subscription = await this.registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(this.vapidPublicKey)
+        applicationServerKey: this.urlBase64ToUint8Array(this.vapidPublicKey) as any
       })
 
       // Send subscription to server

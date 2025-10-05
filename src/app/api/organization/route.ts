@@ -45,10 +45,37 @@ export async function GET() {
     const organization = await Organization.findOne()
     
     if (!organization) {
-      return NextResponse.json(
-        { error: 'Organization not found' },
-        { status: 404 }
-      )
+      // Return default organization when none exists
+      const defaultOrganization = {
+        id: '1',
+        name: 'Kanvaro',
+        domain: 'kanvaro.com',
+        logo: '/logo-light.svg',
+        darkLogo: '/logo-dark.svg',
+        logoMode: 'both',
+        timezone: 'UTC',
+        currency: 'USD',
+        language: 'en',
+        industry: 'Technology',
+        size: 'small',
+        settings: {
+          allowSelfRegistration: false,
+          requireEmailVerification: true,
+          defaultUserRole: 'team_member',
+          projectTemplates: [],
+          timeTracking: {
+            allowTimeTracking: true,
+            allowManualTimeSubmission: true
+          }
+        },
+        billing: {
+          plan: 'free',
+          maxUsers: 5,
+          maxProjects: 3,
+          features: ['basic_project_management', 'time_tracking', 'basic_reporting']
+        }
+      }
+      return NextResponse.json(defaultOrganization)
     }
     
     return NextResponse.json({

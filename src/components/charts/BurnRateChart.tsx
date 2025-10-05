@@ -1,8 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
 import { 
   LineChart, 
   Line, 
@@ -284,7 +284,7 @@ export function BurnRateChart({ data, title = "Burn Rate Analysis", description 
           {/* Chart */}
           <div className="h-80">
             <ResponsiveContainer width="100%" height="100%">
-              {renderChart()}
+              {renderChart() || <div>No chart data available</div>}
             </ResponsiveContainer>
           </div>
 

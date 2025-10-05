@@ -6,6 +6,7 @@ import { TimeEntry } from '@/models/TimeEntry'
 import { Project } from '@/models/Project'
 import { authenticateUser } from '@/lib/auth-utils'
 import { hasPermission } from '@/lib/permissions/permission-utils'
+import { Permission } from '@/lib/permissions/permission-definitions'
 
 export async function GET(req: NextRequest) {
   try {
@@ -17,7 +18,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Check if user has team reporting permissions
-    const hasAccess = await hasPermission(authResult.user.id, 'REPORTING_VIEW')
+    const hasAccess = await hasPermission(authResult.user.id, Permission.REPORTING_VIEW)
     if (!hasAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
@@ -109,6 +110,8 @@ export async function GET(req: NextRequest) {
 
         return {
           ...user,
+          firstName: user.firstName,
+          lastName: user.lastName,
           stats: {
             tasksCompleted: completedTasks,
             totalTasks,

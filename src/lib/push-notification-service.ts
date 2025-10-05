@@ -142,7 +142,7 @@ export class PushNotificationService {
       icon: icons[notification.type] || '/icons/notification.png',
       badge: `/icons/badge-${priority}.png`,
       data: {
-        notificationId: notification._id.toString(),
+        notificationId: (notification._id as any).toString(),
         type: notification.type,
         entityId: notification.data?.entityId,
         entityType: notification.data?.entityType,

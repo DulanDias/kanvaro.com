@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
@@ -222,6 +223,7 @@ const navigationItems = [
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [expandedItems, setExpandedItems] = useState<string[]>([])
   const pathname = usePathname()
+  const router = useRouter()
   const { organization, loading } = useOrganization()
   const { theme, resolvedTheme } = useTheme()
 
@@ -259,16 +261,16 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       const response = await fetch('/api/auth/logout', { method: 'POST' })
       if (response.ok) {
         // Clear any client-side state if needed
-        window.location.href = '/login'
+        router.push('/login')
       } else {
         console.error('Logout failed:', await response.text())
         // Still redirect to login even if logout API fails
-        window.location.href = '/login'
+        router.push('/login')
       }
     } catch (error) {
       console.error('Logout failed:', error)
       // Still redirect to login even if logout API fails
-      window.location.href = '/login'
+      router.push('/login')
     }
   }
 
@@ -325,6 +327,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
               pathname={pathname}
               expandedItems={expandedItems}
               onToggleExpanded={toggleExpanded}
+              router={router}
             />
           ))}
         </nav>
@@ -354,9 +357,10 @@ interface NavigationItemProps {
   pathname: string
   expandedItems: string[]
   onToggleExpanded: (itemId: string) => void
+  router: any
 }
 
-function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpanded }: NavigationItemProps) {
+function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpanded, router }: NavigationItemProps) {
   const isActive = pathname === item.path
   const hasChildren = item.children && item.children.length > 0
   const isExpanded = expandedItems.includes(item.id)
@@ -376,7 +380,7 @@ function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpa
             if (hasChildren) {
               onToggleExpanded(item.id)
             } else {
-              window.location.href = item.path
+              router.push(item.path)
             }
           }}
         >
@@ -405,7 +409,7 @@ function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpa
                   variant={pathname === child.path ? 'secondary' : 'ghost'}
                   className="w-full justify-start text-sm"
                   onClick={() => {
-                    window.location.href = child.path
+                    router.push(child.path)
                   }}
                 >
                   <child.icon className="mr-2 h-4 w-4" />

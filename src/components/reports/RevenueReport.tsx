@@ -1,8 +1,8 @@
 'use client'
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
+import { Progress } from '@/components/ui/Progress'
 import { 
   BarChart, 
   Bar, 
@@ -232,7 +232,7 @@ export function RevenueReport({ revenueSources, monthlyTrends, filters }: Revenu
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
-                <Tooltip formatter={(value) => [`${value.toFixed(1)}%`, 'Margin']} />
+                <Tooltip formatter={(value) => [`${typeof value === 'number' ? value.toFixed(1) : value}%`, 'Margin']} />
                 <Line 
                   type="monotone" 
                   dataKey="margin" 

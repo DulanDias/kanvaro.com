@@ -1,16 +1,18 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { MainLayout } from '@/components/layout/MainLayout'
+import { PageWrapper } from '@/components/layout/PageWrapper'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
-import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import { Progress } from '@/components/ui/Progress'
+import { Input } from '@/components/ui/Input'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Calendar } from '@/components/ui/calendar'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/Popover'
 import { CalendarIcon, Download, Filter, RefreshCw, Search } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
@@ -31,9 +33,27 @@ interface Project {
     spent: number
     remaining: number
   }
-  team?: {
-    members: number
-    leads: number
+  team?: any[]
+  stats: {
+    tasks: {
+      total: number
+      completed: number
+      completionRate: number
+    }
+    sprints: {
+      total: number
+      active: number
+    }
+    timeTracking: {
+      totalHours: number
+      entries: number
+    }
+    budget: {
+      total: number
+      spent: number
+      remaining: number
+      utilizationRate: number
+    }
   }
 }
 
@@ -169,22 +189,28 @@ export default function ProjectReportsPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </MainLayout>
     )
   }
 
   if (!reportData) {
     return (
-      <div className="text-center py-8">
-        <p className="text-muted-foreground">No project data available</p>
-      </div>
+      <MainLayout>
+        <div className="text-center py-8">
+          <p className="text-muted-foreground">No project data available</p>
+        </div>
+      </MainLayout>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <MainLayout>
+      <PageWrapper>
+        <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -437,6 +463,8 @@ export default function ProjectReportsPage() {
           />
         </TabsContent>
       </Tabs>
-    </div>
+        </div>
+      </PageWrapper>
+    </MainLayout>
   )
 }

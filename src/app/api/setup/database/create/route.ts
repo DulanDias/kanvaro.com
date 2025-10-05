@@ -1,5 +1,82 @@
 import { NextRequest, NextResponse } from 'next/server'
 import mongoose from 'mongoose'
+import { Currency } from '@/models/Currency'
+
+// Currency data for seeding
+const currencyData = [
+  // Major Global Currencies
+  { code: 'USD', name: 'US Dollar', symbol: '$', country: 'United States', isMajor: true },
+  { code: 'EUR', name: 'Euro', symbol: '€', country: 'European Union', isMajor: true },
+  { code: 'GBP', name: 'British Pound Sterling', symbol: '£', country: 'United Kingdom', isMajor: true },
+  { code: 'JPY', name: 'Japanese Yen', symbol: '¥', country: 'Japan', isMajor: true },
+  { code: 'CHF', name: 'Swiss Franc', symbol: 'CHF', country: 'Switzerland', isMajor: true },
+  { code: 'CAD', name: 'Canadian Dollar', symbol: 'C$', country: 'Canada', isMajor: true },
+  { code: 'AUD', name: 'Australian Dollar', symbol: 'A$', country: 'Australia', isMajor: true },
+  { code: 'NZD', name: 'New Zealand Dollar', symbol: 'NZ$', country: 'New Zealand', isMajor: true },
+  { code: 'CNY', name: 'Chinese Yuan', symbol: '¥', country: 'China', isMajor: true },
+  { code: 'INR', name: 'Indian Rupee', symbol: '₹', country: 'India', isMajor: true },
+  { code: 'BRL', name: 'Brazilian Real', symbol: 'R$', country: 'Brazil', isMajor: true },
+  { code: 'HKD', name: 'Hong Kong Dollar', symbol: 'HK$', country: 'Hong Kong', isMajor: true },
+  { code: 'SGD', name: 'Singapore Dollar', symbol: 'S$', country: 'Singapore', isMajor: true },
+  { code: 'KRW', name: 'South Korean Won', symbol: '₩', country: 'South Korea', isMajor: true },
+  { code: 'THB', name: 'Thai Baht', symbol: '฿', country: 'Thailand', isMajor: true },
+  { code: 'MYR', name: 'Malaysian Ringgit', symbol: 'RM', country: 'Malaysia', isMajor: true },
+  { code: 'IDR', name: 'Indonesian Rupiah', symbol: 'Rp', country: 'Indonesia', isMajor: true },
+  { code: 'PHP', name: 'Philippine Peso', symbol: '₱', country: 'Philippines', isMajor: true },
+  { code: 'VND', name: 'Vietnamese Dong', symbol: '₫', country: 'Vietnam', isMajor: true },
+  { code: 'TRY', name: 'Turkish Lira', symbol: '₺', country: 'Turkey', isMajor: true },
+  { code: 'RUB', name: 'Russian Ruble', symbol: '₽', country: 'Russia', isMajor: true },
+  { code: 'ZAR', name: 'South African Rand', symbol: 'R', country: 'South Africa', isMajor: true },
+  { code: 'EGP', name: 'Egyptian Pound', symbol: '£', country: 'Egypt', isMajor: true },
+  { code: 'MXN', name: 'Mexican Peso', symbol: '$', country: 'Mexico', isMajor: true },
+  { code: 'ARS', name: 'Argentine Peso', symbol: '$', country: 'Argentina', isMajor: true },
+  { code: 'CLP', name: 'Chilean Peso', symbol: '$', country: 'Chile', isMajor: true },
+  { code: 'COP', name: 'Colombian Peso', symbol: '$', country: 'Colombia', isMajor: true },
+  { code: 'PEN', name: 'Peruvian Sol', symbol: 'S/', country: 'Peru', isMajor: true },
+  { code: 'UYU', name: 'Uruguayan Peso', symbol: '$U', country: 'Uruguay', isMajor: true },
+  { code: 'BOB', name: 'Bolivian Boliviano', symbol: 'Bs', country: 'Bolivia', isMajor: true },
+  { code: 'PYG', name: 'Paraguayan Guarani', symbol: '₲', country: 'Paraguay', isMajor: true },
+  { code: 'VES', name: 'Venezuelan Bolivar', symbol: 'Bs.S', country: 'Venezuela', isMajor: true },
+  { code: 'GYD', name: 'Guyanese Dollar', symbol: 'G$', country: 'Guyana', isMajor: true },
+  { code: 'SRD', name: 'Surinamese Dollar', symbol: '$', country: 'Suriname', isMajor: true },
+  { code: 'TTD', name: 'Trinidad and Tobago Dollar', symbol: 'TT$', country: 'Trinidad and Tobago', isMajor: true },
+  { code: 'JMD', name: 'Jamaican Dollar', symbol: 'J$', country: 'Jamaica', isMajor: true },
+  { code: 'BBD', name: 'Barbadian Dollar', symbol: 'Bds$', country: 'Barbados', isMajor: true },
+  { code: 'BZD', name: 'Belize Dollar', symbol: 'BZ$', country: 'Belize', isMajor: true },
+  { code: 'XCD', name: 'East Caribbean Dollar', symbol: 'EC$', country: 'Eastern Caribbean', isMajor: true },
+  { code: 'AWG', name: 'Aruban Florin', symbol: 'ƒ', country: 'Aruba', isMajor: true },
+  { code: 'BMD', name: 'Bermudian Dollar', symbol: 'BD$', country: 'Bermuda', isMajor: true },
+  { code: 'KYD', name: 'Cayman Islands Dollar', symbol: 'CI$', country: 'Cayman Islands', isMajor: true },
+  { code: 'FJD', name: 'Fijian Dollar', symbol: 'FJ$', country: 'Fiji', isMajor: true },
+  { code: 'PGK', name: 'Papua New Guinean Kina', symbol: 'K', country: 'Papua New Guinea', isMajor: false },
+  { code: 'SBD', name: 'Solomon Islands Dollar', symbol: 'SI$', country: 'Solomon Islands', isMajor: false },
+  { code: 'VUV', name: 'Vanuatu Vatu', symbol: 'Vt', country: 'Vanuatu', isMajor: false },
+  { code: 'WST', name: 'Samoan Tala', symbol: 'WS$', country: 'Samoa', isMajor: false },
+  { code: 'TOP', name: 'Tongan Paʻanga', symbol: 'T$', country: 'Tonga', isMajor: false },
+  { code: 'KID', name: 'Kiribati Dollar', symbol: '$', country: 'Kiribati', isMajor: false },
+  // Cryptocurrencies
+  { code: 'BTC', name: 'Bitcoin', symbol: '₿', country: 'Global', isMajor: false },
+  { code: 'ETH', name: 'Ethereum', symbol: 'Ξ', country: 'Global', isMajor: false },
+  { code: 'LTC', name: 'Litecoin', symbol: 'Ł', country: 'Global', isMajor: false },
+  { code: 'XRP', name: 'Ripple', symbol: 'XRP', country: 'Global', isMajor: false },
+  { code: 'ADA', name: 'Cardano', symbol: '₳', country: 'Global', isMajor: false },
+  { code: 'DOT', name: 'Polkadot', symbol: '●', country: 'Global', isMajor: false },
+  { code: 'LINK', name: 'Chainlink', symbol: 'LINK', country: 'Global', isMajor: false },
+  { code: 'UNI', name: 'Uniswap', symbol: 'UNI', country: 'Global', isMajor: false },
+  { code: 'AAVE', name: 'Aave', symbol: 'AAVE', country: 'Global', isMajor: false },
+  { code: 'SOL', name: 'Solana', symbol: '◎', country: 'Global', isMajor: false }
+]
+
+async function seedCurrencies() {
+  try {
+    console.log('Seeding currencies...')
+    await Currency.insertMany(currencyData)
+    console.log(`Successfully seeded ${currencyData.length} currencies`)
+  } catch (error) {
+    console.error('Error seeding currencies:', error)
+    throw error
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +113,17 @@ export async function POST(request: NextRequest) {
       
       // Clean up test document
       await testCollection.deleteOne({ test: true })
+      
+      // Seed currencies if not already seeded
+      console.log('Checking if currencies need to be seeded...')
+      const existingCurrencies = await Currency.countDocuments()
+      if (existingCurrencies === 0) {
+        console.log('Seeding currencies...')
+        await seedCurrencies()
+        console.log('Currencies seeded successfully')
+      } else {
+        console.log(`Currencies already exist (${existingCurrencies} found)`)
+      }
     }
     
     // Close connection

@@ -6,6 +6,7 @@ import { Sprint } from '@/models/Sprint'
 import { TimeEntry } from '@/models/TimeEntry'
 import { authenticateUser } from '@/lib/auth-utils'
 import { hasPermission } from '@/lib/permissions/permission-utils'
+import { Permission } from '@/lib/permissions/permission-definitions'
 
 export async function GET(req: NextRequest) {
   try {
@@ -28,7 +29,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Check if user has access to this project
-    const hasAccess = await hasPermission(authResult.user.id, 'PROJECT_READ', projectId)
+    const hasAccess = await hasPermission(authResult.user.id, Permission.PROJECT_READ, projectId)
     if (!hasAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
@@ -71,7 +72,7 @@ export async function POST(req: NextRequest) {
     const { projectId, sprintId, date, plannedBurn, actualBurn, velocity, capacity, utilization, notes } = body
 
     // Check if user has permission to manage budget for this project
-    const hasAccess = await hasPermission(authResult.user.id, 'FINANCIAL_MANAGE_BUDGET', projectId)
+    const hasAccess = await hasPermission(authResult.user.id, Permission.FINANCIAL_MANAGE_BUDGET, projectId)
     if (!hasAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }

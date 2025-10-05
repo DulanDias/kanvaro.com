@@ -89,7 +89,7 @@ export async function POST(req: NextRequest) {
     const { projectId, amount, currency, category, description, billingReference, isRecurring, recurringFrequency, notes } = body
 
     // Check if user has permission to manage budget for this project
-    const hasAccess = await hasPermission(authResult.user.id, 'FINANCIAL_MANAGE_BUDGET', projectId)
+    const hasAccess = await hasPermission(authResult.user.id, Permission.FINANCIAL_MANAGE_BUDGET, projectId)
     if (!hasAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }

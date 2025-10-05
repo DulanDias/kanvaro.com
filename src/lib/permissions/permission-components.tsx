@@ -103,7 +103,7 @@ export function FeatureGate({
 }
 
 // Higher-order component for permission-based rendering
-export function withPermission<P extends object>(
+export function withPermissionComponent<P extends object>(
   Component: React.ComponentType<P>,
   permission: Permission,
   projectId?: string
@@ -118,7 +118,7 @@ export function withPermission<P extends object>(
 }
 
 // Higher-order component for multiple permissions
-export function withPermissions<P extends object>(
+export function withPermissionsComponent<P extends object>(
   Component: React.ComponentType<P>,
   permissions: Permission[],
   projectId?: string,
@@ -138,7 +138,7 @@ export function withPermissions<P extends object>(
 }
 
 // Higher-order component for project access
-export function withProjectAccess<P extends object>(
+export function withProjectAccessComponent<P extends object>(
   Component: React.ComponentType<P>,
   projectId: string,
   requireManagement: boolean = false

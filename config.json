@@ -1,8 +1,8 @@
 {
   "setupCompleted": true,
   "database": {
-    "host": "mongodb",
-    "port": 27017,
+    "host": "localhost",
+    "port": 27018,
     "database": "kanvaro_dev",
     "username": "admin",
     "password": "password",
@@ -10,5 +10,5 @@
     "ssl": false,
     "uri": "mongodb://admin:password@mongodb:27017/kanvaro_dev?authSource=admin"
   },
-  "organizationId": "68e065c7514e3182614b1a36"
+  "organizationId": "68e2447bb2e580d490ddd7cf"
 }

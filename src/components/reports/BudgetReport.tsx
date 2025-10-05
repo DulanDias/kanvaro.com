@@ -1,10 +1,10 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Progress } from '@/components/ui/progress'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import { Progress } from '@/components/ui/Progress'
 import { 
   DollarSign, 
   Plus, 
@@ -301,7 +301,7 @@ export function BudgetReport({ projectId }: BudgetReportProps) {
                       ${entry.amount.toLocaleString()} {entry.currency}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      Next: {entry.nextRecurringDate ? new Date(entry.nextRecurringDate).toLocaleDateString() : 'N/A'}
+                      Next: {(entry as any).nextRecurringDate ? new Date((entry as any).nextRecurringDate).toLocaleDateString() : 'N/A'}
                     </p>
                   </div>
                 </div>

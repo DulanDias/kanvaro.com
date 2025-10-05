@@ -42,9 +42,24 @@ export interface IProject extends Document {
       budgetAlerts: boolean
       deadlineReminders: boolean
     }
+    kanbanStatuses?: Array<{
+      key: string
+      title: string
+      color?: string
+      order: number
+    }>
   }
   tags: string[]
   customFields: Record<string, any>
+  attachments: {
+    name: string
+    url: string
+    size: number
+    type: string
+    uploadedBy: mongoose.Types.ObjectId
+    uploadedAt: Date
+  }[]
+  archived: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -98,10 +113,25 @@ const ProjectSchema = new Schema<IProject>({
       taskUpdates: { type: Boolean, default: true },
       budgetAlerts: { type: Boolean, default: true },
       deadlineReminders: { type: Boolean, default: true }
-    }
+    },
+    kanbanStatuses: [{
+      key: { type: String, required: true },
+      title: { type: String, required: true },
+      color: String,
+      order: { type: Number, required: true }
+    }]
   },
   tags: [{ type: String, trim: true }],
-  customFields: { type: Schema.Types.Mixed, default: {} }
+  customFields: { type: Schema.Types.Mixed, default: {} },
+  attachments: [{
+    name: { type: String, required: true },
+    url: { type: String, required: true },
+    size: { type: Number, required: true },
+    type: { type: String, required: true },
+    uploadedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    uploadedAt: { type: Date, default: Date.now }
+  }],
+  archived: { type: Boolean, default: false }
 }, {
   timestamps: true
 })
@@ -111,5 +141,7 @@ ProjectSchema.index({ organization: 1, status: 1 })
 ProjectSchema.index({ createdBy: 1 })
 ProjectSchema.index({ teamMembers: 1 })
 ProjectSchema.index({ startDate: 1, endDate: 1 })
+ProjectSchema.index({ archived: 1 })
+ProjectSchema.index({ organization: 1, archived: 1 })
 
 export const Project = mongoose.models.Project || mongoose.model<IProject>('Project', ProjectSchema)

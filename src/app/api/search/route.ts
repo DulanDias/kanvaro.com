@@ -234,11 +234,11 @@ export async function GET(request: NextRequest) {
         const score = calculateScore(searchText, project.name, 'project')
         if (score > 0) {
           results.push({
-            id: project._id.toString(),
+            id: (project._id as any).toString(),
             title: project.name,
             description: project.description,
             type: 'project',
-            url: `/projects/${project._id}`,
+            url: `/projects/${(project._id as any).toString()}`,
             score,
             highlights: generateHighlights(searchText, project.name),
             metadata: {
@@ -281,11 +281,11 @@ export async function GET(request: NextRequest) {
         const score = calculateScore(searchText, task.title, 'task')
         if (score > 0) {
           results.push({
-            id: task._id.toString(),
+            id: (task._id as any).toString(),
             title: task.title,
             description: task.description,
             type: 'task',
-            url: `/tasks/${task._id}`,
+            url: `/tasks/${(task._id as any).toString()}`,
             score,
             highlights: generateHighlights(searchText, task.title),
             metadata: {
@@ -323,11 +323,11 @@ export async function GET(request: NextRequest) {
         const score = calculateScore(searchText, story.title, 'story')
         if (score > 0) {
           results.push({
-            id: story._id.toString(),
+            id: (story._id as any).toString(),
             title: story.title,
             description: story.description,
             type: 'story',
-            url: `/stories/${story._id}`,
+            url: `/stories/${(story._id as any).toString()}`,
             score,
             highlights: generateHighlights(searchText, story.title),
             metadata: {
@@ -364,11 +364,11 @@ export async function GET(request: NextRequest) {
         const score = calculateScore(searchText, epic.title, 'epic')
         if (score > 0) {
           results.push({
-            id: epic._id.toString(),
+            id: (epic._id as any).toString(),
             title: epic.title,
             description: epic.description,
             type: 'epic',
-            url: `/epics/${epic._id}`,
+            url: `/epics/${(epic._id as any).toString()}`,
             score,
             highlights: generateHighlights(searchText, epic.title),
             metadata: {
@@ -403,11 +403,11 @@ export async function GET(request: NextRequest) {
         const score = calculateScore(searchText, fullName, 'user')
         if (score > 0) {
           results.push({
-            id: user._id.toString(),
+            id: (user._id as any).toString(),
             title: fullName,
             description: user.email,
             type: 'user',
-            url: `/profile/${user._id}`,
+            url: `/profile/${(user._id as any).toString()}`,
             score,
             highlights: generateHighlights(searchText, fullName),
             metadata: {

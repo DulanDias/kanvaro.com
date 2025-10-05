@@ -35,6 +35,8 @@ export interface ITask extends Document {
     createdAt: Date
     updatedAt: Date
   }[]
+  archived: boolean
+  position: number
   createdAt: Date
   updatedAt: Date
 }
@@ -52,7 +54,6 @@ const TaskSchema = new Schema<ITask>({
   },
   status: {
     type: String,
-    enum: ['todo', 'in_progress', 'review', 'testing', 'done', 'cancelled'],
     default: 'todo'
   },
   priority: {
@@ -106,6 +107,10 @@ const TaskSchema = new Schema<ITask>({
     min: 0,
     default: 0
   },
+  position: {
+    type: Number,
+    default: 0
+  },
   sprint: {
     type: Schema.Types.ObjectId,
     ref: 'Sprint'
@@ -134,7 +139,8 @@ const TaskSchema = new Schema<ITask>({
     author: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
-  }]
+  }],
+  archived: { type: Boolean, default: false }
 }, {
   timestamps: true
 })
@@ -156,5 +162,12 @@ TaskSchema.index({ sprint: 1, status: 1 })
 TaskSchema.index({ assignedTo: 1, status: 1 })
 TaskSchema.index({ organization: 1, assignedTo: 1 })
 TaskSchema.index({ organization: 1, createdBy: 1 })
+TaskSchema.index({ archived: 1 })
+TaskSchema.index({ organization: 1, archived: 1 })
+TaskSchema.index({ project: 1, archived: 1 })
+TaskSchema.index({ project: 1, status: 1, position: 1 })
+TaskSchema.index({ organization: 1, createdAt: -1 })
+TaskSchema.index({ project: 1, status: 1, createdAt: -1 })
+TaskSchema.index({ title: 'text', description: 'text' })
 
 export const Task = mongoose.models.Task || mongoose.model<ITask>('Task', TaskSchema)

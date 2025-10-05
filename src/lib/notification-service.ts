@@ -140,7 +140,7 @@ export class NotificationService {
         Notification.countDocuments({ user: userId, isRead: false })
       ])
 
-      return { notifications, total, unreadCount }
+      return { notifications: notifications as any, total, unreadCount }
     } catch (error) {
       console.error('Failed to get user notifications:', error)
       return { notifications: [], total: 0, unreadCount: 0 }
@@ -418,7 +418,7 @@ export class NotificationService {
       data: {
         entityType: 'project',
         entityId: projectId,
-        action,
+        action: action === 'deadline_approaching' ? 'reminder' : action,
         priority: action === 'deadline_approaching' ? 'high' : 'medium',
         url: `/projects/${projectId}`
       },
@@ -449,7 +449,7 @@ export class NotificationService {
       message: messages[action],
       data: {
         entityType: 'user',
-        action,
+        action: action === 'member_joined' ? 'created' : action === 'member_left' ? 'deleted' : 'updated',
         priority: 'low'
       },
       sendEmail: false,
@@ -481,7 +481,7 @@ export class NotificationService {
       data: {
         entityType: 'budget',
         entityId: projectId,
-        action,
+        action: action === 'budget_exceeded' ? 'overdue' : action === 'budget_warning' ? 'reminder' : 'updated',
         priority: action === 'budget_exceeded' ? 'critical' : 'high',
         url: `/projects/${projectId}`
       },

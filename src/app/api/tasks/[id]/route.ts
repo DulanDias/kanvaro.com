@@ -6,6 +6,7 @@ import { User } from '@/models/User'
 import { authenticateUser } from '@/lib/auth-utils'
 import { CompletionService } from '@/lib/completion-service'
 import { notificationService } from '@/lib/notification-service'
+import { invalidateCache } from '@/lib/redis'
 
 export async function GET(
   request: NextRequest,
@@ -96,6 +97,15 @@ export async function PUT(
       ]
     })
 
+    // If status is changing, set position to end of target column
+    if (updateData.status && updateData.status !== currentTask.status) {
+      const maxPosition = await Task.findOne(
+        { project: currentTask.project, status: updateData.status },
+        { position: 1 }
+      ).sort({ position: -1 })
+      updateData.position = maxPosition ? maxPosition.position + 1 : 0
+    }
+
     if (!currentTask) {
       return NextResponse.json(
         { error: 'Task not found or unauthorized' },
@@ -141,6 +151,9 @@ export async function PUT(
         { status: 404 }
       )
     }
+
+    // Invalidate tasks cache for this organization
+    await invalidateCache(`tasks:*:org:${organizationId}:*`)
 
     // Check if task status changed to 'done' and trigger completion logic
     if (updateData.status === 'done' && currentTask.status !== 'done') {
@@ -254,6 +267,9 @@ export async function DELETE(
         { status: 404 }
       )
     }
+
+    // Invalidate tasks cache for this organization
+    await invalidateCache(`tasks:*:org:${organizationId}:*`)
 
     return NextResponse.json({
       success: true,

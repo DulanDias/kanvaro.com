@@ -1,3 +1,14 @@
+---
+slug: "reference/permission-system"
+title: "Permission System"
+summary: "Comprehensive guide to Kanvaro's role-based access control system, custom roles, granular permissions, and resource access management."
+visibility: "public"
+audiences: ["admin", "project_manager", "self_host_admin"]
+category: "reference"
+order: 30
+updated: "2025-01-04"
+---
+
 # Kanvaro - Advanced Permission System
 
 ## Overview

@@ -339,7 +339,7 @@ async function getTeamActivity(organizationId: string, userId: string) {
   ])
 
   // Format activities
-  const activities = []
+  const activities: any[] = []
 
   // Add task activities
   taskActivities.forEach(task => {

@@ -7,6 +7,7 @@ import { TimeEntry } from '@/models/TimeEntry'
 import { BudgetEntry } from '@/models/BudgetEntry'
 import { authenticateUser } from '@/lib/auth-utils'
 import { hasPermission } from '@/lib/permissions/permission-utils'
+import { Permission } from '@/lib/permissions/permission-definitions'
 
 export async function GET(req: NextRequest) {
   try {
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Check if user has reporting permissions
-    const hasAccess = await hasPermission(authResult.user.id, 'REPORTING_VIEW')
+    const hasAccess = await hasPermission(authResult.user.id, Permission.REPORTING_VIEW)
     if (!hasAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }
@@ -97,6 +98,7 @@ export async function GET(req: NextRequest) {
 
         return {
           ...project,
+          status: project.status,
           stats: {
             tasks: {
               total: totalTasks,

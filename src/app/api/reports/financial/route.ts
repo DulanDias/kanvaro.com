@@ -5,6 +5,7 @@ import { Project } from '@/models/Project'
 import { TimeEntry } from '@/models/TimeEntry'
 import { authenticateUser } from '@/lib/auth-utils'
 import { hasPermission } from '@/lib/permissions/permission-utils'
+import { Permission } from '@/lib/permissions/permission-definitions'
 
 export async function GET(req: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Check if user has financial reporting permissions
-    const hasAccess = await hasPermission(authResult.user.id, 'FINANCIAL_READ')
+    const hasAccess = await hasPermission(authResult.user.id, Permission.FINANCIAL_READ)
     if (!hasAccess) {
       return NextResponse.json({ error: 'Insufficient permissions' }, { status: 403 })
     }

@@ -18,6 +18,15 @@ export interface IStory extends Document {
   dueDate?: Date
   completedAt?: Date
   tags: string[]
+  attachments: {
+    name: string
+    url: string
+    size: number
+    type: string
+    uploadedBy: mongoose.Types.ObjectId
+    uploadedAt: Date
+  }[]
+  archived: boolean
   createdAt: Date
   updatedAt: Date
 }
@@ -90,7 +99,16 @@ const StorySchema = new Schema<IStory>({
     type: String,
     trim: true,
     maxlength: 50
-  }]
+  }],
+  attachments: [{
+    name: { type: String, required: true },
+    url: { type: String, required: true },
+    size: { type: Number, required: true },
+    type: { type: String, required: true },
+    uploadedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    uploadedAt: { type: Date, default: Date.now }
+  }],
+  archived: { type: Boolean, default: false }
 }, {
   timestamps: true
 })
@@ -105,5 +123,7 @@ StorySchema.index({ status: 1 })
 StorySchema.index({ priority: 1 })
 StorySchema.index({ project: 1, status: 1 })
 StorySchema.index({ sprint: 1, status: 1 })
+StorySchema.index({ archived: 1 })
+StorySchema.index({ project: 1, archived: 1 })
 
 export const Story = mongoose.models.Story || mongoose.model<IStory>('Story', StorySchema)

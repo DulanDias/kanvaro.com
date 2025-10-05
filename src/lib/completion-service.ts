@@ -59,7 +59,7 @@ export class CompletionService {
         })
         
         // Check if epic should be completed
-        const epicIds = [...new Set(stories.map(story => story.epic).filter(Boolean))]
+        const epicIds = Array.from(new Set(stories.map(story => story.epic).filter(Boolean)))
         for (const epicId of epicIds) {
           if (epicId) {
             await this.checkEpicCompletion(epicId.toString())
@@ -85,7 +85,7 @@ export class CompletionService {
       if (stories.length === 0) return
 
       // Get all sprints that contain stories from this epic
-      const sprintIds = [...new Set(stories.map(story => story.sprint).filter(Boolean))]
+      const sprintIds = Array.from(new Set(stories.map(story => story.sprint).filter(Boolean)))
       
       if (sprintIds.length === 0) return
 

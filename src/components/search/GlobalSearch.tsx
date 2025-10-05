@@ -160,10 +160,10 @@ export function GlobalSearch({ className, placeholder = "Search projects, tasks,
     const currentFilters = { ...filters }
     const currentValues = currentFilters[filterType] || []
     
-    if (currentValues.includes(value)) {
-      currentFilters[filterType] = currentValues.filter(v => v !== value)
-    } else {
-      currentFilters[filterType] = [...currentValues, value]
+    if (Array.isArray(currentValues) && currentValues.includes(value)) {
+      (currentFilters as any)[filterType] = currentValues.filter(v => v !== value)
+    } else if (Array.isArray(currentValues)) {
+      (currentFilters as any)[filterType] = [...currentValues, value]
     }
     
     setFilters(currentFilters)

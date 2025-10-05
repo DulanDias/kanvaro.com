@@ -1,11 +1,13 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
+import { useParams, useRouter } from 'next/navigation'
+import { useAuth } from '@/hooks/useAuth'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
+import { Button } from '@/components/ui/Button'
+import { Badge } from '@/components/ui/Badge'
+import { Input } from '@/components/ui/Input'
+import { MainLayout } from '@/components/layout/MainLayout'
 import { 
   Calendar, 
   Clock, 
@@ -67,6 +69,8 @@ interface SprintEvent {
 
 export default function SprintEventsPage() {
   const params = useParams()
+  const router = useRouter()
+  const { user, isLoading: authLoading, isAuthenticated } = useAuth()
   const projectId = params.id as string
   const [events, setEvents] = useState<SprintEvent[]>([])
   const [loading, setLoading] = useState(true)
@@ -77,13 +81,23 @@ export default function SprintEventsPage() {
   const [editingEvent, setEditingEvent] = useState<SprintEvent | null>(null)
 
   useEffect(() => {
-    fetchSprintEvents()
-  }, [projectId])
+    if (!authLoading && !isAuthenticated) {
+      router.push('/login')
+      return
+    }
+  }, [authLoading, isAuthenticated, router])
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      fetchSprintEvents()
+    }
+  }, [projectId, isAuthenticated])
 
   const fetchSprintEvents = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/sprint-events?projectId=${projectId}`)
+      const url = projectId ? `/api/sprint-events?projectId=${projectId}` : '/api/sprint-events'
+      const response = await fetch(url)
       if (response.ok) {
         const data = await response.json()
         setEvents(data)
@@ -176,28 +190,61 @@ export default function SprintEventsPage() {
     return matchesSearch && matchesType && matchesStatus
   })
 
-  if (loading) {
+  if (authLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
-      </div>
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </MainLayout>
     )
   }
 
+  if (!isAuthenticated) {
+    return (
+      <MainLayout>
+        <div className="text-center py-8">
+          <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+          <h2 className="text-2xl font-semibold mb-2">Authentication Required</h2>
+          <p className="text-muted-foreground mb-4">
+            Please log in to access sprint events.
+          </p>
+          <Button onClick={() => router.push('/login')}>
+            Go to Login
+          </Button>
+        </div>
+      </MainLayout>
+    )
+  }
+
+  if (loading) {
+    return (
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      </MainLayout>
+    )
+  }
+
+
   return (
-    <div className="space-y-6">
+    <MainLayout>
+      <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Sprint Events</h1>
           <p className="text-muted-foreground">
-            Manage agile events and ceremonies
+            {projectId ? 'Manage agile events and ceremonies' : 'View all sprint events across your projects'}
           </p>
         </div>
-        <Button onClick={() => setShowAddModal(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          New Event
-        </Button>
+        {projectId && (
+          <Button onClick={() => setShowAddModal(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Event
+          </Button>
+        )}
       </div>
 
       {/* Filters */}
@@ -252,10 +299,12 @@ export default function SprintEventsPage() {
             <CardContent className="text-center py-8">
               <Calendar className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <p className="text-muted-foreground">No sprint events found</p>
-              <Button onClick={() => setShowAddModal(true)} className="mt-4">
-                <Plus className="h-4 w-4 mr-2" />
-                Create First Event
-              </Button>
+              {projectId && (
+                <Button onClick={() => setShowAddModal(true)} className="mt-4">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create First Event
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
@@ -423,6 +472,7 @@ export default function SprintEventsPage() {
           onSuccess={handleEventUpdated}
         />
       )}
-    </div>
+      </div>
+    </MainLayout>
   )
 }

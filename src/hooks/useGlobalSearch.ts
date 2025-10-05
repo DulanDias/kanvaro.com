@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { useDebounce } from './useDebounce'
 
 export interface SearchResult {
@@ -81,6 +82,7 @@ export interface SearchActions {
 }
 
 export function useGlobalSearch(): SearchState & SearchActions {
+  const router = useRouter()
   const [state, setState] = useState<SearchState>({
     query: '',
     results: [],
@@ -297,9 +299,9 @@ export function useGlobalSearch(): SearchState & SearchActions {
   }, [])
 
   const navigateToResult = useCallback((result: SearchResult) => {
-    window.location.href = result.url
+    router.push(result.url)
     closeSearch()
-  }, [closeSearch])
+  }, [router, closeSearch])
 
   return {
     ...state,

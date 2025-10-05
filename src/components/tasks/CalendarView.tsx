@@ -79,23 +79,23 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
-      case 'low': return 'bg-gray-100 text-gray-800'
-      case 'medium': return 'bg-blue-100 text-blue-800'
-      case 'high': return 'bg-orange-100 text-orange-800'
-      case 'critical': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'low': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+      case 'medium': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+      case 'high': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+      case 'critical': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
     }
   }
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'todo': return 'bg-gray-100 text-gray-800'
-      case 'in_progress': return 'bg-blue-100 text-blue-800'
-      case 'review': return 'bg-yellow-100 text-yellow-800'
-      case 'testing': return 'bg-purple-100 text-purple-800'
-      case 'done': return 'bg-green-100 text-green-800'
-      case 'cancelled': return 'bg-red-100 text-red-800'
-      default: return 'bg-gray-100 text-gray-800'
+      case 'todo': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+      case 'in_progress': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+      case 'review': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+      case 'testing': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+      case 'done': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+      case 'cancelled': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
     }
   }
 
@@ -240,15 +240,15 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
               {getDaysInMonth(currentDate).map((date, index) => (
                 <div
                   key={index}
-                  className={`min-h-[100px] p-2 border border-gray-200 ${
-                    date ? 'bg-background' : 'bg-gray-50'
-                  } ${isToday(date || new Date()) ? 'bg-blue-50 border-blue-200' : ''}`}
+                  className={`min-h-[100px] p-2 border border-border ${
+                    date ? 'bg-background' : 'bg-muted/30'
+                  } ${isToday(date || new Date()) ? 'bg-primary/10 border-primary/20' : ''}`}
                 >
                   {date && (
                     <>
                       <div className="flex items-center justify-between mb-1">
                         <span className={`text-sm font-medium ${
-                          isToday(date) ? 'text-blue-600' : 'text-foreground'
+                          isToday(date) ? 'text-primary' : 'text-foreground'
                         }`}>
                           {date.getDate()}
                         </span>
@@ -262,7 +262,7 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
                         {getTasksForDate(date).slice(0, 3).map(task => (
                           <div
                             key={task._id}
-                            className="text-xs p-1 rounded bg-white border shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                            className="text-xs p-1 rounded bg-card border shadow-sm cursor-pointer hover:shadow-md transition-shadow"
                           >
                             <div className="font-medium truncate">{task.title}</div>
                             <div className="flex items-center space-x-1">

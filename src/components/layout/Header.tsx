@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { Bell, User, Sun, Moon, Monitor, LogOut, UserCircle, X, Check } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
@@ -25,6 +26,7 @@ import {
 export function Header() {
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
+  const router = useRouter()
   const { theme, setTheme } = useTheme()
   const { notifications, unreadCount, markAsRead, markAllAsRead, deleteNotification, loading } = useNotifications({
     limit: 10,
@@ -57,16 +59,16 @@ export function Header() {
       const response = await fetch('/api/auth/logout', { method: 'POST' })
       if (response.ok) {
         // Clear any client-side state if needed
-        window.location.href = '/login'
+        router.push('/login')
       } else {
         console.error('Logout failed:', await response.text())
         // Still redirect to login even if logout API fails
-        window.location.href = '/login'
+        router.push('/login')
       }
     } catch (error) {
       console.error('Logout failed:', error)
       // Still redirect to login even if logout API fails
-      window.location.href = '/login'
+      router.push('/login')
     }
   }
 
@@ -147,7 +149,7 @@ export function Header() {
                 ) : (
                   notifications.map((notification) => (
                     <div
-                      key={notification._id.toString()}
+                      key={(notification._id as any).toString()}
                       className={`flex items-start space-x-3 rounded-lg p-2 hover:bg-accent ${
                         !notification.isRead ? 'bg-primary/5 border-l-2 border-primary' : ''
                       }`}
@@ -166,7 +168,7 @@ export function Header() {
                                 variant="ghost"
                                 size="sm"
                                 className="h-6 w-6 p-0"
-                                onClick={() => markAsRead(notification._id.toString())}
+                                onClick={() => markAsRead((notification._id as any).toString())}
                               >
                                 <Check className="h-3 w-3" />
                               </Button>
@@ -175,7 +177,7 @@ export function Header() {
                               variant="ghost"
                               size="sm"
                               className="h-6 w-6 p-0"
-                              onClick={() => deleteNotification(notification._id.toString())}
+                              onClick={() => deleteNotification((notification._id as any).toString())}
                             >
                               <X className="h-3 w-3" />
                             </Button>
@@ -209,7 +211,7 @@ export function Header() {
               {user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : 'User'}
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => window.location.href = '/profile'}>
+            <DropdownMenuItem onClick={() => router.push('/profile')}>
               <UserCircle className="mr-2 h-4 w-4" />
               Profile
             </DropdownMenuItem>

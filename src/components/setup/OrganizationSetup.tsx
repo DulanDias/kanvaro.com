@@ -32,7 +32,11 @@ export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationS
   const [logoPreview, setLogoPreview] = useState<string | null>(initialData?.logoPreview || null)
   const [darkLogo, setDarkLogo] = useState<File | null>(null)
   const [darkLogoPreview, setDarkLogoPreview] = useState<string | null>(initialData?.darkLogoPreview || null)
-  const [logoMode, setLogoMode] = useState<'single' | 'dual'>('single')
+  const [logoMode, setLogoMode] = useState<'light' | 'dark' | 'both'>(
+    initialData?.logoMode === 'single' ? 'light' : 
+    initialData?.logoMode === 'dual' ? 'both' : 
+    initialData?.logoMode || 'both'
+  )
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const timezones = [
@@ -198,11 +202,11 @@ export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationS
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div
                 className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${
-                  logoMode === 'single'
+                  logoMode === 'light'
                     ? 'border-primary bg-primary/5'
                     : 'border-muted hover:border-muted-foreground/50'
                 }`}
-                onClick={() => setLogoMode('single')}
+                onClick={() => setLogoMode('light')}
               >
                 <div className="text-center">
                   <div className="h-12 w-12 mx-auto mb-3 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -217,11 +221,11 @@ export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationS
 
               <div
                 className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${
-                  logoMode === 'dual'
+                  logoMode === 'both'
                     ? 'border-primary bg-primary/5'
                     : 'border-muted hover:border-muted-foreground/50'
                 }`}
-                onClick={() => setLogoMode('dual')}
+                onClick={() => setLogoMode('both')}
               >
                 <div className="text-center">
                   <div className="h-12 w-12 mx-auto mb-3 bg-primary/10 rounded-lg flex items-center justify-center">
@@ -238,7 +242,7 @@ export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationS
               </div>
             </div>
 
-            {logoMode === 'single' ? (
+            {logoMode === 'light' ? (
               <div className="bg-card border rounded-lg p-6">
                 <div className="flex items-center space-x-4">
                   {logoPreview ? (
@@ -398,7 +402,7 @@ export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationS
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="timezone">Timezone</Label>
-              <Select value={formData.timezone} onValueChange={(value) => setFormData({ ...formData, timezone: value })}>
+              <Select value={formData.timezone || undefined} onValueChange={(value) => setFormData({ ...formData, timezone: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select timezone" />
                 </SelectTrigger>
@@ -412,13 +416,13 @@ export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationS
 
             <div className="space-y-2">
               <Label htmlFor="currency">Currency</Label>
-              <Select value={formData.currency} onValueChange={(value) => setFormData({ ...formData, currency: value })}>
+              <Select value={formData.currency || undefined} onValueChange={(value) => setFormData({ ...formData, currency: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select currency" />
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
                   {currenciesLoading ? (
-                    <SelectItem value="" disabled>Loading currencies...</SelectItem>
+                    <SelectItem value="loading" disabled>Loading currencies...</SelectItem>
                   ) : (
                     currencies.map((currency) => (
                       <SelectItem key={currency.code} value={currency.code}>
@@ -432,7 +436,7 @@ export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationS
 
             <div className="space-y-2">
               <Label htmlFor="language">Language</Label>
-              <Select value={formData.language} onValueChange={(value) => setFormData({ ...formData, language: value })}>
+              <Select value={formData.language || undefined} onValueChange={(value) => setFormData({ ...formData, language: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select language" />
                 </SelectTrigger>
@@ -446,7 +450,7 @@ export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationS
 
             <div className="space-y-2">
               <Label htmlFor="industry">Industry</Label>
-              <Select value={formData.industry} onValueChange={(value) => setFormData({ ...formData, industry: value })}>
+              <Select value={formData.industry || undefined} onValueChange={(value) => setFormData({ ...formData, industry: value })}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select industry" />
                 </SelectTrigger>

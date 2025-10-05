@@ -1,3 +1,14 @@
+---
+slug: "self-hosting/deployment"
+title: "Deployment Guide"
+summary: "Complete deployment guide for self-hosting Kanvaro using Docker, covering single-server setups to production-ready configurations with monitoring and backup strategies."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "self-hosting"
+order: 50
+updated: "2025-01-04"
+---
+
 # Kanvaro - Deployment Guide
 
 ## Overview

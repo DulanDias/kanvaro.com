@@ -97,8 +97,8 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
         setData(prev => ({
           ...prev,
           notifications: prev.notifications.map(n => 
-            n._id.toString() === notificationId 
-              ? { ...n, isRead: true, readAt: new Date() }
+            (n._id as any).toString() === notificationId 
+              ? { ...n, isRead: true, readAt: new Date() } as any
               : n
           ),
           unreadCount: Math.max(0, prev.unreadCount - 1)
@@ -125,7 +125,7 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
         // Update local state
         setData(prev => ({
           ...prev,
-          notifications: prev.notifications.map(n => ({ ...n, isRead: true, readAt: new Date() })),
+          notifications: prev.notifications.map(n => ({ ...n, isRead: true, readAt: new Date() } as any)),
           unreadCount: 0
         }))
       }
@@ -150,10 +150,10 @@ export function useNotifications(options: UseNotificationsOptions = {}) {
       if (response.ok) {
         // Update local state
         setData(prev => {
-          const notification = prev.notifications.find(n => n._id.toString() === notificationId)
+          const notification = prev.notifications.find(n => (n._id as any).toString() === notificationId)
           return {
             ...prev,
-            notifications: prev.notifications.filter(n => n._id.toString() !== notificationId),
+            notifications: prev.notifications.filter(n => (n._id as any).toString() !== notificationId),
             total: prev.total - 1,
             unreadCount: notification && !notification.isRead ? prev.unreadCount - 1 : prev.unreadCount
           }

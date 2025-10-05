@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
         title: title || 'Test Notification',
         message: message || 'This is a test notification',
         data: {
-          entityType: 'system',
+          entityType: 'user',
           action: 'created',
           priority: 'low'
         },

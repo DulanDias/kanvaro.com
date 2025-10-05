@@ -41,6 +41,17 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       
       const response = await fetch('/api/auth/permissions');
       if (!response.ok) {
+        if (response.status === 401) {
+          // User is not authenticated, set empty permissions
+          setPermissions({
+            globalPermissions: [],
+            projectPermissions: {},
+            projectRoles: {},
+            userRole: null,
+            accessibleProjects: []
+          });
+          return;
+        }
         throw new Error('Failed to fetch permissions');
       }
       
