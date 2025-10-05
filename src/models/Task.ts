@@ -37,6 +37,10 @@ export interface ITask extends Document {
   }[]
   archived: boolean
   position: number
+  // Test management fields
+  linkedTestCase?: mongoose.Types.ObjectId
+  foundInVersion?: string
+  testExecutionId?: mongoose.Types.ObjectId
   createdAt: Date
   updatedAt: Date
 }
@@ -140,7 +144,21 @@ const TaskSchema = new Schema<ITask>({
     createdAt: { type: Date, default: Date.now },
     updatedAt: { type: Date, default: Date.now }
   }],
-  archived: { type: Boolean, default: false }
+  archived: { type: Boolean, default: false },
+  // Test management fields
+  linkedTestCase: {
+    type: Schema.Types.ObjectId,
+    ref: 'TestCase'
+  },
+  foundInVersion: {
+    type: String,
+    trim: true,
+    maxlength: 50
+  },
+  testExecutionId: {
+    type: Schema.Types.ObjectId,
+    ref: 'TestExecution'
+  }
 }, {
   timestamps: true
 })

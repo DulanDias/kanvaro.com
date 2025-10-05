@@ -25,13 +25,18 @@ interface PermissionContextType {
 
 const PermissionContext = createContext<PermissionContextType | undefined>(undefined);
 
+// Cache permissions to prevent repeated API calls
+let permissionsCache: UserPermissions | null = null;
+let cacheTimestamp: number = 0;
+const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
+
 interface PermissionProviderProps {
   children: ReactNode;
 }
 
 export function PermissionProvider({ children }: PermissionProviderProps) {
-  const [permissions, setPermissions] = useState<UserPermissions | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [permissions, setPermissions] = useState<UserPermissions | null>(permissionsCache);
+  const [loading, setLoading] = useState(!permissionsCache);
   const [error, setError] = useState<string | null>(null);
 
   const fetchPermissions = async () => {
@@ -39,17 +44,27 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       setLoading(true);
       setError(null);
       
+      // Use cached data if available and not expired
+      if (permissionsCache && Date.now() - cacheTimestamp < CACHE_DURATION) {
+        setPermissions(permissionsCache);
+        setLoading(false);
+        return;
+      }
+      
       const response = await fetch('/api/auth/permissions');
       if (!response.ok) {
         if (response.status === 401) {
           // User is not authenticated, set empty permissions
-          setPermissions({
+          const emptyPermissions = {
             globalPermissions: [],
             projectPermissions: {},
             projectRoles: {},
-            userRole: null,
+            userRole: '',
             accessibleProjects: []
-          });
+          };
+          setPermissions(emptyPermissions);
+          permissionsCache = emptyPermissions;
+          cacheTimestamp = Date.now();
           return;
         }
         throw new Error('Failed to fetch permissions');
@@ -57,9 +72,38 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       
       const data = await response.json();
       setPermissions(data);
+      // Cache the data
+      permissionsCache = data;
+      cacheTimestamp = Date.now();
     } catch (err) {
       console.error('Error fetching permissions:', err);
       setError(err instanceof Error ? err.message : 'Unknown error');
+      
+      // Provide default permissions for basic navigation if API fails
+      const defaultPermissions = {
+        globalPermissions: [
+          'project:read',
+          'task:read', 
+          'team:read',
+          'time_tracking:read',
+          'financial:read',
+          'reporting:view',
+          'settings:read',
+          'epic:read',
+          'sprint:read',
+          'story:read',
+          'calendar:read',
+          'kanban:read',
+          'backlog:read'
+        ],
+        projectPermissions: {},
+        projectRoles: {},
+        userRole: 'team_member',
+        accessibleProjects: []
+      };
+      setPermissions(defaultPermissions);
+      permissionsCache = defaultPermissions;
+      cacheTimestamp = Date.now();
     } finally {
       setLoading(false);
     }
@@ -70,8 +114,13 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
   }, []);
 
   const hasPermission = (permission: Permission, projectId?: string): boolean => {
-    // If permissions are still loading, return false to hide content until loaded
-    if (!permissions) return false;
+    // If permissions are still loading, return true to prevent blocking navigation
+    if (!permissions) return true;
+    
+    // If permissions are empty (user has no permissions), return false
+    if (permissions.globalPermissions.length === 0 && Object.keys(permissions.projectPermissions).length === 0) {
+      return false;
+    }
     
     // Check global permissions first
     if (permissions.globalPermissions.includes(permission)) {
@@ -104,6 +153,9 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
   };
 
   const refreshPermissions = async () => {
+    // Clear cache to force fresh fetch
+    permissionsCache = null;
+    cacheTimestamp = 0;
     await fetchPermissions();
   };
 

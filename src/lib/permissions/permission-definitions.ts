@@ -32,6 +32,8 @@ export enum PermissionCategory {
   KANBAN = 'kanban',
   // Backlog permissions
   BACKLOG = 'backlog',
+  // Test management permissions
+  TEST_MANAGEMENT = 'test_management',
 }
 
 export enum Permission {
@@ -148,6 +150,26 @@ export enum Permission {
   // Backlog permissions
   BACKLOG_READ = 'backlog:read',
   BACKLOG_MANAGE = 'backlog:manage',
+  
+  // Test management permissions
+  TEST_SUITE_CREATE = 'test_suite:create',
+  TEST_SUITE_READ = 'test_suite:read',
+  TEST_SUITE_UPDATE = 'test_suite:update',
+  TEST_SUITE_DELETE = 'test_suite:delete',
+  TEST_CASE_CREATE = 'test_case:create',
+  TEST_CASE_READ = 'test_case:read',
+  TEST_CASE_UPDATE = 'test_case:update',
+  TEST_CASE_DELETE = 'test_case:delete',
+  TEST_PLAN_CREATE = 'test_plan:create',
+  TEST_PLAN_READ = 'test_plan:read',
+  TEST_PLAN_UPDATE = 'test_plan:update',
+  TEST_PLAN_DELETE = 'test_plan:delete',
+  TEST_PLAN_MANAGE = 'test_plan:manage',
+  TEST_EXECUTION_CREATE = 'test_execution:create',
+  TEST_EXECUTION_READ = 'test_execution:read',
+  TEST_EXECUTION_UPDATE = 'test_execution:update',
+  TEST_REPORT_VIEW = 'test_report:view',
+  TEST_REPORT_EXPORT = 'test_report:export',
 }
 
 export enum Role {
@@ -157,6 +179,8 @@ export enum Role {
   TEAM_MEMBER = 'team_member',
   CLIENT = 'client',
   VIEWER = 'viewer',
+  QA_ENGINEER = 'qa_engineer',
+  TESTER = 'tester',
 }
 
 export enum ProjectRole {
@@ -164,6 +188,8 @@ export enum ProjectRole {
   PROJECT_MEMBER = 'project_member',
   PROJECT_VIEWER = 'project_viewer',
   PROJECT_CLIENT = 'project_client',
+  PROJECT_QA_LEAD = 'project_qa_lead',
+  PROJECT_TESTER = 'project_tester',
 }
 
 export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
@@ -513,6 +539,139 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     // Backlog (read only)
     Permission.BACKLOG_READ,
   ],
+  
+  [Role.QA_ENGINEER]: [
+    // User management (read only)
+    Permission.USER_READ,
+    
+    // Organization (read only)
+    Permission.ORGANIZATION_READ,
+    
+    // Projects (assigned projects only)
+    Permission.PROJECT_READ,
+    
+    // Tasks (full access for bug management)
+    Permission.TASK_CREATE,
+    Permission.TASK_READ,
+    Permission.TASK_UPDATE,
+    Permission.TASK_ASSIGN,
+    Permission.TASK_CHANGE_STATUS,
+    Permission.TASK_MANAGE_COMMENTS,
+    Permission.TASK_MANAGE_ATTACHMENTS,
+    
+    // Team (read only)
+    Permission.TEAM_READ,
+    
+    // Time tracking (read only)
+    Permission.TIME_TRACKING_READ,
+    
+    // Financial (read only)
+    Permission.FINANCIAL_READ,
+    
+    // Reporting (read only)
+    Permission.REPORTING_VIEW,
+    
+    // Settings (own settings)
+    Permission.SETTINGS_READ,
+    
+    // Epics (read only)
+    Permission.EPIC_READ,
+    
+    // Sprints (read only)
+    Permission.SPRINT_READ,
+    
+    // Stories (read only)
+    Permission.STORY_READ,
+    
+    // Calendar (read only)
+    Permission.CALENDAR_READ,
+    
+    // Kanban (read only)
+    Permission.KANBAN_READ,
+    
+    // Backlog (read only)
+    Permission.BACKLOG_READ,
+    
+    // Test management (full test management permissions)
+    Permission.TEST_SUITE_CREATE,
+    Permission.TEST_SUITE_READ,
+    Permission.TEST_SUITE_UPDATE,
+    Permission.TEST_SUITE_DELETE,
+    Permission.TEST_CASE_CREATE,
+    Permission.TEST_CASE_READ,
+    Permission.TEST_CASE_UPDATE,
+    Permission.TEST_CASE_DELETE,
+    Permission.TEST_PLAN_CREATE,
+    Permission.TEST_PLAN_READ,
+    Permission.TEST_PLAN_UPDATE,
+    Permission.TEST_PLAN_DELETE,
+    Permission.TEST_PLAN_MANAGE,
+    Permission.TEST_EXECUTION_CREATE,
+    Permission.TEST_EXECUTION_READ,
+    Permission.TEST_EXECUTION_UPDATE,
+    Permission.TEST_REPORT_VIEW,
+    Permission.TEST_REPORT_EXPORT,
+  ],
+  
+  [Role.TESTER]: [
+    // User management (read only)
+    Permission.USER_READ,
+    
+    // Organization (read only)
+    Permission.ORGANIZATION_READ,
+    
+    // Projects (assigned projects only)
+    Permission.PROJECT_READ,
+    
+    // Tasks (create bugs only)
+    Permission.TASK_CREATE,
+    Permission.TASK_READ,
+    Permission.TASK_UPDATE,
+    Permission.TASK_MANAGE_COMMENTS,
+    Permission.TASK_MANAGE_ATTACHMENTS,
+    
+    // Team (read only)
+    Permission.TEAM_READ,
+    
+    // Time tracking (read only)
+    Permission.TIME_TRACKING_READ,
+    
+    // Financial (read only)
+    Permission.FINANCIAL_READ,
+    
+    // Reporting (read only)
+    Permission.REPORTING_VIEW,
+    
+    // Settings (own settings)
+    Permission.SETTINGS_READ,
+    
+    // Epics (read only)
+    Permission.EPIC_READ,
+    
+    // Sprints (read only)
+    Permission.SPRINT_READ,
+    
+    // Stories (read only)
+    Permission.STORY_READ,
+    
+    // Calendar (read only)
+    Permission.CALENDAR_READ,
+    
+    // Kanban (read only)
+    Permission.KANBAN_READ,
+    
+    // Backlog (read only)
+    Permission.BACKLOG_READ,
+    
+    // Test management (execution and reporting only)
+    Permission.TEST_SUITE_READ,
+    Permission.TEST_CASE_READ,
+    Permission.TEST_PLAN_READ,
+    Permission.TEST_EXECUTION_CREATE,
+    Permission.TEST_EXECUTION_READ,
+    Permission.TEST_EXECUTION_UPDATE,
+    Permission.TEST_REPORT_VIEW,
+  ],
 };
 
 export const PROJECT_ROLE_PERMISSIONS: Record<ProjectRole, Permission[]> = {
@@ -609,6 +768,71 @@ export const PROJECT_ROLE_PERMISSIONS: Record<ProjectRole, Permission[]> = {
     Permission.CALENDAR_READ,
     Permission.KANBAN_READ,
     Permission.BACKLOG_READ,
+  ],
+  
+  [ProjectRole.PROJECT_QA_LEAD]: [
+    Permission.PROJECT_READ,
+    Permission.TASK_CREATE,
+    Permission.TASK_READ,
+    Permission.TASK_UPDATE,
+    Permission.TASK_ASSIGN,
+    Permission.TASK_CHANGE_STATUS,
+    Permission.TASK_MANAGE_COMMENTS,
+    Permission.TASK_MANAGE_ATTACHMENTS,
+    Permission.TEAM_READ,
+    Permission.TIME_TRACKING_READ,
+    Permission.FINANCIAL_READ,
+    Permission.EPIC_READ,
+    Permission.SPRINT_READ,
+    Permission.STORY_READ,
+    Permission.CALENDAR_READ,
+    Permission.KANBAN_READ,
+    Permission.BACKLOG_READ,
+    // Test management (full permissions for assigned project)
+    Permission.TEST_SUITE_CREATE,
+    Permission.TEST_SUITE_READ,
+    Permission.TEST_SUITE_UPDATE,
+    Permission.TEST_SUITE_DELETE,
+    Permission.TEST_CASE_CREATE,
+    Permission.TEST_CASE_READ,
+    Permission.TEST_CASE_UPDATE,
+    Permission.TEST_CASE_DELETE,
+    Permission.TEST_PLAN_CREATE,
+    Permission.TEST_PLAN_READ,
+    Permission.TEST_PLAN_UPDATE,
+    Permission.TEST_PLAN_DELETE,
+    Permission.TEST_PLAN_MANAGE,
+    Permission.TEST_EXECUTION_CREATE,
+    Permission.TEST_EXECUTION_READ,
+    Permission.TEST_EXECUTION_UPDATE,
+    Permission.TEST_REPORT_VIEW,
+    Permission.TEST_REPORT_EXPORT,
+  ],
+  
+  [ProjectRole.PROJECT_TESTER]: [
+    Permission.PROJECT_READ,
+    Permission.TASK_CREATE,
+    Permission.TASK_READ,
+    Permission.TASK_UPDATE,
+    Permission.TASK_MANAGE_COMMENTS,
+    Permission.TASK_MANAGE_ATTACHMENTS,
+    Permission.TEAM_READ,
+    Permission.TIME_TRACKING_READ,
+    Permission.FINANCIAL_READ,
+    Permission.EPIC_READ,
+    Permission.SPRINT_READ,
+    Permission.STORY_READ,
+    Permission.CALENDAR_READ,
+    Permission.KANBAN_READ,
+    Permission.BACKLOG_READ,
+    // Test management (execution and reporting only)
+    Permission.TEST_SUITE_READ,
+    Permission.TEST_CASE_READ,
+    Permission.TEST_PLAN_READ,
+    Permission.TEST_EXECUTION_CREATE,
+    Permission.TEST_EXECUTION_READ,
+    Permission.TEST_EXECUTION_UPDATE,
+    Permission.TEST_REPORT_VIEW,
   ],
 };
 

@@ -5,7 +5,7 @@ export interface IUser extends Document {
   lastName: string
   email: string
   password: string
-  role: 'admin' | 'project_manager' | 'team_member' | 'client' | 'viewer' | 'account_manager'
+  role: 'admin' | 'project_manager' | 'team_member' | 'client' | 'viewer' | 'account_manager' | 'qa_engineer' | 'tester'
   organization: mongoose.Types.ObjectId
   isActive: boolean
   avatar?: string
@@ -22,7 +22,7 @@ export interface IUser extends Document {
   // Project-specific roles for fine-grained access control
   projectRoles: {
     project: mongoose.Types.ObjectId
-    role: 'project_manager' | 'project_member' | 'project_viewer' | 'project_client' | 'project_account_manager'
+    role: 'project_manager' | 'project_member' | 'project_viewer' | 'project_client' | 'project_account_manager' | 'project_qa_lead' | 'project_tester'
     assignedBy: mongoose.Types.ObjectId
     assignedAt: Date
   }[]
@@ -51,7 +51,7 @@ const UserSchema = new Schema<IUser>({
   password: { type: String, required: true },
   role: { 
     type: String, 
-    enum: ['admin', 'project_manager', 'team_member', 'client', 'viewer', 'account_manager'],
+    enum: ['admin', 'project_manager', 'team_member', 'client', 'viewer', 'account_manager', 'qa_engineer', 'tester'],
     default: 'team_member'
   },
   organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true },
@@ -72,7 +72,7 @@ const UserSchema = new Schema<IUser>({
     project: { type: Schema.Types.ObjectId, ref: 'Project', required: true },
     role: { 
       type: String, 
-      enum: ['project_manager', 'project_member', 'project_viewer', 'project_client', 'project_account_manager'],
+      enum: ['project_manager', 'project_member', 'project_viewer', 'project_client', 'project_account_manager', 'project_qa_lead', 'project_tester'],
       required: true 
     },
     assignedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },

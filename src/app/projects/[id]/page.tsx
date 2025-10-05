@@ -41,6 +41,8 @@ import KanbanBoard from '@/components/tasks/KanbanBoard'
 import CalendarView from '@/components/tasks/CalendarView'
 import BacklogView from '@/components/tasks/BacklogView'
 import ReportsView from '@/components/tasks/ReportsView'
+import TestSuiteTree from '@/components/test-management/TestSuiteTree'
+import TestCaseList from '@/components/test-management/TestCaseList'
 
 interface Project {
   _id: string
@@ -314,12 +316,13 @@ export default function ProjectDetailPage() {
           newSearchParams.set('tab', value)
           router.push(`/projects/${projectId}?${newSearchParams.toString()}`)
         }} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-7">
+          <TabsList className="grid w-full grid-cols-8">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="tasks">Tasks</TabsTrigger>
             <TabsTrigger value="kanban">Kanban</TabsTrigger>
             <TabsTrigger value="calendar">Calendar</TabsTrigger>
             <TabsTrigger value="backlog">Backlog</TabsTrigger>
+            <TabsTrigger value="testing">Testing</TabsTrigger>
             <TabsTrigger value="reports">Reports</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -498,6 +501,30 @@ export default function ProjectDetailPage() {
               projectId={projectId} 
               onCreateTask={() => setShowCreateTaskModal(true)}
             />
+          </TabsContent>
+
+          <TabsContent value="testing" className="space-y-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div className="lg:col-span-1">
+                <TestSuiteTree
+                  projectId={projectId}
+                  onSuiteSelect={(suite) => console.log('Selected suite:', suite)}
+                  onSuiteCreate={(parentSuiteId) => console.log('Create suite:', parentSuiteId)}
+                  onSuiteEdit={(suite) => console.log('Edit suite:', suite)}
+                  onSuiteDelete={(suiteId) => console.log('Delete suite:', suiteId)}
+                />
+              </div>
+              <div className="lg:col-span-2">
+                <TestCaseList
+                  projectId={projectId}
+                  onTestCaseSelect={(testCase) => console.log('Selected test case:', testCase)}
+                  onTestCaseCreate={(testSuiteId) => console.log('Create test case:', testSuiteId)}
+                  onTestCaseEdit={(testCase) => console.log('Edit test case:', testCase)}
+                  onTestCaseDelete={(testCaseId) => console.log('Delete test case:', testCaseId)}
+                  onTestCaseExecute={(testCase) => console.log('Execute test case:', testCase)}
+                />
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="reports" className="space-y-4">

@@ -12,7 +12,7 @@ export interface IProject extends Document {
   // Project-specific roles for team members
   projectRoles: {
     user: mongoose.Types.ObjectId
-    role: 'project_manager' | 'project_member' | 'project_viewer' | 'project_client' | 'project_account_manager'
+    role: 'project_manager' | 'project_member' | 'project_viewer' | 'project_client' | 'project_account_manager' | 'project_qa_lead' | 'project_tester'
     assignedBy: mongoose.Types.ObjectId
     assignedAt: Date
   }[]
@@ -59,6 +59,16 @@ export interface IProject extends Document {
     uploadedBy: mongoose.Types.ObjectId
     uploadedAt: Date
   }[]
+  // Test management - versions array
+  versions: {
+    name: string
+    version: string
+    description?: string
+    releaseDate?: Date
+    isReleased: boolean
+    createdBy: mongoose.Types.ObjectId
+    createdAt: Date
+  }[]
   archived: boolean
   createdAt: Date
   updatedAt: Date
@@ -82,7 +92,7 @@ const ProjectSchema = new Schema<IProject>({
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     role: { 
       type: String, 
-      enum: ['project_manager', 'project_member', 'project_viewer', 'project_client', 'project_account_manager'],
+      enum: ['project_manager', 'project_member', 'project_viewer', 'project_client', 'project_account_manager', 'project_qa_lead', 'project_tester'],
       required: true 
     },
     assignedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
@@ -130,6 +140,16 @@ const ProjectSchema = new Schema<IProject>({
     type: { type: String, required: true },
     uploadedBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
     uploadedAt: { type: Date, default: Date.now }
+  }],
+  // Test management - versions array
+  versions: [{
+    name: { type: String, required: true, trim: true, maxlength: 200 },
+    version: { type: String, required: true, trim: true, maxlength: 50 },
+    description: { type: String, maxlength: 1000 },
+    releaseDate: Date,
+    isReleased: { type: Boolean, default: false },
+    createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+    createdAt: { type: Date, default: Date.now }
   }],
   archived: { type: Boolean, default: false }
 }, {

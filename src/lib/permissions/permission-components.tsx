@@ -18,7 +18,12 @@ export function PermissionGate({
   fallback = null, 
   children 
 }: PermissionGateProps) {
-  const { hasPermission } = usePermissions();
+  const { hasPermission, loading } = usePermissions();
+  
+  // Show children immediately if permissions are still loading to prevent blocking
+  if (loading) {
+    return <>{children}</>;
+  }
   
   if (hasPermission(permission, projectId)) {
     return <>{children}</>;
@@ -43,7 +48,12 @@ export function PermissionsGate({
   fallback = null, 
   children 
 }: PermissionsGateProps) {
-  const { hasAnyPermission, hasAllPermissions } = usePermissions();
+  const { hasAnyPermission, hasAllPermissions, loading } = usePermissions();
+  
+  // Show children immediately if permissions are still loading to prevent blocking
+  if (loading) {
+    return <>{children}</>;
+  }
   
   const hasRequiredPermissions = requireAll 
     ? hasAllPermissions(permissions, projectId)

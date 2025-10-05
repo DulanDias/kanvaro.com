@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, startTransition } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
@@ -380,7 +380,10 @@ function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpa
             if (hasChildren) {
               onToggleExpanded(item.id)
             } else {
-              router.push(item.path)
+              // Use startTransition for non-blocking navigation
+              startTransition(() => {
+                router.push(item.path)
+              })
             }
           }}
         >
@@ -409,7 +412,10 @@ function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpa
                   variant={pathname === child.path ? 'secondary' : 'ghost'}
                   className="w-full justify-start text-sm"
                   onClick={() => {
-                    router.push(child.path)
+                    // Use startTransition for non-blocking navigation
+                    startTransition(() => {
+                      router.push(child.path)
+                    })
                   }}
                 >
                   <child.icon className="mr-2 h-4 w-4" />
