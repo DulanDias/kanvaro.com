@@ -1,6 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { MainLayout } from '@/components/layout/MainLayout'
+import { PageWrapper } from '@/components/layout/PageWrapper'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -20,14 +22,20 @@ export default function GanttReportPage() {
     startDate: '',
     endDate: ''
   })
+  const ALL_PROJECTS = '__ALL_PROJECTS__'
+  const ALL_SPRINTS = '__ALL_SPRINTS__'
+  const ALL_ASSIGNEES = '__ALL_ASSIGNEES__'
   const [projects, setProjects] = useState<any[]>([])
   const [sprints, setSprints] = useState<any[]>([])
   const [assignees, setAssignees] = useState<any[]>([])
 
   useEffect(() => {
     loadGanttData()
-    loadFilterOptions()
   }, [filters])
+
+  useEffect(() => {
+    loadFilterOptions()
+  }, [filters.project])
 
   const loadGanttData = async () => {
     try {
@@ -58,7 +66,10 @@ export default function GanttReportPage() {
       const projectsResponse = await fetch('/api/projects')
       if (projectsResponse.ok) {
         const projectsData = await projectsResponse.json()
-        setProjects(projectsData)
+        const projectsArray = Array.isArray(projectsData)
+          ? projectsData
+          : (projectsData?.data && Array.isArray(projectsData.data) ? projectsData.data : [])
+        setProjects(projectsArray)
       }
 
       // Load sprints if project is selected
@@ -66,7 +77,10 @@ export default function GanttReportPage() {
         const sprintsResponse = await fetch(`/api/sprints?project=${filters.project}`)
         if (sprintsResponse.ok) {
           const sprintsData = await sprintsResponse.json()
-          setSprints(sprintsData)
+          const sprintsArray = Array.isArray(sprintsData)
+            ? sprintsData
+            : (sprintsData?.data && Array.isArray(sprintsData.data) ? sprintsData.data : [])
+          setSprints(sprintsArray)
         }
       }
 
@@ -74,7 +88,10 @@ export default function GanttReportPage() {
       const assigneesResponse = await fetch('/api/members')
       if (assigneesResponse.ok) {
         const assigneesData = await assigneesResponse.json()
-        setAssignees(assigneesData)
+        const assigneesArray = Array.isArray(assigneesData)
+          ? assigneesData
+          : (assigneesData?.data && Array.isArray(assigneesData.data) ? assigneesData.data : [])
+        setAssignees(assigneesArray)
       }
     } catch (error) {
       console.error('Failed to load filter options:', error)
@@ -100,17 +117,21 @@ export default function GanttReportPage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading Gantt chart...</p>
+      <MainLayout>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading Gantt chart...</p>
+          </div>
         </div>
-      </div>
+      </MainLayout>
     )
   }
 
   return (
-    <div className="space-y-6">
+    <MainLayout>
+      <PageWrapper>
+        <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Gantt Chart</h1>
@@ -137,14 +158,14 @@ export default function GanttReportPage() {
             <div className="space-y-2">
               <Label htmlFor="project">Project</Label>
               <Select
-                value={filters.project}
-                onValueChange={(value) => handleFilterChange('project', value)}
+                value={filters.project || ALL_PROJECTS}
+                onValueChange={(value) => handleFilterChange('project', value === ALL_PROJECTS ? '' : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All projects" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All projects</SelectItem>
+                  <SelectItem value={ALL_PROJECTS}>All projects</SelectItem>
                   {projects.map((project) => (
                     <SelectItem key={project._id} value={project._id}>
                       {project.name}
@@ -157,15 +178,15 @@ export default function GanttReportPage() {
             <div className="space-y-2">
               <Label htmlFor="sprint">Sprint</Label>
               <Select
-                value={filters.sprint}
-                onValueChange={(value) => handleFilterChange('sprint', value)}
+                value={filters.sprint || ALL_SPRINTS}
+                onValueChange={(value) => handleFilterChange('sprint', value === ALL_SPRINTS ? '' : value)}
                 disabled={!filters.project}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All sprints" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All sprints</SelectItem>
+                  <SelectItem value={ALL_SPRINTS}>All sprints</SelectItem>
                   {sprints.map((sprint) => (
                     <SelectItem key={sprint._id} value={sprint._id}>
                       {sprint.name}
@@ -178,14 +199,14 @@ export default function GanttReportPage() {
             <div className="space-y-2">
               <Label htmlFor="assignee">Assignee</Label>
               <Select
-                value={filters.assignee}
-                onValueChange={(value) => handleFilterChange('assignee', value)}
+                value={filters.assignee || ALL_ASSIGNEES}
+                onValueChange={(value) => handleFilterChange('assignee', value === ALL_ASSIGNEES ? '' : value)}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All assignees" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All assignees</SelectItem>
+                  <SelectItem value={ALL_ASSIGNEES}>All assignees</SelectItem>
                   {assignees.map((assignee) => (
                     <SelectItem key={assignee._id} value={assignee._id}>
                       {assignee.name}
@@ -239,6 +260,8 @@ export default function GanttReportPage() {
           </CardContent>
         </Card>
       )}
-    </div>
+        </div>
+      </PageWrapper>
+    </MainLayout>
   )
 }

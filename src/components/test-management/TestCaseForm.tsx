@@ -153,8 +153,8 @@ export default function TestCaseForm({
             <div className="space-y-2">
               <Label htmlFor="testSuite">Test Suite *</Label>
               <Select
-                value={formData.testSuite}
-                onValueChange={(value) => handleInputChange('testSuite', value)}
+                value={(formData.testSuite || '__CURRENT_SUITE__')}
+                onValueChange={(value) => handleInputChange('testSuite', value === '__CURRENT_SUITE__' ? '' : value)}
                 required
               >
                 <SelectTrigger>
@@ -162,9 +162,11 @@ export default function TestCaseForm({
                 </SelectTrigger>
                 <SelectContent>
                   {/* This would be populated with actual test suites */}
-                  <SelectItem value={testSuiteId || ''}>
-                    Current Suite
-                  </SelectItem>
+                  {testSuiteId && (
+                    <SelectItem value={testSuiteId}>
+                      Current Suite
+                    </SelectItem>
+                  )}
                 </SelectContent>
               </Select>
             </div>

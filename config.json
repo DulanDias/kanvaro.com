@@ -10,5 +10,5 @@
     "ssl": false,
     "uri": "mongodb://admin:password@mongodb:27017/kanvaro_dev?authSource=admin"
   },
-  "organizationId": "68e2447bb2e580d490ddd7cf"
+  "organizationId": "68e394756be8a3d2de488abd"
 }

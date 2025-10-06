@@ -83,6 +83,9 @@ export default function TestCaseList({
   const [priorityFilter, setPriorityFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
   const [automationFilter, setAutomationFilter] = useState('')
+  const ALL_PRIORITY = '__ALL_PRIORITY__'
+  const ALL_CATEGORIES = '__ALL_CATEGORIES__'
+  const ALL_STATUS = '__ALL_STATUS__'
   const [selectedCases, setSelectedCases] = useState<string[]>([])
 
   useEffect(() => {
@@ -235,12 +238,12 @@ export default function TestCaseList({
             </div>
           </div>
           
-          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+          <Select value={priorityFilter || ALL_PRIORITY} onValueChange={(v) => setPriorityFilter(v === ALL_PRIORITY ? '' : v)}>
             <SelectTrigger className="w-32">
               <SelectValue placeholder="Priority" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Priority</SelectItem>
+              <SelectItem value={ALL_PRIORITY}>All Priority</SelectItem>
               <SelectItem value="critical">Critical</SelectItem>
               <SelectItem value="high">High</SelectItem>
               <SelectItem value="medium">Medium</SelectItem>
@@ -248,12 +251,12 @@ export default function TestCaseList({
             </SelectContent>
           </Select>
 
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <Select value={categoryFilter || ALL_CATEGORIES} onValueChange={(v) => setCategoryFilter(v === ALL_CATEGORIES ? '' : v)}>
             <SelectTrigger className="w-36">
               <SelectValue placeholder="Category" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Categories</SelectItem>
+              <SelectItem value={ALL_CATEGORIES}>All Categories</SelectItem>
               <SelectItem value="functional">Functional</SelectItem>
               <SelectItem value="integration">Integration</SelectItem>
               <SelectItem value="regression">Regression</SelectItem>
@@ -264,12 +267,12 @@ export default function TestCaseList({
             </SelectContent>
           </Select>
 
-          <Select value={automationFilter} onValueChange={setAutomationFilter}>
+          <Select value={automationFilter || ALL_STATUS} onValueChange={(v) => setAutomationFilter(v === ALL_STATUS ? '' : v)}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Automation" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="">All Status</SelectItem>
+              <SelectItem value={ALL_STATUS}>All Status</SelectItem>
               <SelectItem value="not_automated">Not Automated</SelectItem>
               <SelectItem value="automated">Automated</SelectItem>
               <SelectItem value="semi_automated">Semi Automated</SelectItem>

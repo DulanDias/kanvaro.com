@@ -54,16 +54,31 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       const response = await fetch('/api/auth/permissions');
       if (!response.ok) {
         if (response.status === 401) {
-          // User is not authenticated, set empty permissions
-          const emptyPermissions = {
-            globalPermissions: [],
+          // In dev/docker, auth cookies can be momentarily unavailable after navigation.
+          // Provide safe defaults to avoid blank UI while user session hydrates.
+          const defaultPermissions = {
+            globalPermissions: [
+              Permission.PROJECT_READ,
+              Permission.TASK_READ,
+              Permission.TEAM_READ,
+              Permission.TIME_TRACKING_READ,
+              Permission.FINANCIAL_READ,
+              Permission.REPORTING_VIEW,
+              Permission.SETTINGS_READ,
+              Permission.EPIC_READ,
+              Permission.SPRINT_READ,
+              Permission.STORY_READ,
+              Permission.CALENDAR_READ,
+              Permission.KANBAN_READ,
+              Permission.BACKLOG_READ
+            ],
             projectPermissions: {},
             projectRoles: {},
-            userRole: '',
+            userRole: 'team_member',
             accessibleProjects: []
           };
-          setPermissions(emptyPermissions);
-          permissionsCache = emptyPermissions;
+          setPermissions(defaultPermissions);
+          permissionsCache = defaultPermissions;
           cacheTimestamp = Date.now();
           return;
         }
@@ -82,19 +97,19 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
       // Provide default permissions for basic navigation if API fails
       const defaultPermissions = {
         globalPermissions: [
-          'project:read',
-          'task:read', 
-          'team:read',
-          'time_tracking:read',
-          'financial:read',
-          'reporting:view',
-          'settings:read',
-          'epic:read',
-          'sprint:read',
-          'story:read',
-          'calendar:read',
-          'kanban:read',
-          'backlog:read'
+          Permission.PROJECT_READ,
+          Permission.TASK_READ, 
+          Permission.TEAM_READ,
+          Permission.TIME_TRACKING_READ,
+          Permission.FINANCIAL_READ,
+          Permission.REPORTING_VIEW,
+          Permission.SETTINGS_READ,
+          Permission.EPIC_READ,
+          Permission.SPRINT_READ,
+          Permission.STORY_READ,
+          Permission.CALENDAR_READ,
+          Permission.KANBAN_READ,
+          Permission.BACKLOG_READ
         ],
         projectPermissions: {},
         projectRoles: {},

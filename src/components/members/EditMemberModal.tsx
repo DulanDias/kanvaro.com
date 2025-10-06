@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -16,7 +16,17 @@ interface Member {
   lastName: string
   email: string
   role: string
+  customRole?: {
+    _id: string
+    name: string
+  }
   isActive: boolean
+}
+
+interface CustomRole {
+  _id: string
+  name: string
+  description: string
 }
 
 interface EditMemberModalProps {
@@ -30,10 +40,35 @@ export function EditMemberModal({ member, onClose, onUpdate }: EditMemberModalPr
     firstName: member.firstName,
     lastName: member.lastName,
     role: member.role,
+    customRoleId: member.customRole?._id || '',
     isActive: member.isActive
   })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [customRoles, setCustomRoles] = useState<CustomRole[]>([])
+  const [rolesLoading, setRolesLoading] = useState(true)
+
+  useEffect(() => {
+    fetchCustomRoles()
+  }, [])
+
+  const fetchCustomRoles = async () => {
+    try {
+      setRolesLoading(true)
+      const response = await fetch('/api/roles')
+      const data = await response.json()
+
+      if (data.success) {
+        // Filter out system roles and get only custom roles
+        const customRolesData = data.data.filter((role: any) => !role.isSystem)
+        setCustomRoles(customRolesData)
+      }
+    } catch (err) {
+      console.error('Failed to fetch custom roles:', err)
+    } finally {
+      setRolesLoading(false)
+    }
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -46,9 +81,33 @@ export function EditMemberModal({ member, onClose, onUpdate }: EditMemberModalPr
 
     setLoading(true)
     try {
-      await onUpdate(member._id, formData)
+      // Update member basic info
+      await onUpdate(member._id, {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        role: formData.role,
+        isActive: formData.isActive
+      })
+
+      // Update custom role if changed
+      if (formData.customRoleId !== (member.customRole?._id || '')) {
+        const response = await fetch(`/api/users/${member._id}/role`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            customRoleId: formData.customRoleId || null
+          })
+        })
+
+        if (!response.ok) {
+          const errorData = await response.json()
+          throw new Error(errorData.error || 'Failed to update custom role')
+        }
+      }
     } catch (err) {
-      setError('Failed to update member')
+      setError(err instanceof Error ? err.message : 'Failed to update member')
     } finally {
       setLoading(false)
     }
@@ -125,7 +184,7 @@ export function EditMemberModal({ member, onClose, onUpdate }: EditMemberModalPr
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="role">Role</Label>
+              <Label htmlFor="role">System Role</Label>
               <Select value={formData.role} onValueChange={(value) => setFormData(prev => ({ ...prev, role: value }))}>
                 <SelectTrigger>
                   <SelectValue placeholder="Select a role" />
@@ -138,6 +197,36 @@ export function EditMemberModal({ member, onClose, onUpdate }: EditMemberModalPr
                   <SelectItem value="viewer">Viewer</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="customRole">Custom Role (Optional)</Label>
+              <Select 
+                value={formData.customRoleId || '__NO_CUSTOM_ROLE__'} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, customRoleId: value === '__NO_CUSTOM_ROLE__' ? '' : value }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a custom role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__NO_CUSTOM_ROLE__">No custom role</SelectItem>
+                  {rolesLoading ? (
+                    <SelectItem value="loading" disabled>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Loading roles...
+                    </SelectItem>
+                  ) : (
+                    customRoles.map((role) => (
+                      <SelectItem key={role._id} value={role._id}>
+                        {role.name}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Custom roles provide additional permissions beyond the system role
+              </p>
             </div>
 
             <div className="flex items-center justify-between">

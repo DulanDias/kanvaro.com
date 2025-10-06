@@ -1,25 +1,37 @@
 import { Permission, Role, ProjectRole, PermissionScope, getPermissionScope } from './permission-definitions';
 import { User } from '@/models/User';
 import { Project } from '@/models/Project';
+import { CustomRole } from '@/models/CustomRole';
 import mongoose from 'mongoose';
 
 export interface UserPermissions {
   globalPermissions: Permission[];
   projectPermissions: Map<string, Permission[]>; // projectId -> permissions
   userRole: Role;
+  customRole?: {
+    _id: string;
+    name: string;
+    permissions: Permission[];
+  };
   projectRoles: Map<string, ProjectRole>; // projectId -> projectRole
 }
 
 export class PermissionService {
   static async getUserPermissions(userId: string): Promise<UserPermissions> {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).populate('customRole');
     
     if (!user) {
       throw new Error('User not found');
     }
 
-    // Get global permissions based on user role
-    const globalPermissions = this.getGlobalPermissions(user.role as Role);
+    // Get global permissions based on user role and custom role
+    let globalPermissions = this.getGlobalPermissions(user.role as Role);
+    
+    // If user has a custom role, merge those permissions
+    if (user.customRole) {
+      const customRole = user.customRole as any;
+      globalPermissions = Array.from(new Set([...globalPermissions, ...customRole.permissions]));
+    }
     
     // Get project-specific permissions
     const projectPermissions = new Map<string, Permission[]>();
@@ -46,6 +58,11 @@ export class PermissionService {
       globalPermissions,
       projectPermissions,
       userRole: user.role as Role,
+      customRole: user.customRole ? {
+        _id: (user.customRole as any)._id.toString(),
+        name: (user.customRole as any).name,
+        permissions: (user.customRole as any).permissions
+      } : undefined,
       projectRoles
     };
   }

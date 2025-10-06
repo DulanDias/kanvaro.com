@@ -191,6 +191,12 @@ export async function POST(request: NextRequest) {
     
     console.log('Connecting to MongoDB with URI:', mongoUri.replace(/\/\/.*@/, '//***:***@'))
     
+    // Ensure we are not reusing an existing active connection with a different URI
+    // In dev/serverless environments, the process may already hold an open connection
+    if (mongoose.connection.readyState !== 0) {
+      await mongoose.disconnect()
+    }
+    
     // Connect to the new database
     await mongoose.connect(mongoUri, {
       ssl: database.ssl

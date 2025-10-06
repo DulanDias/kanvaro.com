@@ -6,6 +6,7 @@ export interface IUser extends Document {
   email: string
   password: string
   role: 'admin' | 'project_manager' | 'team_member' | 'client' | 'viewer' | 'account_manager' | 'qa_engineer' | 'tester'
+  customRole?: mongoose.Types.ObjectId
   organization: mongoose.Types.ObjectId
   isActive: boolean
   avatar?: string
@@ -54,6 +55,7 @@ const UserSchema = new Schema<IUser>({
     enum: ['admin', 'project_manager', 'team_member', 'client', 'viewer', 'account_manager', 'qa_engineer', 'tester'],
     default: 'team_member'
   },
+  customRole: { type: Schema.Types.ObjectId, ref: 'CustomRole' },
   organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true },
   isActive: { type: Boolean, default: true },
   avatar: String,

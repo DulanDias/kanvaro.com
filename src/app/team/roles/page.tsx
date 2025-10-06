@@ -8,6 +8,8 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { CreateRoleModal } from '@/components/roles/CreateRoleModal'
+import { EditRoleModal } from '@/components/roles/EditRoleModal'
 import { 
   Shield, 
   Plus, 
@@ -33,6 +35,9 @@ export default function RolesPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [authError, setAuthError] = useState('')
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [selectedRole, setSelectedRole] = useState<Role | null>(null)
 
   const checkAuth = useCallback(async () => {
     try {
@@ -79,6 +84,7 @@ export default function RolesPage() {
 
       if (data.success) {
         setRoles(data.data)
+        setError('')
       } else {
         setError(data.error || 'Failed to fetch roles')
       }
@@ -86,6 +92,55 @@ export default function RolesPage() {
       setError('Failed to fetch roles')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleRoleCreated = (newRole: Role) => {
+    setRoles(prev => [...prev, newRole])
+    setShowCreateModal(false)
+  }
+
+  const handleEditRole = (role: Role) => {
+    setSelectedRole(role)
+    setShowEditModal(true)
+  }
+
+  const handleRoleUpdated = (updatedRole: Role) => {
+    setRoles(prev => prev.map(role => role._id === updatedRole._id ? updatedRole : role))
+    setShowEditModal(false)
+    setSelectedRole(null)
+  }
+
+  const handleDeleteRole = async (role: Role) => {
+    if (role.isSystem) {
+      setError('Cannot delete system roles')
+      return
+    }
+
+    if (role.userCount > 0) {
+      setError('Cannot delete role that is assigned to users')
+      return
+    }
+
+    if (!confirm(`Are you sure you want to delete the role "${role.name}"?`)) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/roles/${role._id}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setRoles(prev => prev.filter(r => r._id !== role._id))
+        setError('')
+      } else {
+        setError(data.error || 'Failed to delete role')
+      }
+    } catch (err) {
+      setError('Failed to delete role')
     }
   }
 
@@ -123,7 +178,7 @@ export default function RolesPage() {
             <h1 className="text-3xl font-bold text-foreground">Roles & Permissions</h1>
             <p className="text-muted-foreground">Manage user roles and their permissions</p>
           </div>
-          <Button>
+          <Button onClick={() => setShowCreateModal(true)}>
             <Plus className="h-4 w-4 mr-2" />
             Create Role
           </Button>
@@ -157,10 +212,19 @@ export default function RolesPage() {
                     </Badge>
                     {!role.isSystem && (
                       <div className="flex space-x-1">
-                        <Button variant="ghost" size="sm">
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          onClick={() => handleEditRole(role)}
+                        >
                           <Edit className="h-4 w-4" />
                         </Button>
-                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-destructive hover:text-destructive"
+                          onClick={() => handleDeleteRole(role)}
+                        >
                           <Trash2 className="h-4 w-4" />
                         </Button>
                       </div>
@@ -190,13 +254,29 @@ export default function RolesPage() {
               <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
               <h3 className="text-lg font-medium text-foreground mb-2">No roles found</h3>
               <p className="text-muted-foreground mb-4">Get started by creating your first custom role.</p>
-              <Button>
+              <Button onClick={() => setShowCreateModal(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Create Role
               </Button>
             </CardContent>
           </Card>
         )}
+
+        <CreateRoleModal
+          isOpen={showCreateModal}
+          onClose={() => setShowCreateModal(false)}
+          onRoleCreated={handleRoleCreated}
+        />
+
+        <EditRoleModal
+          isOpen={showEditModal}
+          onClose={() => {
+            setShowEditModal(false)
+            setSelectedRole(null)
+          }}
+          onRoleUpdated={handleRoleUpdated}
+          role={selectedRole}
+        />
       </div>
     </MainLayout>
   )

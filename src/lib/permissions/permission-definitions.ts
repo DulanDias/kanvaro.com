@@ -303,6 +303,26 @@ export const ROLE_PERMISSIONS: Record<Role, Permission[]> = {
     // Backlog
     Permission.BACKLOG_READ,
     Permission.BACKLOG_MANAGE,
+
+    // Test management
+    Permission.TEST_SUITE_CREATE,
+    Permission.TEST_SUITE_READ,
+    Permission.TEST_SUITE_UPDATE,
+    Permission.TEST_SUITE_DELETE,
+    Permission.TEST_CASE_CREATE,
+    Permission.TEST_CASE_READ,
+    Permission.TEST_CASE_UPDATE,
+    Permission.TEST_CASE_DELETE,
+    Permission.TEST_PLAN_CREATE,
+    Permission.TEST_PLAN_READ,
+    Permission.TEST_PLAN_UPDATE,
+    Permission.TEST_PLAN_DELETE,
+    Permission.TEST_PLAN_MANAGE,
+    Permission.TEST_EXECUTION_CREATE,
+    Permission.TEST_EXECUTION_READ,
+    Permission.TEST_EXECUTION_UPDATE,
+    Permission.TEST_REPORT_VIEW,
+    Permission.TEST_REPORT_EXPORT,
   ],
   
   [Role.PROJECT_MANAGER]: [

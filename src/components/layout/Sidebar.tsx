@@ -31,7 +31,15 @@ import {
   DollarSign,
   Sliders,
   LogOut,
-  BookOpen
+  BookOpen,
+  TestTube,
+  TestTube2,
+  ClipboardList,
+  PlayCircle,
+  FileText,
+  Bug,
+  Target,
+  Activity
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -175,6 +183,57 @@ const navigationItems = [
     ]
   },
   {
+    id: 'test-management',
+    label: 'Test Management',
+    icon: TestTube,
+    path: '/test-management',
+    permission: Permission.TEST_SUITE_READ,
+    children: [
+      {
+        id: 'test-dashboard',
+        label: 'Dashboard',
+        icon: Activity,
+        path: '/test-management',
+        permission: Permission.TEST_SUITE_READ
+      },
+      {
+        id: 'test-suites',
+        label: 'Test Suites',
+        icon: TestTube2,
+        path: '/test-management/suites',
+        permission: Permission.TEST_SUITE_READ
+      },
+      {
+        id: 'test-cases',
+        label: 'Test Cases',
+        icon: ClipboardList,
+        path: '/test-management/cases',
+        permission: Permission.TEST_CASE_READ
+      },
+      {
+        id: 'test-plans',
+        label: 'Test Plans',
+        icon: Target,
+        path: '/test-management/plans',
+        permission: Permission.TEST_PLAN_READ
+      },
+      {
+        id: 'test-executions',
+        label: 'Test Executions',
+        icon: PlayCircle,
+        path: '/test-management/executions',
+        permission: Permission.TEST_EXECUTION_READ
+      },
+      {
+        id: 'test-reports',
+        label: 'Test Reports',
+        icon: FileText,
+        path: '/test-management/reports',
+        permission: Permission.TEST_REPORT_VIEW
+      }
+    ]
+  },
+  {
     id: 'reports',
     label: 'Reports',
     icon: BarChart,
@@ -186,6 +245,13 @@ const navigationItems = [
         label: 'Project Reports',
         icon: FolderOpen,
         path: '/reports/projects',
+        permission: Permission.REPORTING_VIEW
+      },
+      {
+        id: 'reports-gantt',
+        label: 'Gantt Chart',
+        icon: Calendar,
+        path: '/reports/projects/gantt',
         permission: Permission.REPORTING_VIEW
       },
       {
