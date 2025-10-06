@@ -177,7 +177,7 @@ export function UserSettings() {
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
                   {currenciesLoading ? (
-                    <SelectItem value="" disabled>Loading currencies...</SelectItem>
+                    <SelectItem value="__loading__" disabled>Loading currencies...</SelectItem>
                   ) : (
                     currencies.map((currency) => (
                       <SelectItem key={currency.code} value={currency.code}>
