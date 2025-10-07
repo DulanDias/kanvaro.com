@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { connectDB } from '@/lib/db'
+import { connectDB } from '@/lib/db-config'
 import { generateGanttData } from '@/lib/gantt'
 import { authenticateUser } from '@/lib/auth-utils'
 

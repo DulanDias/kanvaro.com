@@ -1,4 +1,4 @@
-import connectDB from '@/lib/db'
+import connectDB from '@/lib/db-config'
 import { Task } from '@/models/Task'
 import { authenticateUser } from '@/lib/auth-utils'
 import { PermissionService } from '@/lib/permissions/permission-service'

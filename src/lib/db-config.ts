@@ -1,8 +1,16 @@
 import mongoose from 'mongoose'
-import connectDB from './db'
 import { getDatabaseConfig as getConfigFromFile, getMongoUri } from './config'
 
-let cachedConnection: any = null
+/**
+ * Global is used here to maintain a cached connection across hot reloads
+ * in development. This prevents connections growing exponentially
+ * during API Route usage.
+ */
+let cached = (global as any).mongoose
+
+if (!cached) {
+  cached = (global as any).mongoose = { conn: null, promise: null }
+}
 
 /**
  * Get database configuration from the config file
@@ -24,39 +32,67 @@ export async function getDatabaseConfig() {
 
 /**
  * Connect to the database using the stored configuration
+ * This is the main database connection function that replaces the old connectDB
  */
-export async function connectWithStoredConfig() {
+export async function connectDB() {
   try {
     // If we already have a connection, return it
-    if (cachedConnection && mongoose.connection.readyState === 1) {
-      return cachedConnection
+    if (cached.conn) {
+      return cached.conn
     }
 
     const mongoUri = getMongoUri()
     if (!mongoUri) {
-      throw new Error('No database URI found in configuration')
+      // During build time or when config doesn't exist, return null instead of throwing
+      if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+        console.log('Build time: Skipping database connection')
+        return null
+      }
+      throw new Error('No database URI found in configuration. Please complete the setup process.')
     }
 
-    console.log('Connecting to database with stored configuration')
+    if (!cached.promise) {
+      const opts = {
+        bufferCommands: false,
+        serverSelectionTimeoutMS: 5000, // Reduce timeout for build time
+        connectTimeoutMS: 5000,
+      }
 
-    // Disconnect any existing connection
-    if (mongoose.connection.readyState !== 0) {
-      await mongoose.disconnect()
+      cached.promise = mongoose.connect(mongoUri, opts).then((mongoose) => {
+        return mongoose
+      })
     }
 
-    // Connect using the stored URI
-    const connection = await mongoose.connect(mongoUri, {
-      bufferCommands: false,
-    })
+    try {
+      cached.conn = await cached.promise
+    } catch (e) {
+      cached.promise = null
+      // During build time, don't throw errors for database connection failures
+      if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+        console.log('Build time: Database connection failed, continuing without connection')
+        return null
+      }
+      throw e
+    }
 
-    cachedConnection = connection
-    console.log('Successfully connected to database using stored configuration')
-    
-    return connection
+    return cached.conn
   } catch (error) {
-    console.error('Failed to connect with stored configuration:', error)
+    // During build time, don't throw errors for database connection failures
+    if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
+      console.log('Build time: Database connection error, continuing without connection:', error instanceof Error ? error.message : 'Unknown error')
+      return null
+    }
+    console.error('Failed to connect to database:', error)
     throw error
   }
+}
+
+/**
+ * Connect to the database using the stored configuration (alias for connectDB)
+ * @deprecated Use connectDB instead
+ */
+export async function connectWithStoredConfig() {
+  return connectDB()
 }
 
 /**
@@ -71,3 +107,6 @@ export async function hasDatabaseConfig(): Promise<boolean> {
     return false
   }
 }
+
+// Export connectDB as default for backward compatibility
+export default connectDB

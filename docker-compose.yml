@@ -5,16 +5,11 @@ services:
       - "3000:3000"
     environment:
       - NODE_ENV=production
+      - DOCKER=true
       - REDIS_URL=redis://redis:6379
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN}
       - REFRESH_TOKEN_SECRET=${REFRESH_TOKEN_SECRET}
-      - SMTP_HOST=${SMTP_HOST}
-      - SMTP_PORT=${SMTP_PORT}
-      - SMTP_USER=${SMTP_USER}
-      - SMTP_PASS=${SMTP_PASS}
-      - SMTP_FROM_EMAIL=${SMTP_FROM_EMAIL}
-      - SMTP_FROM_NAME=${SMTP_FROM_NAME}
     depends_on:
       - mongodb
       - redis

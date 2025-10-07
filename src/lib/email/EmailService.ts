@@ -1,5 +1,5 @@
 import nodemailer from 'nodemailer'
-import connectDB from '@/lib/db'
+import connectDB from '@/lib/db-config'
 import { Organization } from '@/models/Organization'
 
 interface EmailOptions {

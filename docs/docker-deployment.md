@@ -40,7 +40,7 @@ This guide explains how to deploy Kanvaro using Docker Compose.
    REFRESH_TOKEN_SECRET=your-refresh-token-secret-change-this-in-production
    ```
 
-   **Note:** No database credentials are needed in the environment file. All database configuration is handled through the setup wizard UI.
+   **Note:** No database credentials or SMTP configuration are needed in the environment file. All database and email configuration is handled through the setup wizard UI.
 
 4. **Start the services**
    ```bash
@@ -59,6 +59,11 @@ This guide explains how to deploy Kanvaro using Docker Compose.
      - Auth Source: `admin` (if using authentication)
 
    **Note:** MongoDB starts without authentication by default. You can choose to set up authentication through the setup wizard or leave it open for easier development.
+
+   - For email configuration, configure your SMTP settings through the setup wizard:
+     - SMTP Host, Port, Username, Password
+     - From Email and From Name
+     - All email settings are stored in the database, not in environment variables
 
 ## Database Configuration
 

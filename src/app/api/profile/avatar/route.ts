@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import connectDB from '@/lib/db'
+import connectDB from '@/lib/db-config'
 import { User } from '@/models/User'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'

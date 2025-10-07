@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import connectDB from '@/lib/db'
+import connectDB from '@/lib/db-config'
 import { Task } from '@/models/Task'
 import { Project } from '@/models/Project'
 import { TimeEntry } from '@/models/TimeEntry'

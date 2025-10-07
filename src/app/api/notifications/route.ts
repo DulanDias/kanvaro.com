@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateUser } from '@/lib/auth-utils'
 import { notificationService } from '@/lib/notification-service'
-import connectDB from '@/lib/db'
+import connectDB from '@/lib/db-config'
 
 export async function GET(request: NextRequest) {
   try {

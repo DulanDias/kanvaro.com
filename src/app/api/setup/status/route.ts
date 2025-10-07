@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { isSetupCompleted, loadConfig } from '@/lib/config'
-import connectDB from '@/lib/db'
+import connectDB from '@/lib/db-config'
 import { User } from '@/models/User'
 
 export async function GET() {

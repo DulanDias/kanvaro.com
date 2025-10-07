@@ -1,7 +1,7 @@
 import { Notification, INotification } from '@/models/Notification'
 import { User } from '@/models/User'
 import { emailService } from './email/EmailService'
-import connectDB from './db'
+import connectDB from './db-config'
 
 export interface NotificationData {
   type: 'task' | 'project' | 'team' | 'system' | 'budget' | 'deadline' | 'reminder' | 'invitation' | 'time_tracking'

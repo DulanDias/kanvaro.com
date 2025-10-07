@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import connectDB from '@/lib/db'
+import connectDB from '@/lib/db-config'
 import { User } from '@/models/User'
 import jwt from 'jsonwebtoken'
 

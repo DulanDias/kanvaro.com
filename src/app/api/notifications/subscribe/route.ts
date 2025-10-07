@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { authenticateUser } from '@/lib/auth-utils'
 import { pushNotificationService } from '@/lib/push-notification-service'
-import connectDB from '@/lib/db'
+import connectDB from '@/lib/db-config'
 import { User } from '@/models/User'
 
 export async function POST(request: NextRequest) {

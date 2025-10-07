@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import connectDB from '@/lib/db'
+import connectDB from '@/lib/db-config'
 import { ActiveTimer } from '@/models/ActiveTimer'
 import { TimeEntry } from '@/models/TimeEntry'
 import { TimeTrackingSettings } from '@/models/TimeTrackingSettings'

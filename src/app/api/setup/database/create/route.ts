@@ -88,7 +88,12 @@ export async function POST(request: NextRequest) {
     
     // Build MongoDB URI with authentication
     // For Docker deployment, convert localhost to mongodb service name
-    const host = config.host === 'localhost' ? 'mongodb' : config.host
+    // Check if we're running in Docker by looking for the DOCKER environment variable
+    let host = config.host
+    if (config.host === 'localhost' && process.env.DOCKER === 'true') {
+      host = 'mongodb'
+      console.log('Docker environment detected: Converting localhost to mongodb service name')
+    }
     const port = config.port
     
     // Build URI with or without authentication
@@ -101,6 +106,9 @@ export async function POST(request: NextRequest) {
     
     console.log('Attempting to connect to:', uri)
     console.log('Original config:', config)
+    console.log('Environment check - DOCKER:', process.env.DOCKER)
+    console.log('Environment check - NODE_ENV:', process.env.NODE_ENV)
+    console.log('Host conversion - original:', config.host, 'converted:', host)
     
     // Check if there's already an active connection
     const isAlreadyConnected = mongoose.connection.readyState === 1
@@ -108,7 +116,10 @@ export async function POST(request: NextRequest) {
     if (!isAlreadyConnected) {
       // Connect to MongoDB only if not already connected
       await mongoose.connect(uri, {
-        ssl: config.ssl
+        ssl: config.ssl,
+        serverSelectionTimeoutMS: 10000, // 10 second timeout
+        connectTimeoutMS: 10000,
+        socketTimeoutMS: 10000
       })
     } else {
       console.log('Mongoose already connected, using existing connection')

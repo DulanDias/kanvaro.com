@@ -75,7 +75,12 @@ export async function POST(request: NextRequest) {
     
     // Test MongoDB connection
     // If connecting from within Docker, use the service name instead of localhost
-    const host = config.host === 'localhost' ? 'mongodb' : config.host
+    // Check if we're running in Docker by looking for the DOCKER environment variable
+    let host = config.host
+    if (config.host === 'localhost' && process.env.DOCKER === 'true') {
+      host = 'mongodb'
+      console.log('Docker environment detected: Converting localhost to mongodb service name')
+    }
     const port = config.port
     
     // Build URI with or without authentication
@@ -88,7 +93,10 @@ export async function POST(request: NextRequest) {
     
     await mongoose.connect(uri, {
       authSource: config.authSource,
-      ssl: config.ssl
+      ssl: config.ssl,
+      serverSelectionTimeoutMS: 10000, // 10 second timeout
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 10000
     })
     
     // Test basic operations

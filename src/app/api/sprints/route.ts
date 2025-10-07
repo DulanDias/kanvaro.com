@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import connectDB from '@/lib/db'
+import connectDB from '@/lib/db-config'
 import { Sprint } from '@/models/Sprint'
 import { authenticateUser } from '@/lib/auth-utils'
 
