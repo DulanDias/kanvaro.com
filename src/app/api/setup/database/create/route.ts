@@ -137,8 +137,7 @@ export async function POST(request: NextRequest) {
     console.error('Database creation failed:', error)
     console.error('Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined,
-      config: config
+      stack: error instanceof Error ? error.stack : undefined
     })
     
     // Provide more specific error messages
