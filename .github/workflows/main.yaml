@@ -79,6 +79,8 @@ jobs:
             IMAGE_NAME="${IMAGE_NAME}-${ENV_NAME}"
           fi
 
+          IMAGE_NAME="${IMAGE_NAME%-}"
+
           echo "Final IMAGE_NAME: $IMAGE_NAME"
 
           IMAGE_TAG=${GITHUB_SHA::7}
