@@ -28,7 +28,6 @@ jobs:
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
     environment: main
-    needs: semantic-release
     outputs:
       version: ${{ steps.image-version.outputs.version }}
     steps:
