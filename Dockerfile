@@ -24,6 +24,7 @@ RUN chown -R nextjs:nodejs /app
 
 COPY entrypoint.sh /usr/local/bin/entrypoint.sh
 RUN chmod +x /usr/local/bin/entrypoint.sh
+RUN chown -R nextjs:nodejs /app /usr/local/bin/entrypoint.sh
 
 USER nextjs
 
@@ -33,5 +34,5 @@ ENV PORT 3000
 # set hostname to localhost
 ENV HOSTNAME "0.0.0.0"
 
-ENTRYPOINT ["entrypoint.sh"]
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
 CMD ["node", "server.js"]
