@@ -87,10 +87,17 @@ export async function POST(request: NextRequest) {
     // What we're doing here is testing the connection and ensuring we can access the database
     
     // Build MongoDB URI with authentication
-    // Use the host as provided by the user (localhost for external access, mongodb for internal)
-    const host = config.host
+    // For Docker deployment, convert localhost to mongodb service name
+    const host = config.host === 'localhost' ? 'mongodb' : config.host
     const port = config.port
-    const uri = `mongodb://${config.username}:${config.password}@${host}:${port}/${config.database}?authSource=${config.authSource}`
+    
+    // Build URI with or without authentication
+    let uri
+    if (config.username && config.password) {
+      uri = `mongodb://${config.username}:${config.password}@${host}:${port}/${config.database}?authSource=${config.authSource}`
+    } else {
+      uri = `mongodb://${host}:${port}/${config.database}`
+    }
     
     console.log('Attempting to connect to:', uri)
     console.log('Original config:', config)

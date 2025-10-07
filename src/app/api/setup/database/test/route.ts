@@ -76,8 +76,15 @@ export async function POST(request: NextRequest) {
     // Test MongoDB connection
     // If connecting from within Docker, use the service name instead of localhost
     const host = config.host === 'localhost' ? 'mongodb' : config.host
-    const port = config.host === 'localhost' ? 27017 : config.port
-    const uri = `mongodb://${config.username}:${config.password}@${host}:${port}/${config.database}?authSource=${config.authSource}`
+    const port = config.port
+    
+    // Build URI with or without authentication
+    let uri
+    if (config.username && config.password) {
+      uri = `mongodb://${config.username}:${config.password}@${host}:${port}/${config.database}?authSource=${config.authSource}`
+    } else {
+      uri = `mongodb://${host}:${port}/${config.database}`
+    }
     
     await mongoose.connect(uri, {
       authSource: config.authSource,

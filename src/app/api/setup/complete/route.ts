@@ -185,9 +185,15 @@ export async function POST(request: NextRequest) {
     
     // For Docker setup, use the internal service name instead of localhost
     const host = database.host === 'localhost' ? 'mongodb' : database.host
-    const port = database.host === 'localhost' ? 27017 : database.port
+    const port = database.port
     
-    const mongoUri = `mongodb://${database.username}:${database.password}@${host}:${port}/${database.database}?authSource=${database.authSource}`
+    // Build URI with or without authentication
+    let mongoUri
+    if (database.username && database.password) {
+      mongoUri = `mongodb://${database.username}:${database.password}@${host}:${port}/${database.database}?authSource=${database.authSource}`
+    } else {
+      mongoUri = `mongodb://${host}:${port}/${database.database}`
+    }
     
     console.log('Connecting to MongoDB with URI:', mongoUri.replace(/\/\/.*@/, '//***:***@'))
     

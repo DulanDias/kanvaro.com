@@ -1,3 +1,14 @@
+---
+slug: "self-hosting/production-database-config"
+title: "Production Database Configuration Guide"
+summary: "Complete guide for configuring MongoDB database connections in production environments"
+visibility: "public"
+audiences: ["self_host_admin", "admin"]
+category: "self-hosting"
+order: 21
+updated: "2025-01-04"
+---
+
 # Production Database Configuration Guide
 
 ## Overview

@@ -19,9 +19,9 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
   const [formData, setFormData] = useState({
     host: initialData?.host || 'localhost',
     port: initialData?.port || 27017,
-    database: initialData?.database || 'kanvaro_dev',
-    username: initialData?.username || 'admin',
-    password: initialData?.password || 'password',
+    database: initialData?.database || 'kanvaro',
+    username: initialData?.username || '',
+    password: initialData?.password || '',
     authSource: initialData?.authSource || 'admin',
     ssl: initialData?.ssl || false,
   })
@@ -215,7 +215,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Use "localhost" for Docker setup or your MongoDB server address
+                    Use "localhost" for Docker setup (will connect to internal mongodb service)
                   </p>
                 </div>
 
@@ -230,7 +230,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Use "27017" for Docker setup or direct MongoDB connection
+                    Use "27017" for Docker setup (internal MongoDB port)
                   </p>
                 </div>
 
@@ -256,7 +256,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                     type="text"
                     value={formData.authSource}
                     onChange={(e) => setFormData({ ...formData, authSource: e.target.value })}
-                    placeholder="admin"
+                    placeholder="Enter username"
                   />
                   <p className="text-xs text-muted-foreground">
                     The database to authenticate against (usually "admin" for MongoDB)
@@ -270,7 +270,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                     type="text"
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    placeholder="admin"
+                    placeholder="Enter username"
                     required
                   />
                   <p className="text-xs text-muted-foreground">
@@ -285,7 +285,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="password"
+                    placeholder="Enter password"
                     required
                   />
                   <p className="text-xs text-muted-foreground">
@@ -328,7 +328,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                 <AlertTitle>Automatic Database Setup</AlertTitle>
                 <AlertDescription>
                   We'll automatically prepare your MongoDB database for Kanvaro. 
-                  Just provide the connection details below.
+                  For Docker deployment, use "localhost" as the host - it will automatically connect to the internal MongoDB service.
                 </AlertDescription>
               </Alert>
 
@@ -344,7 +344,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Use "localhost" for Docker setup
+                    Use "localhost" for Docker setup (will connect to internal mongodb service)
                   </p>
                 </div>
 
@@ -359,7 +359,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Use "27017" for Docker setup
+                    Use "27017" for Docker setup (internal MongoDB port)
                   </p>
                 </div>
 
@@ -385,7 +385,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                     type="text"
                     value={formData.authSource}
                     onChange={(e) => setFormData({ ...formData, authSource: e.target.value })}
-                    placeholder="admin"
+                    placeholder="Enter username"
                     disabled
                   />
                   <p className="text-xs text-muted-foreground">
@@ -394,32 +394,30 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="username">Username</Label>
+                  <Label htmlFor="username">Username (Optional)</Label>
                   <Input
                     id="username"
                     type="text"
                     value={formData.username}
                     onChange={(e) => setFormData({ ...formData, username: e.target.value })}
-                    placeholder="admin"
-                    required
+                    placeholder="Enter username (optional)"
                   />
                   <p className="text-xs text-muted-foreground">
-                    MongoDB username for authentication
+                    MongoDB username for authentication (leave empty for no authentication)
                   </p>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password">Password</Label>
+                  <Label htmlFor="password">Password (Optional)</Label>
                   <Input
                     id="password"
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    placeholder="password"
-                    required
+                    placeholder="Enter password (optional)"
                   />
                   <p className="text-xs text-muted-foreground">
-                    MongoDB password for authentication
+                    MongoDB password for authentication (leave empty for no authentication)
                   </p>
                 </div>
               </div>
