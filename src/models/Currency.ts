@@ -47,7 +47,7 @@ const CurrencySchema = new Schema<ICurrency>({
 })
 
 // Indexes for better performance
-CurrencySchema.index({ code: 1 })
+// Note: code field already has unique: true which creates an index
 CurrencySchema.index({ isActive: 1, isMajor: 1 })
 CurrencySchema.index({ country: 1 })
 

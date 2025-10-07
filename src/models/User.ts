@@ -99,7 +99,7 @@ const UserSchema = new Schema<IUser>({
 })
 
 // Indexes
-UserSchema.index({ email: 1 })
+// Note: email field already has unique: true which creates an index
 UserSchema.index({ organization: 1, role: 1 })
 UserSchema.index({ isActive: 1 })
 

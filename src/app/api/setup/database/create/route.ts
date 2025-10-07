@@ -95,10 +95,17 @@ export async function POST(request: NextRequest) {
     console.log('Attempting to connect to:', uri)
     console.log('Original config:', config)
     
-    // Connect to MongoDB
-    await mongoose.connect(uri, {
-      ssl: config.ssl
-    })
+    // Check if there's already an active connection
+    const isAlreadyConnected = mongoose.connection.readyState === 1
+    
+    if (!isAlreadyConnected) {
+      // Connect to MongoDB only if not already connected
+      await mongoose.connect(uri, {
+        ssl: config.ssl
+      })
+    } else {
+      console.log('Mongoose already connected, using existing connection')
+    }
     
     // Test basic operations to ensure database is accessible
     if (mongoose.connection.db) {
@@ -126,8 +133,10 @@ export async function POST(request: NextRequest) {
       }
     }
     
-    // Close connection
-    await mongoose.disconnect()
+    // Only disconnect if we connected in this function
+    if (!isAlreadyConnected) {
+      await mongoose.disconnect()
+    }
     
     return NextResponse.json({ 
       success: true,
