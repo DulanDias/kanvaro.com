@@ -1,41 +1,36 @@
-# Development Dockerfile
-FROM node:18-alpine
+# syntax=docker.io/docker/dockerfile:1
 
-# Install dependencies only when needed
+FROM node:20-alpine AS base
+
+FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
+COPY package.json package-lock.json ./
+RUN if [ -f package-lock.json ]; then npm ci; else npm install; fi
 
-# Copy package files
-COPY package.json package-lock.json* ./
-
-# Install dependencies
-RUN npm install
-
+FROM base AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 RUN npm run build
-# Uncomment the following line in case you want to disable telemetry during runtime.
-# ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN addgroup --system --gid 1001 nodejs
-RUN adduser --system --uid 1001 nextjs
+FROM base AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+RUN addgroup --system --gid 1001 nodejs \
+  && adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-RUN chown -R noduser:nodgroup /app/.next
+USER nextjs
 
-# Copy source code
-COPY . .
-
-# Expose port
 EXPOSE 3000
-
-
-
-# Set environment
-ENV NODE_ENV=development
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
-# Start development server
-CMD ["npm", "run", "start"]
+CMD ["node", ".next/standalone/server.js"]
