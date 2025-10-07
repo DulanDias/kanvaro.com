@@ -6,41 +6,12 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - NODE_ENV=development
-      - MONGODB_URI=mongodb://admin:password@mongodb:27017/kanvaro_dev?authSource=admin
-      - REDIS_URL=redis://redis:6379
-      - JWT_SECRET=dev-jwt-secret-key
-      - JWT_EXPIRES_IN=7d
-      - REFRESH_TOKEN_SECRET=dev-refresh-secret
+      - .env
     depends_on:
       - mongodb
       - redis
     volumes:
       - .:/app
-      - /app/node_modules
       - ./uploads:/app/uploads
     restart: unless-stopped
     command: npm run dev
-
-  mongodb:
-    image: mongo:6.0
-    ports:
-      - "27018:27017"
-    volumes:
-      - mongodb_dev_data:/data/db
-    environment:
-      - MONGO_INITDB_ROOT_USERNAME=admin
-      - MONGO_INITDB_ROOT_PASSWORD=password
-    restart: unless-stopped
-
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6380:6379"
-    volumes:
-      - redis_dev_data:/data
-    restart: unless-stopped
-
-volumes:
-  mongodb_dev_data:
-  redis_dev_data:
