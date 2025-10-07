@@ -125,7 +125,7 @@ jobs:
               -v "${{ needs.build_dev.outputs.version }}" \
               -w "${{ vars.CONTAINER_TAG }}-web-${{ env.CI_ENVIRONMENT_NAME }}" \
               -u "${{ github.actor }}" \
-              -p "${{ secrets.Kanvaro Deploy Key }}" \
+              -p "${{ secrets.Kanvaro_Deploy_Key }}" \
               -l "/var/www/${{ vars.DEPLOY_PATH }}" \
               -r "${{ vars.REGISTRY_PATH }}" \
               -e "${{ env.CI_ENVIRONMENT_NAME }}" \
