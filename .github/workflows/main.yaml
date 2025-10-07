@@ -69,7 +69,7 @@ jobs:
       - name: Build and push Docker image
         if: github.ref == 'refs/heads/main'
         run: |
-          IMAGE_NAME=ghcr.io/${{ github.repository }}-${{ env.CI_ENVIRONMENT_NAME }}
+          IMAGE_NAME="ghcr.io/$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]' | tr '/' '-')-$(echo "$CI_ENVIRONMENT_NAME" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9-' '-')"
           IMAGE_TAG=${GITHUB_SHA::7}
 
           echo "Building image $IMAGE_NAME:${{ needs.build_main.outputs.version }}"
