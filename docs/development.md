@@ -1,3 +1,14 @@
+---
+slug: "self-hosting/development"
+title: "Development Environment Setup"
+summary: "Complete guide for setting up the Kanvaro development environment with Docker, database, and all dependencies."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "self-hosting"
+order: 10
+updated: "2025-01-04"
+---
+
 # Kanvaro - Development Guide
 
 ## Overview

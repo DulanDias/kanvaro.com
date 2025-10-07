@@ -1,3 +1,14 @@
+---
+slug: "concepts/application-layout"
+title: "Application Layout & UX Design"
+summary: "Modern responsive application layout with collapsible sidebar navigation, comprehensive header with global search, and adaptive main content area."
+visibility: "public"
+audiences: ["admin", "project_manager", "team_member", "self_host_admin"]
+category: "concepts"
+order: 50
+updated: "2025-01-04"
+---
+
 # Kanvaro - Application Layout & UX Design
 
 ## Overview

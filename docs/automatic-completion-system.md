@@ -1,3 +1,14 @@
+---
+slug: "concepts/automatic-completion-system"
+title: "Automatic Completion System"
+summary: "System that automatically marks stories, sprints, and epics as completed when all their child tasks are completed."
+visibility: "public"
+audiences: ["admin", "project_manager", "team_member"]
+category: "concepts"
+order: 60
+updated: "2025-01-04"
+---
+
 # Automatic Completion System
 
 ## Overview

@@ -1,3 +1,14 @@
+---
+slug: "reference/user-role-management"
+title: "User Role Management"
+summary: "Comprehensive user role management system with role-based access control, permissions, and team organization."
+visibility: "public"
+audiences: ["admin", "project_manager", "self_host_admin"]
+category: "reference"
+order: 120
+updated: "2025-01-04"
+---
+
 # Kanvaro - User & Role Management System
 
 ## Overview

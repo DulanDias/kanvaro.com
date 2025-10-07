@@ -1,3 +1,14 @@
+---
+slug: "operations/cicd-pipeline"
+title: "CI/CD Pipeline & Deployment"
+summary: "Comprehensive CI/CD pipeline using GitHub Actions for continuous integration and AWS AppRunner for deployment."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "operations"
+order: 30
+updated: "2025-01-04"
+---
+
 # Kanvaro - CI/CD Pipeline & Deployment
 
 ## Overview

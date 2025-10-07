@@ -1,3 +1,14 @@
+---
+slug: "concepts/project-management-features"
+title: "Project Management Features"
+summary: "Detailed overview of project management capabilities including agile methodologies, task tracking, and team collaboration."
+visibility: "public"
+audiences: ["admin", "project_manager", "team_member", "client", "viewer"]
+category: "concepts"
+order: 30
+updated: "2025-01-04"
+---
+
 # Kanvaro - Advanced Project Management Features
 
 ## Overview

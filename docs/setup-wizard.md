@@ -1,3 +1,14 @@
+---
+slug: "self-hosting/setup-wizard"
+title: "Setup Wizard"
+summary: "WordPress-style setup wizard for easy installation and configuration of Kanvaro with database setup and initial configuration."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "self-hosting"
+order: 30
+updated: "2025-01-04"
+---
+
 # Kanvaro - Initial Setup Wizard
 
 ## Overview

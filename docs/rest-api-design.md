@@ -1,3 +1,14 @@
+---
+slug: "reference/rest-api-design"
+title: "REST API Design"
+summary: "RESTful API design principles, endpoints, authentication, and integration patterns for Kanvaro API."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "reference"
+order: 80
+updated: "2025-01-04"
+---
+
 # Kanvaro - REST API Design & Implementation
 
 ## Overview

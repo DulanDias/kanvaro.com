@@ -1,3 +1,14 @@
+---
+slug: "concepts/routing-persistence"
+title: "Routing Persistence"
+summary: "URL routing persistence and state management for maintaining user context across navigation and page refreshes."
+visibility: "public"
+audiences: ["admin", "project_manager", "team_member"]
+category: "concepts"
+order: 90
+updated: "2025-01-04"
+---
+
 # Kanvaro - Advanced Routing & URL Persistence
 
 ## Overview

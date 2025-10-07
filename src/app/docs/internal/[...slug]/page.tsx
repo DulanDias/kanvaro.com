@@ -7,14 +7,9 @@ interface PageProps {
   params: {
     slug: string[];
   };
-  searchParams: {
-    audience?: string;
-    category?: string;
-    search?: string;
-  };
 }
 
-export default async function InternalDocPage({ params, searchParams }: PageProps) {
+export default async function InternalDocPage({ params }: PageProps) {
   // Authenticate user
   const auth = await authenticateUser();
   
@@ -35,9 +30,6 @@ export default async function InternalDocPage({ params, searchParams }: PageProp
       <DocsLayout
         doc={doc}
         visibility="internal"
-        initialAudience={searchParams.audience as any}
-        initialCategory={searchParams.category as any}
-        initialSearch={searchParams.search}
       />
     );
   } catch (error) {

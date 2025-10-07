@@ -1,3 +1,14 @@
+---
+slug: "concepts/mobile-responsiveness"
+title: "Mobile Responsiveness"
+summary: "Mobile-first responsive design approach with touch-friendly interfaces, adaptive layouts, and progressive web app features."
+visibility: "public"
+audiences: ["admin", "project_manager", "team_member", "self_host_admin"]
+category: "concepts"
+order: 70
+updated: "2025-01-04"
+---
+
 # Kanvaro - Mobile Responsiveness & Adaptive Design
 
 ## Overview

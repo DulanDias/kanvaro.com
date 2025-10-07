@@ -1,3 +1,14 @@
+---
+slug: "concepts/todo"
+title: "Todo Management"
+summary: "Task and todo management system with priority levels, due dates, and status tracking for personal and team productivity."
+visibility: "public"
+audiences: ["admin", "project_manager", "team_member"]
+category: "concepts"
+order: 100
+updated: "2025-01-04"
+---
+
 # Kanvaro Development TODO
 
 ## 🚧 PENDING IMPLEMENTATION - Core Features

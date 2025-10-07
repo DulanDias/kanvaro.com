@@ -1,3 +1,14 @@
+---
+slug: "self-hosting/production-readiness"
+title: "Production Readiness"
+summary: "Complete guide for preparing Kanvaro for production deployment including security, monitoring, and performance considerations."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "self-hosting"
+order: 50
+updated: "2025-01-04"
+---
+
 # Kanvaro - Production Readiness & Deployment
 
 ## Overview

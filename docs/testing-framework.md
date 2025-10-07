@@ -1,3 +1,14 @@
+---
+slug: "reference/testing-framework"
+title: "Testing Framework"
+summary: "Comprehensive testing framework including unit tests, integration tests, and end-to-end testing strategies."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "reference"
+order: 100
+updated: "2025-01-04"
+---
+
 # Kanvaro - Testing Framework & Strategy
 
 ## Overview

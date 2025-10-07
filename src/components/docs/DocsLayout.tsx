@@ -1,6 +1,7 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { DocNode, Audience, Category } from '@/lib/docs/types';
 import { Sidebar } from './Sidebar';
 import { AudienceFilter } from './AudienceFilter';
@@ -16,7 +17,7 @@ interface DocsLayoutProps {
   initialSearch?: string;
 }
 
-export function DocsLayout({ 
+function DocsLayoutContent({ 
   doc, 
   children, 
   visibility,
@@ -24,10 +25,22 @@ export function DocsLayout({
   initialCategory,
   initialSearch
 }: DocsLayoutProps) {
+  const searchParams = useSearchParams();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const [selectedAudience, setSelectedAudience] = useState<Audience | undefined>(initialAudience);
-  const [selectedCategory, setSelectedCategory] = useState<Category | undefined>(initialCategory);
-  const [searchQuery, setSearchQuery] = useState(initialSearch || '');
+  const [selectedAudience, setSelectedAudience] = useState<Audience | undefined>();
+  const [selectedCategory, setSelectedCategory] = useState<Category | undefined>();
+  const [searchQuery, setSearchQuery] = useState('');
+
+  // Initialize state from URL params or initial props
+  useEffect(() => {
+    const audience = searchParams.get('audience') as Audience || initialAudience;
+    const category = searchParams.get('category') as Category || initialCategory;
+    const search = searchParams.get('search') || initialSearch || '';
+    
+    setSelectedAudience(audience);
+    setSelectedCategory(category);
+    setSearchQuery(search);
+  }, [searchParams, initialAudience, initialCategory, initialSearch]);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -152,6 +165,21 @@ export function DocsLayout({
         </main>
       </div>
     </div>
+  );
+}
+
+export function DocsLayout(props: DocsLayoutProps) {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-8 w-8 rounded bg-primary/20 animate-pulse mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading documentation...</p>
+        </div>
+      </div>
+    }>
+      <DocsLayoutContent {...props} />
+    </Suspense>
   );
 }
 

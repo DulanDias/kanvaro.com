@@ -1,3 +1,14 @@
+---
+slug: "reference/navigation-performance-optimization"
+title: "Navigation Performance Optimization"
+summary: "Performance optimization strategies for navigation, routing, and page loading with caching and lazy loading techniques."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "reference"
+order: 40
+updated: "2025-01-04"
+---
+
 # Navigation Performance Optimization
 
 ## Problem Analysis
