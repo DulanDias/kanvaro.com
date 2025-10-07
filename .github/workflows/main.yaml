@@ -69,14 +69,15 @@ jobs:
       - name: Build and push Docker image
         if: github.ref == 'refs/heads/main'
         run: |
-          IMAGE_NAME="ghcr.io/$(echo "$GITHUB_REPOSITORY" | tr '[:upper:]' '[:lower:]' | tr '/' '-')"
+          IMAGE_OWNER="$(echo "$GITHUB_REPOSITORY" | cut -d'/' -f1 | tr '[:upper:]' '[:lower:]')"
+          IMAGE_REPO="$(echo "$GITHUB_REPOSITORY" | cut -d'/' -f2 | tr '[:upper:]' '[:lower:]')"
           ENV_NAME="$(echo "$CI_ENVIRONMENT_NAME" | tr '[:upper:]' '[:lower:]' | tr -c 'a-z0-9-' '-')"
+
+          IMAGE_NAME="ghcr.io/${IMAGE_OWNER}/${IMAGE_REPO}"
 
           if [ -n "$ENV_NAME" ]; then
             IMAGE_NAME="${IMAGE_NAME}-${ENV_NAME}"
           fi
-
-          IMAGE_NAME="${IMAGE_NAME%-}"
 
           echo "Final IMAGE_NAME: $IMAGE_NAME"
 
