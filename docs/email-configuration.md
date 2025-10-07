@@ -1,3 +1,14 @@
+---
+slug: "self-hosting/email-configuration"
+title: "Email Configuration"
+summary: "Configure email services for notifications, invitations, and system communications with SMTP and Azure Communication Services."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "self-hosting"
+order: 40
+updated: "2025-01-04"
+---
+
 # Kanvaro - Email Configuration Setup
 
 ## Overview

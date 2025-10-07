@@ -1,3 +1,14 @@
+---
+slug: "concepts/feature-roadmap"
+title: "Feature Roadmap"
+summary: "Comprehensive roadmap of current and future features across multiple development phases with AI, collaboration, and mobile enhancements."
+visibility: "public"
+audiences: ["admin", "project_manager", "team_member", "client", "viewer", "self_host_admin"]
+category: "concepts"
+order: 20
+updated: "2025-01-04"
+---
+
 # Kanvaro - Feature Roadmap & Development Phases
 
 ## Overview

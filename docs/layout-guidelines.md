@@ -1,3 +1,14 @@
+---
+slug: "reference/layout-guidelines"
+title: "Layout Guidelines"
+summary: "Design system guidelines for consistent UI layout, spacing, typography, and component usage across the application."
+visibility: "public"
+audiences: ["admin", "project_manager", "self_host_admin"]
+category: "reference"
+order: 30
+updated: "2025-01-04"
+---
+
 # Layout Guidelines for Kanvaro Application
 
 ## Overview

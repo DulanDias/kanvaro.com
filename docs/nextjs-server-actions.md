@@ -1,3 +1,14 @@
+---
+slug: "reference/nextjs-server-actions"
+title: "Next.js Server Actions"
+summary: "Implementation guide for Next.js Server Actions in Kanvaro for form handling, data mutations, and API integration."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "reference"
+order: 50
+updated: "2025-01-04"
+---
+
 # Kanvaro - Next.js Server Actions Integration
 
 ## Overview

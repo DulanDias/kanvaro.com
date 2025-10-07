@@ -1,3 +1,14 @@
+---
+slug: "reference/shadcn-integration"
+title: "Shadcn Integration"
+summary: "Integration guide for Shadcn UI components with Tailwind CSS for consistent design system and component library."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "reference"
+order: 90
+updated: "2025-01-04"
+---
+
 # Kanvaro - shadcn/ui Integration Guide
 
 ## Overview

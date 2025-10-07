@@ -1,3 +1,14 @@
+---
+slug: "self-hosting/database-setup"
+title: "Database Setup & Seeding"
+summary: "Database initialization, schema creation, and data seeding process for Kanvaro setup wizard with MongoDB support."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "self-hosting"
+order: 20
+updated: "2025-01-04"
+---
+
 # Kanvaro - Database Setup & Seeding
 
 ## Overview

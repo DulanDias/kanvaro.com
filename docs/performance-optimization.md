@@ -1,3 +1,14 @@
+---
+slug: "reference/performance-optimization"
+title: "Performance Optimization"
+summary: "Comprehensive performance optimization strategies including caching, lazy loading, database optimization, and frontend performance."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "reference"
+order: 60
+updated: "2025-01-04"
+---
+
 # Kanvaro - Performance Optimization & Caching Strategies
 
 ## Overview

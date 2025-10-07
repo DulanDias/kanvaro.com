@@ -6,14 +6,9 @@ interface PageProps {
   params: {
     slug: string[];
   };
-  searchParams: {
-    audience?: string;
-    category?: string;
-    search?: string;
-  };
 }
 
-export default async function PublicDocPage({ params, searchParams }: PageProps) {
+export default async function PublicDocPage({ params }: PageProps) {
   const slug = params.slug.join('/');
   
   try {
@@ -27,9 +22,6 @@ export default async function PublicDocPage({ params, searchParams }: PageProps)
       <DocsLayout
         doc={doc}
         visibility="public"
-        initialAudience={searchParams.audience as any}
-        initialCategory={searchParams.category as any}
-        initialSearch={searchParams.search}
       />
     );
   } catch (error) {

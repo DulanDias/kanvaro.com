@@ -1,3 +1,14 @@
+---
+slug: "reference/enterprise-security"
+title: "Enterprise Security Features"
+summary: "Comprehensive security features including authentication, authorization, data encryption, and compliance for enterprise deployments."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "reference"
+order: 20
+updated: "2025-01-04"
+---
+
 # Kanvaro - Enterprise-Grade Security Implementation
 
 ## Overview

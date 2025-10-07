@@ -1,3 +1,14 @@
+---
+slug: "reference/permission-system-implementation"
+title: "Permission System Implementation"
+summary: "Technical implementation details for the role-based permission system with granular access control and security."
+visibility: "public"
+audiences: ["admin", "self_host_admin"]
+category: "reference"
+order: 70
+updated: "2025-01-04"
+---
+
 # Kanvaro Permission System Implementation
 
 ## Overview

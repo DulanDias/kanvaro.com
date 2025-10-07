@@ -1,3 +1,14 @@
+---
+slug: "reference/ui-framework"
+title: "UI Framework"
+summary: "UI framework and design system documentation including components, styling, and accessibility guidelines."
+visibility: "public"
+audiences: ["admin", "project_manager", "self_host_admin"]
+category: "reference"
+order: 110
+updated: "2025-01-04"
+---
+
 # Kanvaro - UI Framework & Design System
 
 ## Overview

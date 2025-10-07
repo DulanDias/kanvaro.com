@@ -1,3 +1,14 @@
+---
+slug: "concepts/permission-loading-ux"
+title: "Permission Loading UX"
+summary: "User experience design for permission loading states, role-based access control, and seamless permission transitions."
+visibility: "public"
+audiences: ["admin", "project_manager", "team_member"]
+category: "concepts"
+order: 80
+updated: "2025-01-04"
+---
+
 # Permission Loading UX Implementation
 
 ## Overview
