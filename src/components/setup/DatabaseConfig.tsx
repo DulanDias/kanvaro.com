@@ -18,7 +18,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
   const [connectionType, setConnectionType] = useState<'existing' | 'create'>('existing')
   const [formData, setFormData] = useState({
     host: initialData?.host || 'localhost',
-    port: initialData?.port || 27018,
+    port: initialData?.port || 27017,
     database: initialData?.database || 'kanvaro_dev',
     username: initialData?.username || 'admin',
     password: initialData?.password || 'password',
@@ -226,11 +226,11 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                     type="number"
                     value={formData.port}
                     onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value) })}
-                    placeholder="27018"
+                    placeholder="27017"
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Use "27018" for Docker setup or "27017" for direct MongoDB connection
+                    Use "27017" for Docker setup or direct MongoDB connection
                   </p>
                 </div>
 
@@ -355,11 +355,11 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                     type="number"
                     value={formData.port}
                     onChange={(e) => setFormData({ ...formData, port: parseInt(e.target.value) })}
-                    placeholder="27018"
+                    placeholder="27017"
                     required
                   />
                   <p className="text-xs text-muted-foreground">
-                    Use "27018" for Docker setup (mapped from internal 27017)
+                    Use "27017" for Docker setup
                   </p>
                 </div>
 

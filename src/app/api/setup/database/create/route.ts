@@ -87,9 +87,9 @@ export async function POST(request: NextRequest) {
     // What we're doing here is testing the connection and ensuring we can access the database
     
     // Build MongoDB URI with authentication
-    // If connecting from within Docker, use the service name instead of localhost
-    const host = config.host === 'localhost' ? 'mongodb' : config.host
-    const port = config.host === 'localhost' ? 27017 : config.port
+    // Use the host as provided by the user (localhost for external access, mongodb for internal)
+    const host = config.host
+    const port = config.port
     const uri = `mongodb://${config.username}:${config.password}@${host}:${port}/${config.database}?authSource=${config.authSource}`
     
     console.log('Attempting to connect to:', uri)
@@ -137,12 +137,26 @@ export async function POST(request: NextRequest) {
     console.error('Database creation failed:', error)
     console.error('Error details:', {
       message: error instanceof Error ? error.message : 'Unknown error',
-      stack: error instanceof Error ? error.stack : undefined
+      stack: error instanceof Error ? error.stack : undefined,
+      config: config
     })
+    
+    // Provide more specific error messages
+    let errorMessage = 'Database setup failed. Please check your connection settings.'
+    let details = error instanceof Error ? error.message : 'Unknown error'
+    
+    if (details.includes('EAI_AGAIN') || details.includes('getaddrinfo')) {
+      errorMessage = 'Cannot resolve database hostname. Please check your host and port settings.'
+    } else if (details.includes('authentication failed') || details.includes('auth')) {
+      errorMessage = 'Authentication failed. Please check your username and password.'
+    } else if (details.includes('ECONNREFUSED')) {
+      errorMessage = 'Connection refused. Please check if MongoDB is running and accessible.'
+    }
+    
     return NextResponse.json(
       { 
-        error: 'Database setup failed. Please check your connection settings.',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: errorMessage,
+        details: details
       },
       { status: 400 }
     )
