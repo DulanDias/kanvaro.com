@@ -106,12 +106,31 @@ export default function SetupPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="container mx-auto px-4 py-8">
+      <div className="container mx-auto px-3 sm:px-4 py-4 sm:py-8">
         <div className="max-w-6xl mx-auto">
+          {/* Mobile Header */}
+          <div className="block md:hidden mb-6">
+            <h1 className="text-xl sm:text-2xl font-bold text-foreground mb-2">
+              Welcome to Kanvaro
+            </h1>
+            <p className="text-sm text-muted-foreground mb-4">
+              Let's configure your Kanvaro instance with a few simple steps.
+            </p>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => window.open('/docs/public', '_blank')}
+              className="flex items-center space-x-2 w-full sm:w-auto"
+            >
+              <BookOpen className="h-4 w-4" />
+              <span>Check our Documentation</span>
+            </Button>
+          </div>
+
           {/* Main Content Layout */}
-          <div className="flex gap-8">
-            {/* Left Sidebar - Progress Steps */}
-            <div className="w-64 flex-shrink-0">
+          <div className="flex flex-col lg:flex-row gap-4 lg:gap-8">
+            {/* Desktop Sidebar - Progress Steps */}
+            <div className="hidden lg:block w-64 flex-shrink-0">
               <div className="sticky top-8">
                 {/* Header Section - Left Aligned */}
                 <div className="mb-6">
@@ -143,8 +162,16 @@ export default function SetupPage() {
               </div>
             </div>
             
-            {/* Right Content Area */}
+            {/* Content Area */}
             <div className="flex-1 min-w-0">
+              {/* Mobile Progress Steps */}
+              <div className="block lg:hidden mb-6">
+                <ProgressSteps 
+                  steps={setupSteps} 
+                  currentStep={currentStep}
+                />
+              </div>
+              
               {renderCurrentStep()}
             </div>
           </div>

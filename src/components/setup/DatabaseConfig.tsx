@@ -155,7 +155,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
       </div>
 
       {/* Connection Type Selection */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div
           className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${
             connectionType === 'existing'
@@ -203,7 +203,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                 </AlertDescription>
               </Alert>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="host">Database Host</Label>
                   <Input
@@ -303,7 +303,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                 <Label htmlFor="ssl">Enable SSL connection</Label>
               </div>
 
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-col sm:flex-row gap-3">
                 <Button
                   type="button"
                   variant="outline"
@@ -332,7 +332,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
                 </AlertDescription>
               </Alert>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 <div className="space-y-2">
                   <Label htmlFor="host">Database Host</Label>
                   <Input
@@ -446,7 +446,7 @@ export const DatabaseConfig = ({ onNext, initialData }: DatabaseConfigProps) => 
             </Alert>
           )}
 
-          <div className="flex justify-end">
+          <div className="flex flex-col sm:flex-row justify-end gap-3">
             <Button
               type="submit"
               disabled={
