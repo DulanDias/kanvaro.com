@@ -36,25 +36,20 @@ export async function getDatabaseConfig() {
  */
 export async function connectDB() {
   try {
-    // If we already have a connection, verify it's still alive
+    // If we already have a connection, return it
     if (cached.conn) {
+      return cached.conn
+    }
+
+    // If there's a pending connection promise, wait for it
+    if (cached.promise) {
       try {
-        // Check if connection is still valid
-        const state = mongoose.connection.readyState
-        // 1 = connected, 2 = connecting
-        if (state === 1 || state === 2) {
-          return cached.conn
-        } else {
-          // Connection is disconnected or disconnecting, clear cache
-          console.log('Cached connection is stale, clearing cache')
-          cached.conn = null
-          cached.promise = null
-        }
+        cached.conn = await cached.promise
+        return cached.conn
       } catch (e) {
-        // Error checking connection state, clear cache
-        console.log('Error checking cached connection, clearing cache:', e)
-        cached.conn = null
+        // If the pending promise failed, clear it and try again
         cached.promise = null
+        // Don't return, fall through to create a new connection
       }
     }
 
@@ -68,20 +63,18 @@ export async function connectDB() {
       throw new Error('No database URI found in configuration. Please complete the setup process.')
     }
 
-    if (!cached.promise) {
-      const opts = {
-        bufferCommands: false,
-        serverSelectionTimeoutMS: 10000, // 10 second timeout
-        connectTimeoutMS: 10000,
-        socketTimeoutMS: 10000
-      }
-
-      console.log('Creating new database connection to:', mongoUri.replace(/:[^:@]+@/, ':****@'))
-      cached.promise = mongoose.connect(mongoUri, opts).then((mongoose) => {
-        console.log('Database connection established successfully')
-        return mongoose
-      })
+    const opts = {
+      bufferCommands: false,
+      serverSelectionTimeoutMS: 10000, // 10 second timeout
+      connectTimeoutMS: 10000,
+      socketTimeoutMS: 10000
     }
+
+    console.log('Creating new database connection to:', mongoUri.replace(/:[^:@]+@/, ':****@'))
+    cached.promise = mongoose.connect(mongoUri, opts).then((mongoose) => {
+      console.log('Database connection established successfully')
+      return mongoose
+    })
 
     try {
       cached.conn = await cached.promise

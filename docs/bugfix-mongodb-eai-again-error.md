@@ -4,6 +4,8 @@
 
 When accessing certain endpoints (like `/api/setup/complete` or `/api/currencies`) during the setup flow, the application would throw a `getaddrinfo EAI_AGAIN` MongoDB error, even though the `/api/setup/database/create` endpoint worked fine.
 
+Additionally, when running the application locally (outside Docker), the create endpoint would fail with `getaddrinfo ENOTFOUND mongodb` because it was incorrectly converting `localhost` to `mongodb` hostname.
+
 ## Root Cause
 
 The issue was caused by **global mongoose connection state corruption** in the database test endpoint:
@@ -35,7 +37,32 @@ Other endpoints (like `/api/setup/complete` and `/api/currencies`):
 
 ## The Fix
 
-### 1. Fixed Test Endpoint to Use Isolated Connection
+### 1. Fixed Hostname Resolution for Local Development
+
+**Files:** `src/app/api/setup/database/test/route.ts` and `src/app/api/setup/database/create/route.ts`
+
+**Change:** Only convert `localhost` to `mongodb` when actually running inside Docker:
+
+```typescript
+// Before (BAD):
+let host = config.host
+if (config.host === 'localhost') {
+  host = 'mongodb' // Always converted, breaks local development!
+}
+
+// After (GOOD):
+let host = config.host
+if (config.host === 'localhost' && process.env.DOCKER === 'true') {
+  host = 'mongodb' // Only convert when running in Docker
+}
+```
+
+**Why this matters:**
+- The hostname `mongodb` only resolves inside Docker containers (via Docker's internal DNS)
+- When running locally with `npm run dev`, you need to use `localhost` to connect to MongoDB
+- The `DOCKER=true` environment variable is set in `docker-compose.yml` but not in local development
+
+### 2. Fixed Test Endpoint to Use Isolated Connection
 
 **File:** `src/app/api/setup/database/test/route.ts`
 
@@ -54,30 +81,41 @@ await testMongoose.disconnect() // Only affects this instance
 
 This ensures the test endpoint doesn't interfere with the cached global connection used by other endpoints.
 
-### 2. Enhanced Connection Cache Validation
+### 3. Simplified Connection Cache Handling
 
 **File:** `src/lib/db-config.ts`
 
-**Change:** Added connection state validation before reusing cached connections:
+**Change:** Simplified the connection caching logic to be more robust:
 
 ```typescript
-if (cached.conn) {
-  // Check if connection is still valid
-  const state = mongoose.connection.readyState
-  // 1 = connected, 2 = connecting
-  if (state === 1 || state === 2) {
+export async function connectDB() {
+  // If we already have a connection, return it
+  if (cached.conn) {
     return cached.conn
-  } else {
-    // Connection is stale, clear cache and reconnect
-    cached.conn = null
-    cached.promise = null
   }
+
+  // If there's a pending connection promise, wait for it
+  if (cached.promise) {
+    try {
+      cached.conn = await cached.promise
+      return cached.conn
+    } catch (e) {
+      // If the pending promise failed, clear it and try again
+      cached.promise = null
+      // Fall through to create a new connection
+    }
+  }
+
+  // Create new connection...
 }
 ```
 
-This ensures that if the cached connection is disconnected or in an invalid state, it's cleared and a fresh connection is established.
+This ensures that:
+- Existing connections are reused when available
+- Failed connection promises are cleared and retried
+- The cache is cleaned up properly on errors
 
-### 3. Improved Error Handling
+### 4. Improved Error Handling
 
 **File:** `src/lib/db-config.ts`
 
@@ -108,12 +146,29 @@ The fix ensures we only reuse connections in states 1 (connected) or 2 (connecti
 
 To verify the fix works:
 
-1. Go through the setup flow
-2. Test the database connection (calls `/api/setup/database/test`)
-3. Complete the setup (calls `/api/setup/complete`)
-4. Verify currencies are loaded (calls `/api/currencies`)
+1. Clear any existing `config.json` file to start fresh
+2. Start MongoDB: `docker compose up mongodb -d` (or ensure MongoDB is running on localhost:27017)
+3. Start the application in dev mode: `npm run dev`
+4. Go through the setup flow:
+   - Test the database connection (calls `/api/setup/database/test`)
+   - Create/configure the database (calls `/api/setup/database/create`)
+   - Complete the setup (calls `/api/setup/complete`)
+5. Verify currencies are loaded (calls `/api/currencies`)
 
 All endpoints should now work without the `EAI_AGAIN` error.
+
+### Debugging
+
+If you encounter a 400 error, check the terminal/console logs for:
+- "Creating new database connection to..." - indicates connection attempt
+- "Database connection established successfully" - indicates success
+- Any error messages with stack traces
+
+Common issues:
+- **MongoDB not running**: Ensure MongoDB is accessible on the configured host/port
+- **Connection refused**: Check that MongoDB service is started
+- **Authentication failed**: Verify username/password if using authentication
+- **Config file issues**: Check that `config.json` is being saved correctly
 
 ## Key Learnings
 
