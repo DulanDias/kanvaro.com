@@ -181,40 +181,7 @@ export async function POST(request: NextRequest) {
       throw new Error('Admin user configuration is missing')
     }
     
-    // Save database configuration first so db-config.ts can use it
-    const { database } = setupData
-    
-    // For Docker setup, use the internal service name instead of localhost
-    // Always convert localhost to mongodb service name since we always run in Docker
-    let host = database.host
-    if (database.host === 'localhost') {
-      host = 'mongodb'
-      console.log('Converting localhost to mongodb service name (Docker deployment)')
-    }
-    const port = database.port
-    
-    // Build URI with or without authentication
-    let mongoUri
-    if (database.username && database.password) {
-      mongoUri = `mongodb://${database.username}:${database.password}@${host}:${port}/${database.database}?authSource=${database.authSource}`
-    } else {
-      mongoUri = `mongodb://${host}:${port}/${database.database}`
-    }
-    
-    console.log('Connecting to MongoDB with URI:', mongoUri.replace(/\/\/.*@/, '//***:***@'))
-    
-    // Save database configuration to config file first
-    saveDatabaseConfig({
-      host: database.host,
-      port: database.port,
-      database: database.database,
-      username: database.username,
-      password: database.password,
-      authSource: database.authSource,
-      ssl: database.ssl,
-      uri: mongoUri
-    })
-    
+    // Database configuration should already be saved from the database step
     // Connect using unified connection system
     await connectDB()
     
@@ -249,17 +216,7 @@ export async function POST(request: NextRequest) {
         provider: setupData.email.provider,
         smtp: setupData.email.smtp,
         azure: setupData.email.azure
-      } : undefined,
-      databaseConfig: {
-        host: database.host,
-        port: database.port,
-        database: database.database,
-        username: database.username,
-        password: database.password,
-        authSource: database.authSource,
-        ssl: database.ssl,
-        uri: mongoUri
-      }
+      } : undefined
     }
     
     console.log('Upserting organization...')
@@ -316,7 +273,7 @@ export async function POST(request: NextRequest) {
       console.log(`Currencies already exist (${existingCurrencies} found)`)
     }
     
-    // Database configuration already saved above
+    // Database configuration was already saved in the database step
     
     // Mark setup as completed
     markSetupCompleted(organization._id.toString())

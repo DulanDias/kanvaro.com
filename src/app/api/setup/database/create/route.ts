@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import mongoose from 'mongoose'
 import { Currency } from '@/models/Currency'
+import { saveDatabaseConfig } from '@/lib/config'
 
 // Currency data for seeding
 const currencyData = [
@@ -149,6 +150,20 @@ export async function POST(request: NextRequest) {
         console.log(`Currencies already exist (${existingCurrencies} found)`)
       }
     }
+    
+    // Save database configuration to config file for future use
+    console.log('Saving database configuration to config file...')
+    saveDatabaseConfig({
+      host: config.host,
+      port: config.port,
+      database: config.database,
+      username: config.username,
+      password: config.password,
+      authSource: config.authSource,
+      ssl: config.ssl,
+      uri: uri
+    })
+    console.log('Database configuration saved successfully')
     
     // Only disconnect if we connected in this function
     if (!isAlreadyConnected) {
