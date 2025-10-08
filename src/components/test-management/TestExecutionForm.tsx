@@ -193,14 +193,14 @@ export function TestExecutionForm({
           <div className="space-y-2">
             <Label htmlFor="testPlan">Test Plan (Optional)</Label>
             <Select 
-              value={formData.testPlan || ''} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, testPlan: value || undefined }))}
+              value={formData.testPlan || 'none'} 
+              onValueChange={(value) => setFormData(prev => ({ ...prev, testPlan: value === 'none' ? undefined : value }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select test plan (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No test plan</SelectItem>
+                <SelectItem value="none">No test plan</SelectItem>
                 {testPlans.map((plan) => (
                   <SelectItem key={plan._id} value={plan._id}>
                     {plan.name} ({plan.version})

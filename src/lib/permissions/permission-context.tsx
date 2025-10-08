@@ -30,6 +30,15 @@ let permissionsCache: UserPermissions | null = null;
 let cacheTimestamp: number = 0;
 const CACHE_DURATION = 5 * 60 * 1000; // 5 minutes
 
+// Global function to clear permission cache for debugging
+if (typeof window !== 'undefined') {
+  (window as any).clearPermissionCache = () => {
+    permissionsCache = null;
+    cacheTimestamp = 0;
+    console.log('Permission cache cleared. Refresh the page to reload permissions.');
+  };
+}
+
 interface PermissionProviderProps {
   children: ReactNode;
 }
@@ -70,7 +79,12 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
               Permission.STORY_READ,
               Permission.CALENDAR_READ,
               Permission.KANBAN_READ,
-              Permission.BACKLOG_READ
+              Permission.BACKLOG_READ,
+              Permission.TEST_SUITE_READ,
+              Permission.TEST_CASE_READ,
+              Permission.TEST_PLAN_READ,
+              Permission.TEST_EXECUTION_READ,
+              Permission.TEST_REPORT_VIEW
             ],
             projectPermissions: {},
             projectRoles: {},
@@ -109,7 +123,12 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
           Permission.STORY_READ,
           Permission.CALENDAR_READ,
           Permission.KANBAN_READ,
-          Permission.BACKLOG_READ
+          Permission.BACKLOG_READ,
+          Permission.TEST_SUITE_READ,
+          Permission.TEST_CASE_READ,
+          Permission.TEST_PLAN_READ,
+          Permission.TEST_EXECUTION_READ,
+          Permission.TEST_REPORT_VIEW
         ],
         projectPermissions: {},
         projectRoles: {},
@@ -146,6 +165,7 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
     if (projectId && permissions.projectPermissions[projectId]) {
       return permissions.projectPermissions[projectId].includes(permission);
     }
+    
     
     return false;
   };
@@ -281,6 +301,14 @@ export function useFeaturePermissions() {
     
     // Backlog permissions
     canManageBacklog: hasPermission(Permission.BACKLOG_MANAGE),
+    
+    // Test management permissions
+    canManageTestSuites: hasPermission(Permission.TEST_SUITE_CREATE) || hasPermission(Permission.TEST_SUITE_UPDATE) || hasPermission(Permission.TEST_SUITE_DELETE),
+    canManageTestCases: hasPermission(Permission.TEST_CASE_CREATE) || hasPermission(Permission.TEST_CASE_UPDATE) || hasPermission(Permission.TEST_CASE_DELETE),
+    canManageTestPlans: hasPermission(Permission.TEST_PLAN_CREATE) || hasPermission(Permission.TEST_PLAN_UPDATE) || hasPermission(Permission.TEST_PLAN_DELETE) || hasPermission(Permission.TEST_PLAN_MANAGE),
+    canExecuteTests: hasPermission(Permission.TEST_EXECUTION_CREATE) || hasPermission(Permission.TEST_EXECUTION_UPDATE),
+    canViewTestReports: hasPermission(Permission.TEST_REPORT_VIEW),
+    canExportTestReports: hasPermission(Permission.TEST_REPORT_EXPORT),
     
     loading,
     error

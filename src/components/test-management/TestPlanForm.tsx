@@ -202,14 +202,14 @@ export function TestPlanForm({ testPlan, projectId, onSave, onCancel, loading = 
             <div className="space-y-2">
               <Label htmlFor="assignedTo">Assigned To</Label>
               <Select 
-                value={formData.assignedTo || ''} 
-                onValueChange={(value) => setFormData(prev => ({ ...prev, assignedTo: value || undefined }))}
+                value={formData.assignedTo || 'unassigned'} 
+                onValueChange={(value) => setFormData(prev => ({ ...prev, assignedTo: value === 'unassigned' ? undefined : value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select assignee" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">Unassigned</SelectItem>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
                   {users.map((user) => (
                     <SelectItem key={user._id} value={user._id}>
                       {user.firstName} {user.lastName}

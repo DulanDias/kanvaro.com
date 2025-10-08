@@ -111,14 +111,14 @@ export function TestSuiteForm({ testSuite, projectId, onSave, onCancel, loading 
           <div className="space-y-2">
             <Label htmlFor="parentSuite">Parent Suite (Optional)</Label>
             <Select 
-              value={formData.parentSuite || ''} 
-              onValueChange={(value) => setFormData(prev => ({ ...prev, parentSuite: value || undefined }))}
+              value={formData.parentSuite || 'none'} 
+              onValueChange={(value) => setFormData(prev => ({ ...prev, parentSuite: value === 'none' ? undefined : value }))}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Select parent suite (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No parent suite</SelectItem>
+                <SelectItem value="none">No parent suite</SelectItem>
                 {parentSuites.map((suite) => (
                   <SelectItem key={suite._id} value={suite._id!}>
                     {suite.name}

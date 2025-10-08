@@ -1,12 +1,13 @@
 'use client'
 
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/Dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/Dialog'
 import { cn } from '@/lib/utils'
 
 interface ResponsiveDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   title: string
+  description?: string
   children: React.ReactNode
   className?: string
 }
@@ -15,6 +16,7 @@ export function ResponsiveDialog({
   open, 
   onOpenChange, 
   title, 
+  description,
   children, 
   className 
 }: ResponsiveDialogProps) {
@@ -29,6 +31,7 @@ export function ResponsiveDialog({
       >
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
+          {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         <div className="overflow-y-auto max-h-[calc(90vh-120px)]">
           {children}

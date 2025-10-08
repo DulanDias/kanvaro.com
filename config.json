@@ -1,5 +1,5 @@
 {
-  "setupCompleted": true,
+  "setupCompleted": false,
   "database": {
     "host": "mongodb",
     "port": 27017,
@@ -10,5 +10,5 @@
     "ssl": false,
     "uri": "mongodb://mongodb:27017/kanvaro"
   },
-  "organizationId": "68e394756be8a3d2de488abd"
+  "organizationId": ""
 }
