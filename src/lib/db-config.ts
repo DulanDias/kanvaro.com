@@ -36,9 +36,26 @@ export async function getDatabaseConfig() {
  */
 export async function connectDB() {
   try {
-    // If we already have a connection, return it
+    // If we already have a connection, verify it's still alive
     if (cached.conn) {
-      return cached.conn
+      try {
+        // Check if connection is still valid
+        const state = mongoose.connection.readyState
+        // 1 = connected, 2 = connecting
+        if (state === 1 || state === 2) {
+          return cached.conn
+        } else {
+          // Connection is disconnected or disconnecting, clear cache
+          console.log('Cached connection is stale, clearing cache')
+          cached.conn = null
+          cached.promise = null
+        }
+      } catch (e) {
+        // Error checking connection state, clear cache
+        console.log('Error checking cached connection, clearing cache:', e)
+        cached.conn = null
+        cached.promise = null
+      }
     }
 
     const mongoUri = getMongoUri()
@@ -59,7 +76,9 @@ export async function connectDB() {
         socketTimeoutMS: 10000
       }
 
+      console.log('Creating new database connection to:', mongoUri.replace(/:[^:@]+@/, ':****@'))
       cached.promise = mongoose.connect(mongoUri, opts).then((mongoose) => {
+        console.log('Database connection established successfully')
         return mongoose
       })
     }
@@ -67,7 +86,10 @@ export async function connectDB() {
     try {
       cached.conn = await cached.promise
     } catch (e) {
+      // Clear both cache and promise on error
       cached.promise = null
+      cached.conn = null
+      
       // During build time, don't throw errors for database connection failures
       if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
         console.log('Build time: Database connection failed, continuing without connection')

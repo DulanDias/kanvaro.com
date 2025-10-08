@@ -24,7 +24,7 @@ import {
 interface TestSuite {
   _id: string
   name: string
-  description?: string
+  description: string
   project: string
   parentSuite?: string
   isActive: boolean

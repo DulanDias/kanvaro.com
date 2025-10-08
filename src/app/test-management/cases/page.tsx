@@ -13,10 +13,11 @@ interface TestCase {
   _id: string
   title: string
   description: string
-  priority: string
-  category: string
-  automationStatus: string
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  category: 'functional' | 'integration' | 'regression' | 'performance' | 'security' | 'usability' | 'compatibility'
+  automationStatus: 'not_automated' | 'automated' | 'semi_automated' | 'deprecated'
   estimatedExecutionTime: number
+  tags: string[]
   testSuite: {
     _id: string
     name: string
@@ -28,13 +29,32 @@ interface TestCase {
   }
   isActive: boolean
   createdAt: string
+  updatedAt: string
+}
+
+interface FormTestCase {
+  _id?: string
+  title: string
+  description: string
+  preconditions: string
+  steps: Array<{ step: string; expectedResult: string }>
+  expectedResult: string
+  testData: string
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  category: 'functional' | 'integration' | 'regression' | 'performance' | 'security' | 'usability' | 'compatibility'
+  automationStatus: 'not_automated' | 'automated' | 'semi_automated' | 'deprecated'
+  estimatedExecutionTime: number
+  testSuite: string
+  tags: string[]
+  requirements?: string
 }
 
 export default function TestCasesPage() {
   const [selectedProject, setSelectedProject] = useState<string>('')
+  const [testCases, setTestCases] = useState<TestCase[]>([])
   const [testCaseDialogOpen, setTestCaseDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
-  const [selectedTestCase, setSelectedTestCase] = useState<TestCase | null>(null)
+  const [selectedTestCase, setSelectedTestCase] = useState<FormTestCase | null>(null)
   const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
@@ -51,16 +71,36 @@ export default function TestCasesPage() {
   }
 
   const handleEditTestCase = (testCase: TestCase) => {
-    setSelectedTestCase(testCase)
+    // Convert TestCase to FormTestCase
+    const formTestCase: FormTestCase = {
+      _id: testCase._id,
+      title: testCase.title,
+      description: testCase.description,
+      preconditions: '', // Default value, would need to be fetched from API
+      steps: [{ step: '', expectedResult: '' }], // Default value, would need to be fetched from API
+      expectedResult: '', // Default value, would need to be fetched from API
+      testData: '', // Default value, would need to be fetched from API
+      priority: testCase.priority,
+      category: testCase.category,
+      automationStatus: testCase.automationStatus,
+      estimatedExecutionTime: testCase.estimatedExecutionTime,
+      testSuite: testCase.testSuite._id,
+      tags: testCase.tags,
+      requirements: '' // Default value, would need to be fetched from API
+    }
+    setSelectedTestCase(formTestCase)
     setTestCaseDialogOpen(true)
   }
 
-  const handleDeleteTestCase = (testCaseId: string, testCaseName: string) => {
+  const handleDeleteTestCase = (testCaseId: string) => {
+    // Find the test case to get its name
+    const testCase = testCases.find(tc => tc._id === testCaseId)
+    const testCaseName = testCase?.title || 'Unknown Test Case'
     setDeleteItem({ id: testCaseId, name: testCaseName })
     setDeleteDialogOpen(true)
   }
 
-  const handleSaveTestCase = async (testCaseData: any) => {
+  const handleSaveTestCase = async (testCaseData: FormTestCase) => {
     setSaving(true)
     try {
       const url = selectedTestCase?._id 

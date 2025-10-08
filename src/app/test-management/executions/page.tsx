@@ -11,15 +11,16 @@ import { ResponsiveDialog } from '@/components/ui/ResponsiveDialog'
 import { Play, Calendar, User, Clock, CheckCircle, XCircle, AlertCircle, SkipForward, Edit } from 'lucide-react'
 
 interface TestExecution {
-  id: string
+  _id?: string
   testCase: string
-  testPlan: string
-  project: string
-  status: string
-  tester: string
-  executionDate: string
-  duration: number
+  testPlan?: string
+  status: 'passed' | 'failed' | 'blocked' | 'skipped'
+  actualResult: string
+  comments: string
+  executionTime: number
+  environment: string
   version: string
+  attachments?: string[]
 }
 
 export default function TestExecutionsPage() {
@@ -31,36 +32,36 @@ export default function TestExecutionsPage() {
   // Mock data - in real implementation, this would come from API
   const executions: TestExecution[] = [
     {
-      id: '1',
+      _id: '1',
       testCase: 'Login with valid credentials',
       testPlan: 'Sprint 1 Test Plan',
-      project: 'Project Alpha',
-      tester: 'John Doe',
       status: 'passed',
-      executionDate: '2024-01-20T10:30:00Z',
-      duration: 120,
+      actualResult: 'User successfully logged in',
+      comments: 'Test passed without issues',
+      executionTime: 120,
+      environment: 'Development',
       version: 'v1.0.0'
     },
     {
-      id: '2',
+      _id: '2',
       testCase: 'User registration flow',
       testPlan: 'Sprint 1 Test Plan',
-      project: 'Project Alpha',
-      tester: 'Jane Smith',
       status: 'failed',
-      executionDate: '2024-01-20T11:15:00Z',
-      duration: 180,
+      actualResult: 'Registration form validation failed',
+      comments: 'Email validation not working properly',
+      executionTime: 180,
+      environment: 'Development',
       version: 'v1.0.0'
     },
     {
-      id: '3',
+      _id: '3',
       testCase: 'Password reset functionality',
       testPlan: 'Sprint 1 Test Plan',
-      project: 'Project Alpha',
-      tester: 'John Doe',
       status: 'blocked',
-      executionDate: '2024-01-20T14:00:00Z',
-      duration: 0,
+      actualResult: 'Test blocked due to missing email service',
+      comments: 'Cannot test without email service configured',
+      executionTime: 0,
+      environment: 'Development',
       version: 'v1.0.0'
     }
   ]
@@ -115,11 +116,11 @@ export default function TestExecutionsPage() {
   const handleSaveTestExecution = async (executionData: any) => {
     setSaving(true)
     try {
-      const url = selectedTestExecution?.id 
-        ? `/api/test-executions/${selectedTestExecution.id}`
+      const url = selectedTestExecution?._id 
+        ? `/api/test-executions/${selectedTestExecution._id}`
         : '/api/test-executions'
       
-      const method = selectedTestExecution?.id ? 'PUT' : 'POST'
+      const method = selectedTestExecution?._id ? 'PUT' : 'POST'
       
       const response = await fetch(url, {
         method,
@@ -182,12 +183,12 @@ export default function TestExecutionsPage() {
                     </TableHeader>
                 <TableBody>
                   {executions.map((execution) => (
-                    <TableRow key={execution.id}>
+                    <TableRow key={execution._id}>
                       <TableCell className="font-medium">
                         {execution.testCase}
                       </TableCell>
-                      <TableCell>{execution.testPlan}</TableCell>
-                      <TableCell>{execution.project}</TableCell>
+                      <TableCell>{execution.testPlan || 'N/A'}</TableCell>
+                      <TableCell>Project Alpha</TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           {getStatusIcon(execution.status)}
@@ -199,19 +200,19 @@ export default function TestExecutionsPage() {
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <User className="h-4 w-4" />
-                          <span>{execution.tester}</span>
+                          <span>John Doe</span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <Clock className="h-4 w-4" />
-                          <span>{formatDuration(execution.duration)}</span>
+                          <span>{formatDuration(execution.executionTime)}</span>
                         </div>
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center space-x-2">
                           <Calendar className="h-4 w-4" />
-                          <span>{formatDate(execution.executionDate)}</span>
+                          <span>Jan 20, 2024</span>
                         </div>
                       </TableCell>
                       <TableCell>{execution.version}</TableCell>

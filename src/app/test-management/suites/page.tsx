@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/Button'
 import { Plus } from 'lucide-react'
 
 interface TestSuite {
-  _id: string
+  _id?: string
   name: string
   description: string
   parentSuite?: string
@@ -19,6 +19,7 @@ interface TestSuite {
 
 export default function TestSuitesPage() {
   const [selectedProject, setSelectedProject] = useState<string>('')
+  const [testSuites, setTestSuites] = useState<TestSuite[]>([])
   const [testSuiteDialogOpen, setTestSuiteDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [selectedTestSuite, setSelectedTestSuite] = useState<TestSuite | null>(null)
@@ -41,7 +42,10 @@ export default function TestSuitesPage() {
     setTestSuiteDialogOpen(true)
   }
 
-  const handleDeleteTestSuite = (testSuiteId: string, testSuiteName: string) => {
+  const handleDeleteTestSuite = (testSuiteId: string) => {
+    // Find the test suite to get its name
+    const testSuite = testSuites.find(ts => ts._id === testSuiteId)
+    const testSuiteName = testSuite?.name || 'Unknown Test Suite'
     setDeleteItem({ id: testSuiteId, name: testSuiteName })
     setDeleteDialogOpen(true)
   }

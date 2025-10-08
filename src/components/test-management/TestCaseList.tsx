@@ -54,6 +54,7 @@ interface TestCase {
   }
   isActive: boolean
   createdAt: string
+  updatedAt: string
 }
 
 interface TestCaseListProps {

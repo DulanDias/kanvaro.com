@@ -70,6 +70,9 @@ async function checkExistingData(db: any) {
 }
 
 export async function POST(request: NextRequest) {
+  // Create a new mongoose instance for testing to avoid affecting cached connections
+  const testMongoose = new mongoose.Mongoose()
+  
   try {
     const config = await request.json()
     
@@ -90,7 +93,8 @@ export async function POST(request: NextRequest) {
       uri = `mongodb://${host}:${port}/${config.database}`
     }
     
-    await mongoose.connect(uri, {
+    // Use the test mongoose instance instead of the global one
+    await testMongoose.connect(uri, {
       authSource: config.authSource,
       ssl: config.ssl,
       serverSelectionTimeoutMS: 10000, // 10 second timeout
@@ -99,14 +103,14 @@ export async function POST(request: NextRequest) {
     })
     
     // Test basic operations
-    if (mongoose.connection.db) {
-      await mongoose.connection.db.admin().ping()
+    if (testMongoose.connection.db) {
+      await testMongoose.connection.db.admin().ping()
       
       // Check for existing data to pre-fill setup steps
-      const existingData = await checkExistingData(mongoose.connection.db)
+      const existingData = await checkExistingData(testMongoose.connection.db)
       
-      // Close connection
-      await mongoose.disconnect()
+      // Close the test connection
+      await testMongoose.disconnect()
       
       return NextResponse.json({ 
         success: true,
@@ -114,12 +118,20 @@ export async function POST(request: NextRequest) {
       })
     }
     
-    // Close connection
-    await mongoose.disconnect()
+    // Close the test connection
+    await testMongoose.disconnect()
     
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Database connection test failed:', error)
+    
+    // Ensure we close the test connection even on error
+    try {
+      await testMongoose.disconnect()
+    } catch (disconnectError) {
+      // Ignore disconnect errors
+    }
+    
     return NextResponse.json(
       { error: 'Database connection failed' },
       { status: 400 }
