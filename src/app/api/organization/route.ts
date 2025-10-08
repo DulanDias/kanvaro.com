@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db-config'
+import { hasDatabaseConfig } from '@/lib/db-config'
 import { Organization } from '@/models/Organization'
 
 export async function GET() {
   try {
-    // Check if MongoDB URI is configured
-    if (!process.env.MONGODB_URI) {
+    // Check if database is configured
+    const isConfigured = await hasDatabaseConfig()
+    if (!isConfigured) {
       // Return mock organization for demo purposes when DB is not configured
       const mockOrganization = {
         id: '1',
@@ -106,8 +108,9 @@ export async function PUT(request: NextRequest) {
   try {
     const updateData = await request.json()
     
-    // Check if MongoDB URI is configured
-    if (!process.env.MONGODB_URI) {
+    // Check if database is configured
+    const isConfigured = await hasDatabaseConfig()
+    if (!isConfigured) {
       return NextResponse.json(
         { message: 'Organization settings updated successfully (demo mode)' },
         { status: 200 }

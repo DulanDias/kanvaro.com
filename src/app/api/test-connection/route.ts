@@ -1,23 +1,23 @@
 import { NextResponse } from 'next/server'
-import mongoose from 'mongoose'
+import connectDB from '@/lib/db-config'
+import { hasDatabaseConfig } from '@/lib/db-config'
 
 export async function GET() {
   try {
     console.log('Testing MongoDB connection...')
-    console.log('MONGODB_URI:', process.env.MONGODB_URI ? 'Set' : 'Not set')
     
-    if (!process.env.MONGODB_URI) {
+    // Check if database is configured
+    const isConfigured = await hasDatabaseConfig()
+    if (!isConfigured) {
       return NextResponse.json({
         success: false,
-        error: 'MONGODB_URI environment variable is not set',
+        error: 'Database configuration not found. Please complete the setup process.',
         env: process.env.NODE_ENV
       })
     }
 
-    // Test direct connection
-    const connection = await mongoose.connect(process.env.MONGODB_URI, {
-      bufferCommands: false,
-    })
+    // Test connection using unified system
+    const connection = await connectDB()
 
     console.log('Connection state:', connection.connection.readyState)
     console.log('Database name:', connection.connection.name)
@@ -30,9 +30,6 @@ export async function GET() {
     const collections = await connection.connection.db.listCollections().toArray()
     console.log('Collections found:', collections.length)
 
-    // Close the connection
-    await mongoose.disconnect()
-
     return NextResponse.json({
       success: true,
       connectionState: connection.connection.readyState,
@@ -42,15 +39,14 @@ export async function GET() {
         port: connection.connection.port
       },
       collections: collections.map((c: any) => c.name),
-      message: 'Direct connection test successful'
+      message: 'Connection test successful'
     })
   } catch (error) {
     console.error('Connection test failed:', error)
     return NextResponse.json({
       success: false,
       error: 'Connection test failed',
-      details: error instanceof Error ? error.message : 'Unknown error',
-      mongodbUri: process.env.MONGODB_URI ? 'Set' : 'Not set'
+      details: error instanceof Error ? error.message : 'Unknown error'
     }, { status: 500 })
   }
 }

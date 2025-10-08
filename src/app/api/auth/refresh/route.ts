@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import jwt from 'jsonwebtoken'
 import connectDB from '@/lib/db-config'
+import { hasDatabaseConfig } from '@/lib/db-config'
 import { User } from '@/models/User'
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key'
@@ -22,8 +23,9 @@ export async function POST() {
     // Verify refresh token
     const decoded = jwt.verify(refreshToken, JWT_REFRESH_SECRET) as any
 
-    // Check if MongoDB URI is configured
-    if (!process.env.MONGODB_URI) {
+    // Check if database is configured
+    const isConfigured = await hasDatabaseConfig()
+    if (!isConfigured) {
       // Demo mode - return mock user
       const mockUser = {
         id: '1',

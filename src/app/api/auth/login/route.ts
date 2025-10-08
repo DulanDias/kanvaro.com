@@ -38,7 +38,8 @@ export async function POST(request: Request) {
       } else {
         // Fall back to environment variable
         console.log('Using environment variable database configuration')
-        if (!process.env.MONGODB_URI) {
+        const isConfigured = await hasDatabaseConfig()
+        if (!isConfigured) {
           console.error('No database configuration found')
           return NextResponse.json(
             { error: 'Database not configured. Please complete the setup process first.' },

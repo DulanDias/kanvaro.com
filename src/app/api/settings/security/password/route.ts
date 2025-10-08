@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db-config'
+import { hasDatabaseConfig } from '@/lib/db-config'
 import { User } from '@/models/User'
 import bcrypt from 'bcryptjs'
 
@@ -7,8 +8,9 @@ export async function PUT(request: NextRequest) {
   try {
     const { currentPassword, newPassword } = await request.json()
     
-    // Check if MongoDB URI is configured
-    if (!process.env.MONGODB_URI) {
+    // Check if database is configured
+    const isConfigured = await hasDatabaseConfig()
+    if (!isConfigured) {
       return NextResponse.json(
         { message: 'Password updated successfully (demo mode)' },
         { status: 200 }

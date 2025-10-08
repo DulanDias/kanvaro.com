@@ -5,8 +5,6 @@ import mongoose from 'mongoose'
 export async function GET() {
   try {
     console.log('Checking database health...')
-    console.log('MONGODB_URI exists:', !!process.env.MONGODB_URI)
-    console.log('MONGODB_URI value:', process.env.MONGODB_URI ? 'Set' : 'Not set')
     
     const db = await connectDB()
     console.log('Database connection state:', db.connection.readyState)
