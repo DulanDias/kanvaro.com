@@ -54,18 +54,7 @@ const currencyData = [
   { code: 'VUV', name: 'Vanuatu Vatu', symbol: 'Vt', country: 'Vanuatu', isMajor: false },
   { code: 'WST', name: 'Samoan Tala', symbol: 'WS$', country: 'Samoa', isMajor: false },
   { code: 'TOP', name: 'Tongan Paʻanga', symbol: 'T$', country: 'Tonga', isMajor: false },
-  { code: 'KID', name: 'Kiribati Dollar', symbol: '$', country: 'Kiribati', isMajor: false },
-  // Cryptocurrencies
-  { code: 'BTC', name: 'Bitcoin', symbol: '₿', country: 'Global', isMajor: false },
-  { code: 'ETH', name: 'Ethereum', symbol: 'Ξ', country: 'Global', isMajor: false },
-  { code: 'LTC', name: 'Litecoin', symbol: 'Ł', country: 'Global', isMajor: false },
-  { code: 'XRP', name: 'Ripple', symbol: 'XRP', country: 'Global', isMajor: false },
-  { code: 'ADA', name: 'Cardano', symbol: '₳', country: 'Global', isMajor: false },
-  { code: 'DOT', name: 'Polkadot', symbol: '●', country: 'Global', isMajor: false },
-  { code: 'LINK', name: 'Chainlink', symbol: 'LINK', country: 'Global', isMajor: false },
-  { code: 'UNI', name: 'Uniswap', symbol: 'UNI', country: 'Global', isMajor: false },
-  { code: 'AAVE', name: 'Aave', symbol: 'AAVE', country: 'Global', isMajor: false },
-  { code: 'SOL', name: 'Solana', symbol: '◎', country: 'Global', isMajor: false }
+  { code: 'KID', name: 'Kiribati Dollar', symbol: '$', country: 'Kiribati', isMajor: false }
 ]
 
 async function seedCurrencies() {
