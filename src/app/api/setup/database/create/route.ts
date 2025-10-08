@@ -78,9 +78,9 @@ export async function POST(request: NextRequest) {
     // What we're doing here is testing the connection and ensuring we can access the database
     
     // Build MongoDB URI with authentication
-    // Convert localhost to mongodb service name only when running in Docker
+    // Always convert localhost to mongodb service name since we always run in Docker
     let host = config.host
-    if (config.host === 'localhost' && process.env.DOCKER === 'true') {
+    if (config.host === 'localhost') {
       host = 'mongodb'
       console.log('Converting localhost to mongodb service name (Docker deployment)')
     }

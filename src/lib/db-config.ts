@@ -41,18 +41,6 @@ export async function connectDB() {
       return cached.conn
     }
 
-    // If there's a pending connection promise, wait for it
-    if (cached.promise) {
-      try {
-        cached.conn = await cached.promise
-        return cached.conn
-      } catch (e) {
-        // If the pending promise failed, clear it and try again
-        cached.promise = null
-        // Don't return, fall through to create a new connection
-      }
-    }
-
     const mongoUri = getMongoUri()
     if (!mongoUri) {
       // During build time or when config doesn't exist, return null instead of throwing
@@ -63,26 +51,23 @@ export async function connectDB() {
       throw new Error('No database URI found in configuration. Please complete the setup process.')
     }
 
-    const opts = {
-      bufferCommands: false,
-      serverSelectionTimeoutMS: 10000, // 10 second timeout
-      connectTimeoutMS: 10000,
-      socketTimeoutMS: 10000
-    }
+    if (!cached.promise) {
+      const opts = {
+        bufferCommands: false,
+        serverSelectionTimeoutMS: 10000, // 10 second timeout
+        connectTimeoutMS: 10000,
+        socketTimeoutMS: 10000
+      }
 
-    console.log('Creating new database connection to:', mongoUri.replace(/:[^:@]+@/, ':****@'))
-    cached.promise = mongoose.connect(mongoUri, opts).then((mongoose) => {
-      console.log('Database connection established successfully')
-      return mongoose
-    })
+      cached.promise = mongoose.connect(mongoUri, opts).then((mongoose) => {
+        return mongoose
+      })
+    }
 
     try {
       cached.conn = await cached.promise
     } catch (e) {
-      // Clear both cache and promise on error
       cached.promise = null
-      cached.conn = null
-      
       // During build time, don't throw errors for database connection failures
       if (process.env.NODE_ENV === 'production' && process.env.NEXT_PHASE === 'phase-production-build') {
         console.log('Build time: Database connection failed, continuing without connection')

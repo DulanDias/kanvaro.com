@@ -70,16 +70,13 @@ async function checkExistingData(db: any) {
 }
 
 export async function POST(request: NextRequest) {
-  // Create a new mongoose instance for testing to avoid affecting cached connections
-  const testMongoose = new mongoose.Mongoose()
-  
   try {
     const config = await request.json()
     
     // Test MongoDB connection
-    // Convert localhost to mongodb service name only when running in Docker
+    // Always convert localhost to mongodb service name since we always run in Docker
     let host = config.host
-    if (config.host === 'localhost' && process.env.DOCKER === 'true') {
+    if (config.host === 'localhost') {
       host = 'mongodb'
       console.log('Converting localhost to mongodb service name (Docker deployment)')
     }
@@ -93,8 +90,7 @@ export async function POST(request: NextRequest) {
       uri = `mongodb://${host}:${port}/${config.database}`
     }
     
-    // Use the test mongoose instance instead of the global one
-    await testMongoose.connect(uri, {
+    await mongoose.connect(uri, {
       authSource: config.authSource,
       ssl: config.ssl,
       serverSelectionTimeoutMS: 10000, // 10 second timeout
@@ -103,14 +99,14 @@ export async function POST(request: NextRequest) {
     })
     
     // Test basic operations
-    if (testMongoose.connection.db) {
-      await testMongoose.connection.db.admin().ping()
+    if (mongoose.connection.db) {
+      await mongoose.connection.db.admin().ping()
       
       // Check for existing data to pre-fill setup steps
-      const existingData = await checkExistingData(testMongoose.connection.db)
+      const existingData = await checkExistingData(mongoose.connection.db)
       
-      // Close the test connection
-      await testMongoose.disconnect()
+      // Close connection
+      await mongoose.disconnect()
       
       return NextResponse.json({ 
         success: true,
@@ -118,20 +114,12 @@ export async function POST(request: NextRequest) {
       })
     }
     
-    // Close the test connection
-    await testMongoose.disconnect()
+    // Close connection
+    await mongoose.disconnect()
     
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error('Database connection test failed:', error)
-    
-    // Ensure we close the test connection even on error
-    try {
-      await testMongoose.disconnect()
-    } catch (disconnectError) {
-      // Ignore disconnect errors
-    }
-    
     return NextResponse.json(
       { error: 'Database connection failed' },
       { status: 400 }
