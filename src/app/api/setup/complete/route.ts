@@ -5,6 +5,7 @@ import { Organization } from '@/models/Organization'
 import { Currency } from '@/models/Currency'
 import bcrypt from 'bcryptjs'
 import { saveDatabaseConfig, markSetupCompleted } from '@/lib/config'
+import connectDB from '@/lib/db-config'
 
 // Currency data for seeding
 const currencyData = [
@@ -180,7 +181,7 @@ export async function POST(request: NextRequest) {
       throw new Error('Admin user configuration is missing')
     }
     
-    // Create MongoDB URI from setup data
+    // Save database configuration first so db-config.ts can use it
     const { database } = setupData
     
     // For Docker setup, use the internal service name instead of localhost
@@ -202,16 +203,20 @@ export async function POST(request: NextRequest) {
     
     console.log('Connecting to MongoDB with URI:', mongoUri.replace(/\/\/.*@/, '//***:***@'))
     
-    // Ensure we are not reusing an existing active connection with a different URI
-    // In dev/serverless environments, the process may already hold an open connection
-    if (mongoose.connection.readyState !== 0) {
-      await mongoose.disconnect()
-    }
-    
-    // Connect to the new database
-    await mongoose.connect(mongoUri, {
-      ssl: database.ssl
+    // Save database configuration to config file first
+    saveDatabaseConfig({
+      host: database.host,
+      port: database.port,
+      database: database.database,
+      username: database.username,
+      password: database.password,
+      authSource: database.authSource,
+      ssl: database.ssl,
+      uri: mongoUri
     })
+    
+    // Connect using unified connection system
+    await connectDB()
     
     console.log('Successfully connected to MongoDB')
     
@@ -311,18 +316,7 @@ export async function POST(request: NextRequest) {
       console.log(`Currencies already exist (${existingCurrencies} found)`)
     }
     
-    // Save database configuration to config file for future use
-    console.log('Saving database configuration to config file...')
-    saveDatabaseConfig({
-      host: database.host,
-      port: database.port,
-      database: database.database,
-      username: database.username,
-      password: database.password,
-      authSource: database.authSource,
-      ssl: database.ssl,
-      uri: mongoUri
-    })
+    // Database configuration already saved above
     
     // Mark setup as completed
     markSetupCompleted(organization._id.toString())
