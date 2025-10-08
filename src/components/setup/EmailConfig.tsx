@@ -133,7 +133,7 @@ export const EmailConfig = ({ onNext, onBack, initialData }: EmailConfigProps) =
           {/* Email Provider Selection */}
           <div className="space-y-4">
             <Label>Email Provider</Label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div
                 className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
                   provider === 'smtp'
@@ -196,7 +196,7 @@ export const EmailConfig = ({ onNext, onBack, initialData }: EmailConfigProps) =
                 Configure your SMTP server settings. Common providers: Gmail (smtp.gmail.com:587), Outlook (smtp-mail.outlook.com:587), or your custom SMTP server.
               </AlertDescription>
             </Alert>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="smtp-host">SMTP Host *</Label>
                 <Input
@@ -233,7 +233,7 @@ export const EmailConfig = ({ onNext, onBack, initialData }: EmailConfigProps) =
               <Label htmlFor="secure">Use SSL/TLS</Label>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="smtp-username">Username *</Label>
                 <Input
@@ -265,7 +265,7 @@ export const EmailConfig = ({ onNext, onBack, initialData }: EmailConfigProps) =
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="smtp-from-email">From Email *</Label>
                 <Input
@@ -308,7 +308,7 @@ export const EmailConfig = ({ onNext, onBack, initialData }: EmailConfigProps) =
                 Configure your Azure App registration for Exchange Online. You'll need to create an app in Azure Portal and grant it Mail.Send permissions.
               </AlertDescription>
             </Alert>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="azure-client-id">Client ID *</Label>
                 <Input
@@ -355,7 +355,7 @@ export const EmailConfig = ({ onNext, onBack, initialData }: EmailConfigProps) =
               )}
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="azure-from-email">From Email *</Label>
                 <Input
@@ -430,7 +430,7 @@ export const EmailConfig = ({ onNext, onBack, initialData }: EmailConfigProps) =
           </Alert>
         )}
 
-        <div className="flex justify-between">
+        <div className="flex flex-col sm:flex-row justify-between gap-3">
           <Button
             type="button"
             variant="outline"

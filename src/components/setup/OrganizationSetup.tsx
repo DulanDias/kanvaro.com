@@ -199,7 +199,7 @@ export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationS
             </div>
 
             {/* Logo Mode Selection */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div
                 className={`p-6 border-2 rounded-lg cursor-pointer transition-all ${
                   logoMode === 'light'
@@ -293,7 +293,7 @@ export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationS
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
                 {/* Light Mode Logo */}
                 <div className="bg-card border rounded-lg p-6">
                   <div className="flex items-center space-x-3 mb-4">
@@ -471,7 +471,7 @@ export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationS
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {organizationSizes.map((size) => {
                 const getIcon = () => {
                   switch (size.value) {
@@ -529,7 +529,7 @@ export const OrganizationSetup = ({ onNext, onBack, initialData }: OrganizationS
             </div>
           </div>
 
-          <div className="flex justify-between">
+          <div className="flex flex-col sm:flex-row justify-between gap-3">
             <Button
               type="button"
               variant="outline"

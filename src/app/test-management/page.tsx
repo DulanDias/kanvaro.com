@@ -1,11 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { ResponsiveDialog } from '@/components/ui/ResponsiveDialog'
+import { TestPlanForm } from '@/components/test-management/TestPlanForm'
+import { TestExecutionForm } from '@/components/test-management/TestExecutionForm'
 import { 
   TestTube, 
   Play, 
@@ -45,6 +49,10 @@ export default function TestManagementPage() {
   const [selectedProject, setSelectedProject] = useState<string>('')
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
+  const [testPlanDialogOpen, setTestPlanDialogOpen] = useState(false)
+  const [testExecutionDialogOpen, setTestExecutionDialogOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const router = useRouter()
 
   useEffect(() => {
     fetchProjects()
@@ -89,6 +97,61 @@ export default function TestManagementPage() {
     }
   }
 
+  const handleCreateTestPlan = () => {
+    setTestPlanDialogOpen(true)
+  }
+
+  const handleSaveTestPlan = async (testPlanData: any) => {
+    setSaving(true)
+    try {
+      const response = await fetch('/api/test-plans', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...testPlanData,
+          projectId: selectedProject
+        })
+      })
+
+      if (response.ok) {
+        setTestPlanDialogOpen(false)
+        // Refresh data or show success message
+      } else {
+        console.error('Failed to create test plan')
+      }
+    } catch (error) {
+      console.error('Error creating test plan:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleStartTestExecution = () => {
+    setTestExecutionDialogOpen(true)
+  }
+
+  const handleSaveTestExecution = async (executionData: any) => {
+    setSaving(true)
+    try {
+      const response = await fetch('/api/test-executions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(executionData)
+      })
+
+      if (response.ok) {
+        setTestExecutionDialogOpen(false)
+        // Refresh data or show success message
+      } else {
+        console.error('Failed to create test execution')
+      }
+    } catch (error) {
+      console.error('Error creating test execution:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   if (loading) {
     return (
       <MainLayout>
@@ -125,12 +188,12 @@ export default function TestManagementPage() {
             <h1 className="text-3xl font-bold">Test Management</h1>
             <p className="text-muted-foreground">Manage test suites, cases, and executions</p>
           </div>
-          <div className="flex gap-2">
-            <Button variant="outline">
+          <div className="flex flex-col sm:flex-row gap-2">
+            <Button variant="outline" onClick={() => router.push('/test-management/reports')}>
               <BarChart3 className="h-4 w-4 mr-2" />
               Reports
             </Button>
-            <Button>
+            <Button onClick={handleCreateTestPlan}>
               <TestTube className="h-4 w-4 mr-2" />
               New Test Plan
             </Button>
@@ -145,7 +208,7 @@ export default function TestManagementPage() {
               <p className="text-muted-foreground mb-4">
                 You need to be assigned to a project to access test management features.
               </p>
-              <Button>
+              <Button onClick={() => router.push('/projects/create')}>
                 <TestTube className="h-4 w-4 mr-2" />
                 Create Test Project
               </Button>
@@ -315,7 +378,7 @@ export default function TestManagementPage() {
                   <div className="text-center py-8 text-muted-foreground">
                     <Play className="h-8 w-8 mx-auto mb-2" />
                     <p>No test executions found</p>
-                    <Button className="mt-4">
+                    <Button className="mt-4" onClick={handleStartTestExecution}>
                       <Play className="h-4 w-4 mr-2" />
                       Start Test Execution
                     </Button>
@@ -325,6 +388,33 @@ export default function TestManagementPage() {
             </TabsContent>
           </Tabs>
         )}
+
+        {/* Dialogs */}
+        <ResponsiveDialog
+          open={testPlanDialogOpen}
+          onOpenChange={setTestPlanDialogOpen}
+          title="Create Test Plan"
+        >
+          <TestPlanForm
+            projectId={selectedProject}
+            onSave={handleSaveTestPlan}
+            onCancel={() => setTestPlanDialogOpen(false)}
+            loading={saving}
+          />
+        </ResponsiveDialog>
+
+        <ResponsiveDialog
+          open={testExecutionDialogOpen}
+          onOpenChange={setTestExecutionDialogOpen}
+          title="Execute Test Case"
+        >
+          <TestExecutionForm
+            projectId={selectedProject}
+            onSave={handleSaveTestExecution}
+            onCancel={() => setTestExecutionDialogOpen(false)}
+            loading={saving}
+          />
+        </ResponsiveDialog>
       </div>
     </MainLayout>
   )

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
-import { Bell, User, Sun, Moon, Monitor, LogOut, UserCircle, X, Check } from 'lucide-react'
+import { Bell, User, Sun, Moon, Monitor, LogOut, UserCircle, X, Check, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { OrganizationLogo } from '@/components/ui/OrganizationLogo'
@@ -23,7 +23,11 @@ import {
   PopoverTrigger,
 } from '@/components/ui/Popover'
 
-export function Header() {
+interface HeaderProps {
+  onMobileMenuToggle?: () => void
+}
+
+export function Header({ onMobileMenuToggle }: HeaderProps) {
   const [user, setUser] = useState<any>(null)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
@@ -73,7 +77,17 @@ export function Header() {
   }
 
   return (
-    <header className="flex h-16 items-center border-b bg-background px-4">
+    <header className="flex h-14 lg:h-16 items-center border-b bg-background px-3 sm:px-4">
+      {/* Mobile Menu Button */}
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={onMobileMenuToggle}
+        className="lg:hidden h-9 w-9 mr-2"
+      >
+        <Menu className="h-4 w-4" />
+      </Button>
+
       {/* Global Search - Full Width */}
       <div className="flex-1">
         <GlobalSearch 
@@ -83,10 +97,10 @@ export function Header() {
       </div>
 
       {/* Right Side Actions */}
-      <div className="flex items-center space-x-2 ml-4">
-        {/* Theme Toggle Buttons */}
+      <div className="flex items-center space-x-1 sm:space-x-2 ml-2 sm:ml-4">
+        {/* Theme Toggle Buttons - Hidden on mobile */}
         {mounted && (
-          <div className="flex items-center border rounded-md">
+          <div className="hidden sm:flex items-center border rounded-md">
             <Button
               variant={theme === 'light' ? 'default' : 'ghost'}
               size="sm"
@@ -126,7 +140,7 @@ export function Header() {
               )}
             </Button>
           </PopoverTrigger>
-          <PopoverContent className="w-80" align="end">
+          <PopoverContent className="w-80 sm:w-80" align="end">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium">Notifications</h4>
@@ -201,9 +215,11 @@ export function Header() {
         {/* User Profile Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-9 px-3">
-              <User className="h-4 w-4 mr-2" />
-              {user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : 'User'}
+            <Button variant="ghost" className="h-9 px-2 sm:px-3">
+              <User className="h-4 w-4 mr-1 sm:mr-2" />
+              <span className="hidden sm:inline">
+                {user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : 'User'}
+              </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">

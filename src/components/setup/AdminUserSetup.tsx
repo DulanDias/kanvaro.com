@@ -94,7 +94,7 @@ export const AdminUserSetup = ({ onNext, onBack, initialData }: AdminUserSetupPr
 
       <div className="bg-card border rounded-lg p-6">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
             <div className="space-y-2">
               <Label htmlFor="firstName">First Name *</Label>
               <Input
@@ -199,7 +199,7 @@ export const AdminUserSetup = ({ onNext, onBack, initialData }: AdminUserSetupPr
             )}
           </div>
 
-          <div className="flex justify-between">
+          <div className="flex flex-col sm:flex-row justify-between gap-3">
             <Button
               type="button"
               variant="outline"

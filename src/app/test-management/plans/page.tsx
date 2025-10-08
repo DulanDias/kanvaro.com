@@ -1,14 +1,41 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
-import { Plus, Calendar, Users, CheckSquare } from 'lucide-react'
+import { TestPlanForm } from '@/components/test-management/TestPlanForm'
+import { DeleteConfirmDialog } from '@/components/test-management/DeleteConfirmDialog'
+import { ResponsiveDialog } from '@/components/ui/ResponsiveDialog'
+import { Plus, Calendar, Users, CheckSquare, Edit, Trash2 } from 'lucide-react'
+
+interface TestPlan {
+  id: string
+  name: string
+  description: string
+  project: string
+  version: string
+  status: string
+  testCases: number
+  executed: number
+  passed: number
+  failed: number
+  createdBy: string
+  createdAt: string
+}
 
 export default function TestPlansPage() {
+  const [selectedProject, setSelectedProject] = useState<string>('')
+  const [testPlanDialogOpen, setTestPlanDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [selectedTestPlan, setSelectedTestPlan] = useState<TestPlan | null>(null)
+  const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null)
+  const [saving, setSaving] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
   // Mock data - in real implementation, this would come from API
-  const testPlans = [
+  const testPlans: TestPlan[] = [
     {
       id: '1',
       name: 'Sprint 1 Test Plan',
@@ -49,17 +76,87 @@ export default function TestPlansPage() {
     }
   }
 
+  const handleCreateTestPlan = () => {
+    setSelectedTestPlan(null)
+    setTestPlanDialogOpen(true)
+  }
+
+  const handleEditTestPlan = (testPlan: TestPlan) => {
+    setSelectedTestPlan(testPlan)
+    setTestPlanDialogOpen(true)
+  }
+
+  const handleDeleteTestPlan = (testPlanId: string, testPlanName: string) => {
+    setDeleteItem({ id: testPlanId, name: testPlanName })
+    setDeleteDialogOpen(true)
+  }
+
+  const handleSaveTestPlan = async (testPlanData: any) => {
+    setSaving(true)
+    try {
+      const url = selectedTestPlan?.id 
+        ? `/api/test-plans/${selectedTestPlan.id}`
+        : '/api/test-plans'
+      
+      const method = selectedTestPlan?.id ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...testPlanData,
+          projectId: selectedProject
+        })
+      })
+
+      if (response.ok) {
+        setTestPlanDialogOpen(false)
+        setSelectedTestPlan(null)
+        // Refresh the list or show success message
+      } else {
+        console.error('Failed to save test plan')
+      }
+    } catch (error) {
+      console.error('Error saving test plan:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleConfirmDelete = async () => {
+    if (!deleteItem) return
+    
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/test-plans/${deleteItem.id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setDeleteDialogOpen(false)
+        setDeleteItem(null)
+        // Refresh the list or show success message
+      } else {
+        console.error('Failed to delete test plan')
+      }
+    } catch (error) {
+      console.error('Error deleting test plan:', error)
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">Test Plans</h1>
             <p className="text-muted-foreground">
               Create and manage test plans for your projects
             </p>
           </div>
-          <Button>
+          <Button onClick={handleCreateTestPlan} className="w-full sm:w-auto">
             <Plus className="mr-2 h-4 w-4" />
             Create Test Plan
           </Button>
@@ -74,9 +171,29 @@ export default function TestPlansPage() {
                     <CardTitle className="text-lg">{plan.name}</CardTitle>
                     <CardDescription>{plan.description}</CardDescription>
                   </div>
-                  <Badge className={getStatusColor(plan.status)}>
-                    {plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge className={getStatusColor(plan.status)}>
+                      {plan.status.charAt(0).toUpperCase() + plan.status.slice(1)}
+                    </Badge>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleEditTestPlan(plan)}
+                        className="h-8 w-8 p-0"
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => handleDeleteTestPlan(plan.id, plan.name)}
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -113,6 +230,37 @@ export default function TestPlansPage() {
             </Card>
           ))}
         </div>
+
+        {/* Dialogs */}
+        <ResponsiveDialog
+          open={testPlanDialogOpen}
+          onOpenChange={setTestPlanDialogOpen}
+          title={selectedTestPlan ? 'Edit Test Plan' : 'Create Test Plan'}
+        >
+          <TestPlanForm
+            testPlan={selectedTestPlan || undefined}
+            projectId={selectedProject}
+            onSave={handleSaveTestPlan}
+            onCancel={() => {
+              setTestPlanDialogOpen(false)
+              setSelectedTestPlan(null)
+            }}
+            loading={saving}
+          />
+        </ResponsiveDialog>
+
+        <DeleteConfirmDialog
+          isOpen={deleteDialogOpen}
+          onClose={() => {
+            setDeleteDialogOpen(false)
+            setDeleteItem(null)
+          }}
+          onConfirm={handleConfirmDelete}
+          title="Delete Test Plan"
+          itemName={deleteItem?.name || ''}
+          itemType="Test Plan"
+          loading={deleting}
+        />
       </div>
     </MainLayout>
   )

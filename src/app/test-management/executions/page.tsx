@@ -1,15 +1,35 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Button } from '@/components/ui/Button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
-import { Play, Calendar, User, Clock, CheckCircle, XCircle, AlertCircle, SkipForward } from 'lucide-react'
+import { TestExecutionForm } from '@/components/test-management/TestExecutionForm'
+import { ResponsiveDialog } from '@/components/ui/ResponsiveDialog'
+import { Play, Calendar, User, Clock, CheckCircle, XCircle, AlertCircle, SkipForward, Edit } from 'lucide-react'
+
+interface TestExecution {
+  id: string
+  testCase: string
+  testPlan: string
+  project: string
+  status: string
+  tester: string
+  executionDate: string
+  duration: number
+  version: string
+}
 
 export default function TestExecutionsPage() {
+  const [selectedProject, setSelectedProject] = useState<string>('')
+  const [testExecutionDialogOpen, setTestExecutionDialogOpen] = useState(false)
+  const [selectedTestExecution, setSelectedTestExecution] = useState<TestExecution | null>(null)
+  const [saving, setSaving] = useState(false)
+
   // Mock data - in real implementation, this would come from API
-  const executions = [
+  const executions: TestExecution[] = [
     {
       id: '1',
       testCase: 'Login with valid credentials',
@@ -82,17 +102,56 @@ export default function TestExecutionsPage() {
     })
   }
 
+  const handleExecuteTest = () => {
+    setSelectedTestExecution(null)
+    setTestExecutionDialogOpen(true)
+  }
+
+  const handleEditTestExecution = (execution: TestExecution) => {
+    setSelectedTestExecution(execution)
+    setTestExecutionDialogOpen(true)
+  }
+
+  const handleSaveTestExecution = async (executionData: any) => {
+    setSaving(true)
+    try {
+      const url = selectedTestExecution?.id 
+        ? `/api/test-executions/${selectedTestExecution.id}`
+        : '/api/test-executions'
+      
+      const method = selectedTestExecution?.id ? 'PUT' : 'POST'
+      
+      const response = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(executionData)
+      })
+
+      if (response.ok) {
+        setTestExecutionDialogOpen(false)
+        setSelectedTestExecution(null)
+        // Refresh the list or show success message
+      } else {
+        console.error('Failed to save test execution')
+      }
+    } catch (error) {
+      console.error('Error saving test execution:', error)
+    } finally {
+      setSaving(false)
+    }
+  }
+
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
             <h1 className="text-2xl font-bold">Test Executions</h1>
             <p className="text-muted-foreground">
               Track and manage test execution results
             </p>
           </div>
-          <Button>
+          <Button onClick={handleExecuteTest} className="w-full sm:w-auto">
             <Play className="mr-2 h-4 w-4" />
             Execute Test
           </Button>
@@ -117,9 +176,10 @@ export default function TestExecutionsPage() {
                     <TableHead>Tester</TableHead>
                     <TableHead>Duration</TableHead>
                     <TableHead>Executed</TableHead>
-                    <TableHead>Version</TableHead>
-                  </TableRow>
-                </TableHeader>
+                        <TableHead>Version</TableHead>
+                        <TableHead className="w-12">Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
                 <TableBody>
                   {executions.map((execution) => (
                     <TableRow key={execution.id}>
@@ -155,6 +215,16 @@ export default function TestExecutionsPage() {
                         </div>
                       </TableCell>
                       <TableCell>{execution.version}</TableCell>
+                      <TableCell>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleEditTestExecution(execution)}
+                          className="h-8 w-8 p-0"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -162,6 +232,24 @@ export default function TestExecutionsPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Dialog */}
+        <ResponsiveDialog
+          open={testExecutionDialogOpen}
+          onOpenChange={setTestExecutionDialogOpen}
+          title={selectedTestExecution ? 'Edit Test Execution' : 'Execute Test Case'}
+        >
+          <TestExecutionForm
+            testExecution={selectedTestExecution || undefined}
+            projectId={selectedProject}
+            onSave={handleSaveTestExecution}
+            onCancel={() => {
+              setTestExecutionDialogOpen(false)
+              setSelectedTestExecution(null)
+            }}
+            loading={saving}
+          />
+        </ResponsiveDialog>
       </div>
     </MainLayout>
   )

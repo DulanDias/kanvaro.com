@@ -208,12 +208,12 @@ export default function TasksClient({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">My Tasks</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">My Tasks</h1>
           <p className="text-muted-foreground">Manage and track your assigned tasks</p>
         </div>
-        <Button onClick={() => setShowCreateTaskModal(true)}>
+        <Button onClick={() => setShowCreateTaskModal(true)} className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           New Task
         </Button>
@@ -228,62 +228,66 @@ export default function TasksClient({
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle>All Tasks</CardTitle>
-              <CardDescription>
-                {tasks.length} task{tasks.length !== 1 ? 's' : ''} found
-              </CardDescription>
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle>All Tasks</CardTitle>
+                <CardDescription>
+                  {tasks.length} task{tasks.length !== 1 ? 's' : ''} found
+                </CardDescription>
+              </div>
             </div>
-            <div className="flex items-center space-x-2">
-              <div className="relative">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+              <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
                   placeholder="Search tasks..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-10 w-64"
+                  className="pl-10 w-full"
                 />
               </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Filter by status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Status</SelectItem>
-                  <SelectItem value="todo">To Do</SelectItem>
-                  <SelectItem value="in_progress">In Progress</SelectItem>
-                  <SelectItem value="review">Review</SelectItem>
-                  <SelectItem value="testing">Testing</SelectItem>
-                  <SelectItem value="done">Done</SelectItem>
-                  <SelectItem value="cancelled">Cancelled</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Filter by priority" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Priority</SelectItem>
-                  <SelectItem value="low">Low</SelectItem>
-                  <SelectItem value="medium">Medium</SelectItem>
-                  <SelectItem value="high">High</SelectItem>
-                  <SelectItem value="critical">Critical</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="w-40">
-                  <SelectValue placeholder="Filter by type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="bug">Bug</SelectItem>
-                  <SelectItem value="feature">Feature</SelectItem>
-                  <SelectItem value="improvement">Improvement</SelectItem>
-                  <SelectItem value="task">Task</SelectItem>
-                  <SelectItem value="subtask">Subtask</SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2">
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-40">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="todo">To Do</SelectItem>
+                    <SelectItem value="in_progress">In Progress</SelectItem>
+                    <SelectItem value="review">Review</SelectItem>
+                    <SelectItem value="testing">Testing</SelectItem>
+                    <SelectItem value="done">Done</SelectItem>
+                    <SelectItem value="cancelled">Cancelled</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                  <SelectTrigger className="w-full sm:w-40">
+                    <SelectValue placeholder="Priority" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Priority</SelectItem>
+                    <SelectItem value="low">Low</SelectItem>
+                    <SelectItem value="medium">Medium</SelectItem>
+                    <SelectItem value="high">High</SelectItem>
+                    <SelectItem value="critical">Critical</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={typeFilter} onValueChange={setTypeFilter}>
+                  <SelectTrigger className="w-full sm:w-40">
+                    <SelectValue placeholder="Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Types</SelectItem>
+                    <SelectItem value="bug">Bug</SelectItem>
+                    <SelectItem value="feature">Feature</SelectItem>
+                    <SelectItem value="improvement">Improvement</SelectItem>
+                    <SelectItem value="task">Task</SelectItem>
+                    <SelectItem value="subtask">Subtask</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
         </CardHeader>

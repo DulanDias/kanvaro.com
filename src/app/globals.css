@@ -2,6 +2,26 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Mobile responsive utilities */
+@layer utilities {
+  /* Touch targets */
+  @media (max-width: 768px) {
+    .touch-target {
+      min-height: 44px;
+      min-width: 44px;
+    }
+  }
+
+  /* Hide scrollbar but keep functionality */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 @layer base {
   :root {
     /* Light theme - High contrast, accessible colors */
