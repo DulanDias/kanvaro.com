@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import mongoose from 'mongoose'
 import { Currency } from '@/models/Currency'
 import { saveDatabaseConfig } from '@/lib/config'
+import connectDB from '@/lib/db-config'
 
 // Currency data for seeding
 const currencyData = [
@@ -110,27 +111,30 @@ export async function POST(request: NextRequest) {
     console.log('Final URI:', uri)
     console.log('=== END DEBUG ===')
     
-    // Check if there's already an active connection
-    const isAlreadyConnected = mongoose.connection.readyState === 1
+    // Save database configuration first so connectDB can use it
+    console.log('Saving database configuration to config file...')
+    saveDatabaseConfig({
+      host: config.host,
+      port: config.port,
+      database: config.database,
+      username: config.username,
+      password: config.password,
+      authSource: config.authSource,
+      ssl: config.ssl,
+      uri: uri
+    })
+    console.log('Database configuration saved successfully')
     
-    if (!isAlreadyConnected) {
-      // Connect to MongoDB only if not already connected
-      await mongoose.connect(uri, {
-        ssl: config.ssl,
-        serverSelectionTimeoutMS: 10000, // 10 second timeout
-        connectTimeoutMS: 10000,
-        socketTimeoutMS: 10000
-      })
-    } else {
-      console.log('Mongoose already connected, using existing connection')
-    }
+    // Now use the unified connection system
+    const db = await connectDB()
+    console.log('Connected using unified connection system')
     
     // Test basic operations to ensure database is accessible
-    if (mongoose.connection.db) {
-      await mongoose.connection.db.admin().ping()
+    if (db.connection.db) {
+      await db.connection.db.admin().ping()
       
       // Create a simple test collection to "initialize" the database
-      const testCollection = mongoose.connection.db.collection('_setup_test')
+      const testCollection = db.connection.db.collection('_setup_test')
       await testCollection.insertOne({ 
         test: true, 
         createdAt: new Date() 
@@ -149,25 +153,6 @@ export async function POST(request: NextRequest) {
       } else {
         console.log(`Currencies already exist (${existingCurrencies} found)`)
       }
-    }
-    
-    // Save database configuration to config file for future use
-    console.log('Saving database configuration to config file...')
-    saveDatabaseConfig({
-      host: config.host,
-      port: config.port,
-      database: config.database,
-      username: config.username,
-      password: config.password,
-      authSource: config.authSource,
-      ssl: config.ssl,
-      uri: uri
-    })
-    console.log('Database configuration saved successfully')
-    
-    // Only disconnect if we connected in this function
-    if (!isAlreadyConnected) {
-      await mongoose.disconnect()
     }
     
     return NextResponse.json({ 
