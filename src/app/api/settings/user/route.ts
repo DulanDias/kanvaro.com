@@ -1,20 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db-config'
 import { User } from '@/models/User'
+import { authenticateUser } from '@/lib/auth-utils'
 
 export async function PUT(request: NextRequest) {
   try {
     await connectDB()
 
-    const userId = request.headers.get('x-user-id')
-    const organizationId = request.headers.get('x-organization-id')
-
-    if (!userId || !organizationId) {
+    const authResult = await authenticateUser()
+    if ('error' in authResult) {
       return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 }
+        { error: authResult.error },
+        { status: authResult.status }
       )
     }
+
+    const userId = authResult.user.id
+    const organizationId = authResult.user.organization
 
     const updates = await request.json()
 

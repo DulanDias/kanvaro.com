@@ -4,20 +4,22 @@ import { User } from '@/models/User'
 import { writeFile, mkdir } from 'fs/promises'
 import { join } from 'path'
 import { existsSync } from 'fs'
+import { authenticateUser } from '@/lib/auth-utils'
 
 export async function POST(request: NextRequest) {
   try {
     await connectDB()
 
-    const userId = request.headers.get('x-user-id')
-    const organizationId = request.headers.get('x-organization-id')
-
-    if (!userId || !organizationId) {
+    const authResult = await authenticateUser()
+    if ('error' in authResult) {
       return NextResponse.json(
-        { error: 'User not authenticated' },
-        { status: 401 }
+        { error: authResult.error },
+        { status: authResult.status }
       )
     }
+
+    const userId = authResult.user.id
+    const organizationId = authResult.user.organization
 
     const formData = await request.formData()
     const file = formData.get('avatar') as File
