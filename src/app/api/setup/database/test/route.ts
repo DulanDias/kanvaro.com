@@ -74,12 +74,11 @@ export async function POST(request: NextRequest) {
     const config = await request.json()
     
     // Test MongoDB connection
-    // If connecting from within Docker, use the service name instead of localhost
-    // Check if we're running in Docker by looking for the DOCKER environment variable
+    // Always convert localhost to mongodb service name since we always run in Docker
     let host = config.host
-    if (config.host === 'localhost' && process.env.DOCKER === 'true') {
+    if (config.host === 'localhost') {
       host = 'mongodb'
-      console.log('Docker environment detected: Converting localhost to mongodb service name')
+      console.log('Converting localhost to mongodb service name (Docker deployment)')
     }
     const port = config.port
     

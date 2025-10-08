@@ -87,12 +87,11 @@ export async function POST(request: NextRequest) {
     // What we're doing here is testing the connection and ensuring we can access the database
     
     // Build MongoDB URI with authentication
-    // For Docker deployment, convert localhost to mongodb service name
-    // Check if we're running in Docker by looking for the DOCKER environment variable
+    // Always convert localhost to mongodb service name since we always run in Docker
     let host = config.host
-    if (config.host === 'localhost' && process.env.DOCKER === 'true') {
+    if (config.host === 'localhost') {
       host = 'mongodb'
-      console.log('Docker environment detected: Converting localhost to mongodb service name')
+      console.log('Converting localhost to mongodb service name (Docker deployment)')
     }
     const port = config.port
     
@@ -104,11 +103,11 @@ export async function POST(request: NextRequest) {
       uri = `mongodb://${host}:${port}/${config.database}`
     }
     
-    console.log('Attempting to connect to:', uri)
+    console.log('=== DATABASE CONNECTION DEBUG ===')
     console.log('Original config:', config)
-    console.log('Environment check - DOCKER:', process.env.DOCKER)
-    console.log('Environment check - NODE_ENV:', process.env.NODE_ENV)
     console.log('Host conversion - original:', config.host, 'converted:', host)
+    console.log('Final URI:', uri)
+    console.log('=== END DEBUG ===')
     
     // Check if there's already an active connection
     const isAlreadyConnected = mongoose.connection.readyState === 1

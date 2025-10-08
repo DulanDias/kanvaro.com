@@ -184,11 +184,11 @@ export async function POST(request: NextRequest) {
     const { database } = setupData
     
     // For Docker setup, use the internal service name instead of localhost
-    // Check if we're running in Docker by looking for the DOCKER environment variable
+    // Always convert localhost to mongodb service name since we always run in Docker
     let host = database.host
-    if (database.host === 'localhost' && process.env.DOCKER === 'true') {
+    if (database.host === 'localhost') {
       host = 'mongodb'
-      console.log('Docker environment detected: Converting localhost to mongodb service name')
+      console.log('Converting localhost to mongodb service name (Docker deployment)')
     }
     const port = database.port
     
