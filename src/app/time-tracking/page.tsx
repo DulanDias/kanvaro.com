@@ -19,7 +19,8 @@ import {
   ArrowRight,
   Plus,
   Clock3,
-  CheckCircle2
+  CheckCircle2,
+  ArrowLeft
 } from 'lucide-react'
 
 export default function TimeTrackingPage() {
@@ -106,16 +107,22 @@ export default function TimeTrackingPage() {
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center space-x-3">
-              <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
-                <Clock className="h-8 w-8 text-blue-600" />
-              </div>
-              <span>Time Tracking</span>
-            </h1>
-            <p className="text-muted-foreground mt-2">
-              Track your time, manage entries, and view detailed reports
-            </p>
+          <div className="flex items-center space-x-4">
+            <Button variant="outline" size="sm" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground flex items-center space-x-3">
+                <div className="p-2 bg-blue-100 dark:bg-blue-900/20 rounded-lg">
+                  <Clock className="h-8 w-8 text-blue-600" />
+                </div>
+                <span>Time Tracking</span>
+              </h1>
+              <p className="text-muted-foreground mt-2">
+                Track your time, manage entries, and view detailed reports
+              </p>
+            </div>
           </div>
         </div>
 

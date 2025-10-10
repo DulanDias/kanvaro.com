@@ -59,6 +59,11 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
   }, [])
 
   const handleLogout = async () => {
+    // Show confirmation dialog
+    if (!confirm('Are you sure you want to logout?')) {
+      return
+    }
+
     try {
       const response = await fetch('/api/auth/logout', { method: 'POST' })
       if (response.ok) {
@@ -84,6 +89,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
         size="icon"
         onClick={onMobileMenuToggle}
         className="lg:hidden h-9 w-9 mr-2"
+        title="Toggle Menu"
       >
         <Menu className="h-4 w-4" />
       </Button>
@@ -106,6 +112,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
               size="sm"
               onClick={() => setTheme('light')}
               className="h-8 px-3 rounded-r-none border-r"
+              title="Light Mode"
             >
               <Sun className="h-4 w-4" />
             </Button>
@@ -114,6 +121,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
               size="sm"
               onClick={() => setTheme('dark')}
               className="h-8 px-3 rounded-none border-r"
+              title="Dark Mode"
             >
               <Moon className="h-4 w-4" />
             </Button>
@@ -122,6 +130,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
               size="sm"
               onClick={() => setTheme('system')}
               className="h-8 px-3 rounded-l-none"
+              title="System Theme"
             >
               <Monitor className="h-4 w-4" />
             </Button>
@@ -131,7 +140,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
         {/* Notifications */}
         <Popover>
           <PopoverTrigger asChild>
-            <Button variant="ghost" size="icon" className="relative h-9 w-9">
+            <Button variant="ghost" size="icon" className="relative h-9 w-9" title="Notifications">
               <Bell className="h-4 w-4" />
               {unreadCount > 0 && (
                 <Badge className="absolute -top-1 -right-1 h-5 w-5 rounded-full p-0 text-xs flex items-center justify-center">
@@ -147,7 +156,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                 {unreadCount > 0 && (
                   <Button variant="ghost" size="sm" onClick={markAllAsRead}>
                     <Check className="h-4 w-4 mr-1" />
-                    Mark all read
+                    Mark All as Read
                   </Button>
                 )}
               </div>
@@ -215,7 +224,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
         {/* User Profile Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="h-9 px-2 sm:px-3">
+            <Button variant="ghost" className="h-9 px-2 sm:px-3" title="My Account">
               <User className="h-4 w-4 mr-1 sm:mr-2" />
               <span className="hidden sm:inline">
                 {user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email : 'User'}

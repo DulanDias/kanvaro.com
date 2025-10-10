@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { Clock, Play, Pause, Square, TrendingUp, DollarSign } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -42,6 +43,7 @@ interface TimeStats {
 }
 
 export function TimeTrackingWidget({ userId, organizationId, timeStats: propTimeStats }: TimeTrackingWidgetProps) {
+  const router = useRouter()
   const [activeTimer, setActiveTimer] = useState<ActiveTimer | null>(null)
   const [timeStats, setTimeStats] = useState<TimeStats | null>(null)
   const [isLoading, setIsLoading] = useState(false)
@@ -179,7 +181,7 @@ export function TimeTrackingWidget({ userId, organizationId, timeStats: propTime
             <Button
               size="sm"
               variant="outline"
-              onClick={() => window.open('/time-tracking', '_blank')}
+              onClick={() => router.push('/time-tracking')}
               className="flex-1"
             >
               <Clock className="h-4 w-4 mr-2" />
@@ -255,7 +257,7 @@ export function TimeTrackingWidget({ userId, organizationId, timeStats: propTime
         <div className="flex gap-2">
           <Button
             size="sm"
-            onClick={() => window.open('/time-tracking', '_blank')}
+            onClick={() => router.push('/time-tracking')}
             className="flex-1"
           >
             <Play className="h-4 w-4 mr-2" />
@@ -264,7 +266,7 @@ export function TimeTrackingWidget({ userId, organizationId, timeStats: propTime
           <Button
             size="sm"
             variant="outline"
-            onClick={() => window.open('/time-tracking?tab=logs', '_blank')}
+            onClick={() => router.push('/time-tracking?tab=logs')}
           >
             <TrendingUp className="h-4 w-4 mr-2" />
             View Logs

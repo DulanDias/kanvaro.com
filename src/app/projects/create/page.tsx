@@ -91,6 +91,7 @@ export default function CreateProjectPage() {
   const [clientSearchQuery, setClientSearchQuery] = useState('')
   const [showMemberSearch, setShowMemberSearch] = useState(false)
   const [showClientSearch, setShowClientSearch] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
 
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
@@ -187,6 +188,36 @@ export default function CreateProjectPage() {
   }
 
   const progress = (currentStep / steps.length) * 100
+
+  // Validation function to check if all required fields are filled
+  const isFormValid = () => {
+    return formData.name.trim() !== '' && formData.startDate !== ''
+  }
+
+  // Validate individual fields and update error state
+  const validateField = (fieldName: string, value: string) => {
+    const errors = { ...validationErrors }
+    
+    if (fieldName === 'name' && !value.trim()) {
+      errors.name = 'Project name is required'
+    } else if (fieldName === 'name' && value.trim()) {
+      delete errors.name
+    }
+    
+    if (fieldName === 'startDate' && !value) {
+      errors.startDate = 'Start date is required'
+    } else if (fieldName === 'startDate' && value) {
+      delete errors.startDate
+    }
+    
+    setValidationErrors(errors)
+  }
+
+  // Handle field changes with validation
+  const handleFieldChange = (fieldName: string, value: string) => {
+    setFormData(prev => ({ ...prev, [fieldName]: value }))
+    validateField(fieldName, value)
+  }
 
   // Fetch available team members
   const fetchAvailableMembers = async () => {
@@ -353,10 +384,14 @@ export default function CreateProjectPage() {
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                  onChange={(e) => handleFieldChange('name', e.target.value)}
                   placeholder="Enter project name"
                   required
+                  className={validationErrors.name ? 'border-red-500' : ''}
                 />
+                {validationErrors.name && (
+                  <p className="text-sm text-red-600">{validationErrors.name}</p>
+                )}
               </div>
 
               <div className="space-y-2">
@@ -423,9 +458,13 @@ export default function CreateProjectPage() {
                     id="startDate"
                     type="date"
                     value={formData.startDate}
-                    onChange={(e) => setFormData(prev => ({ ...prev, startDate: e.target.value }))}
+                    onChange={(e) => handleFieldChange('startDate', e.target.value)}
                     required
+                    className={validationErrors.startDate ? 'border-red-500' : ''}
                   />
+                  {validationErrors.startDate && (
+                    <p className="text-sm text-red-600">{validationErrors.startDate}</p>
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -434,6 +473,7 @@ export default function CreateProjectPage() {
                     id="endDate"
                     type="date"
                     value={formData.endDate}
+                    min={formData.startDate || undefined}
                     onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
                   />
                 </div>
@@ -1133,7 +1173,7 @@ export default function CreateProjectPage() {
                   <div className="space-y-3">
                     <Button 
                       onClick={() => handleSubmit(false)} 
-                      disabled={loading || !formData.name}
+                      disabled={loading || !isFormValid()}
                       className="w-full"
                     >
                       {loading ? (
@@ -1163,8 +1203,20 @@ export default function CreateProjectPage() {
                   <div className="pt-4 border-t">
                     <div className="text-sm text-muted-foreground space-y-2">
                       <div className="flex items-center space-x-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <span>All required fields completed</span>
+                        {formData.name.trim() !== '' ? (
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                        )}
+                        <span>Project name {formData.name.trim() !== '' ? 'completed' : 'required'}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {formData.startDate !== '' ? (
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <AlertTriangle className="h-4 w-4 text-red-600" />
+                        )}
+                        <span>Start date {formData.startDate !== '' ? 'completed' : 'required'}</span>
                       </div>
                       <div className="flex items-center space-x-2">
                         <CheckCircle className="h-4 w-4 text-green-600" />

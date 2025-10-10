@@ -2,9 +2,32 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db-config'
 import { hasDatabaseConfig } from '@/lib/db-config'
 import { Organization } from '@/models/Organization'
+import { authenticateUser } from '@/lib/auth-utils'
+import { PermissionService } from '@/lib/permissions/permission-service'
+import { Permission } from '@/lib/permissions/permission-definitions'
 
 export async function GET() {
   try {
+    // Authenticate user
+    const authResult = await authenticateUser()
+    if ('error' in authResult) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: authResult.status }
+      )
+    }
+
+    const { user } = authResult
+
+    // Check if user can read organization
+    const canReadOrganization = await PermissionService.hasPermission(user.id, Permission.ORGANIZATION_READ)
+    if (!canReadOrganization) {
+      return NextResponse.json(
+        { error: 'Insufficient permissions to read organization' },
+        { status: 403 }
+      )
+    }
+
     // Check if database is configured
     const isConfigured = await hasDatabaseConfig()
     if (!isConfigured) {
@@ -106,6 +129,26 @@ export async function GET() {
 
 export async function PUT(request: NextRequest) {
   try {
+    // Authenticate user
+    const authResult = await authenticateUser()
+    if ('error' in authResult) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: authResult.status }
+      )
+    }
+
+    const { user } = authResult
+
+    // Check if user can update organization
+    const canUpdateOrganization = await PermissionService.hasPermission(user.id, Permission.ORGANIZATION_UPDATE)
+    if (!canUpdateOrganization) {
+      return NextResponse.json(
+        { error: 'Insufficient permissions to update organization' },
+        { status: 403 }
+      )
+    }
+
     const updateData = await request.json()
     
     // Check if database is configured

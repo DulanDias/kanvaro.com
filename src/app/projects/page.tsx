@@ -32,7 +32,8 @@ import {
   Settings,
   Edit,
   Trash2,
-  Eye
+  Eye,
+  ArrowLeft
 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/DropdownMenu'
 
@@ -230,17 +231,23 @@ export default function ProjectsPage() {
       <PageContent>
         <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Projects</h1>
-          <p className="text-muted-foreground">Manage and track your projects</p>
+        <div className="flex items-center space-x-4">
+          <Button variant="outline" size="sm" onClick={() => router.back()}>
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Projects</h1>
+            <p className="text-muted-foreground">Manage and track your projects</p>
+          </div>
         </div>
         <PermissionButton 
           permission={Permission.PROJECT_CREATE}
           onClick={() => router.push('/projects/create')}
-          className="w-full sm:w-auto"
+          className="w-full sm:w-auto hover:bg-primary/90 hover:shadow-md transition-all duration-200"
         >
           <Plus className="h-4 w-4 mr-2" />
-          New Project
+          Create New Project
         </PermissionButton>
       </div>
 

@@ -41,13 +41,15 @@ export function DashboardHeader({ user }: DashboardHeaderProps) {
             </div>
           </div>
           
-          <div className="text-right space-y-1">
+          <div className="text-right space-y-2">
             <div className="text-sm text-muted-foreground">
               Last login: 2 hours ago
             </div>
-            <Badge variant="secondary" className="text-xs">
-              {user?.role || 'Team Member'}
-            </Badge>
+            <div className="flex justify-end">
+              <Badge variant="secondary" className="text-xs">
+                {user?.role || 'Team Member'}
+              </Badge>
+            </div>
           </div>
         </div>
       </CardContent>

@@ -34,7 +34,8 @@ import {
   Smartphone as Mobile,
   Monitor,
   Laptop,
-  Tablet
+  Tablet,
+  ArrowLeft
 } from 'lucide-react'
 
 interface UserProfile {
@@ -246,15 +247,21 @@ export default function ProfilePage() {
       <div className="space-y-8">
         {/* Profile Header */}
         <div className="border-b border-border pb-6">
-          <div className="flex items-center space-x-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
-              <User className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
-              <p className="text-muted-foreground">
-                {organization ? `Manage your personal information and preferences for ${organization.name}` : 'Manage your personal information and preferences'}
-              </p>
+          <div className="flex items-center space-x-4">
+            <Button variant="outline" size="sm" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div className="flex items-center space-x-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+                <User className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-3xl font-bold tracking-tight">Profile</h1>
+                <p className="text-muted-foreground">
+                  {organization ? `Manage your personal information and preferences for ${organization.name}` : 'Manage your personal information and preferences'}
+                </p>
+              </div>
             </div>
           </div>
         </div>

@@ -22,7 +22,8 @@ import {
   CheckCircle,
   XCircle,
   UserCheck,
-  Loader2
+  Loader2,
+  ArrowLeft
 } from 'lucide-react'
 import { InviteMemberModal } from '@/components/members/InviteMemberModal'
 import { EditMemberModal } from '@/components/members/EditMemberModal'
@@ -275,15 +276,21 @@ export default function MembersPage() {
     <MainLayout>
       <div className="space-y-6">
         <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground">Team Members</h1>
-          <p className="text-muted-foreground">Manage your team members and invitations</p>
+          <div className="flex items-center space-x-4">
+            <Button variant="outline" size="sm" onClick={() => router.back()}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back
+            </Button>
+            <div>
+              <h1 className="text-3xl font-bold text-foreground">Team Members</h1>
+              <p className="text-muted-foreground">Manage your team members and invitations</p>
+            </div>
+          </div>
+          <Button onClick={() => setShowInviteModal(true)}>
+            <UserPlus className="h-4 w-4 mr-2" />
+            Invite Member
+          </Button>
         </div>
-        <Button onClick={() => setShowInviteModal(true)}>
-          <UserPlus className="h-4 w-4 mr-2" />
-          Invite Member
-        </Button>
-      </div>
 
       {error && (
         <Alert variant="destructive">

@@ -124,7 +124,11 @@ export function RecentTasks({ tasks, isLoading }: RecentTasksProps) {
           <Button 
             variant="outline" 
             size="sm"
-            onClick={() => router.push('/tasks')}
+            onClick={(e) => {
+              e.preventDefault()
+              e.stopPropagation()
+              router.push('/tasks')
+            }}
           >
             View All
             <ArrowRight className="h-4 w-4 ml-1" />
