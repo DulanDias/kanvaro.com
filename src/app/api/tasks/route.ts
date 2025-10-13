@@ -190,7 +190,7 @@ export async function POST(request: NextRequest) {
       labels
     } = await request.json()
 
-    // Check if user can create tasks
+    // Check if user can create tasks (project-scoped permission)
     const canCreateTask = await PermissionService.hasPermission(userId, Permission.TASK_CREATE, project)
     if (!canCreateTask) {
       return NextResponse.json(

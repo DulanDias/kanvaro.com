@@ -62,6 +62,7 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
   const fetchTasks = async () => {
     try {
       setLoading(true)
+      setError('')
       const response = await fetch(`/api/tasks?project=${projectId}`)
       const data = await response.json()
 
@@ -75,6 +76,10 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
     } finally {
       setLoading(false)
     }
+  }
+
+  const refreshTasks = () => {
+    fetchTasks()
   }
 
   const getPriorityColor = (priority: string) => {
@@ -198,6 +203,10 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
               Day
             </Button>
           </div>
+          <Button variant="outline" size="sm" onClick={refreshTasks}>
+            <CalendarIcon className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
           <Button onClick={onCreateTask}>
             <Plus className="h-4 w-4 mr-2" />
             Add Task

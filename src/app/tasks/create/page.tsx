@@ -42,6 +42,7 @@ export default function CreateTaskPage() {
   const [projects, setProjects] = useState<Project[]>([])
   const [users, setUsers] = useState<User[]>([])
   const [stories, setStories] = useState<Story[]>([])
+  const today = new Date().toISOString().split('T')[0]
 
   const [formData, setFormData] = useState({
     title: '',
@@ -155,6 +156,11 @@ export default function CreateTaskPage() {
     setError('')
 
     try {
+      // Prevent past due dates
+      if (formData.dueDate && formData.dueDate < today) {
+        setError('Due date cannot be in the past')
+        return
+      }
       const response = await fetch('/api/tasks', {
         method: 'POST',
         headers: {
@@ -358,6 +364,7 @@ export default function CreateTaskPage() {
                     <Input
                       type="date"
                       value={formData.dueDate}
+                  min={today}
                       onChange={(e) => handleChange('dueDate', e.target.value)}
                     />
                   </div>
@@ -404,7 +411,7 @@ export default function CreateTaskPage() {
               </div>
 
               <div className="flex justify-end space-x-4">
-                <Button type="button" variant="outline" onClick={() => router.push('/tasks')}>
+                <Button type="button" variant="outline" onClick={() => router.back()}>
                   Cancel
                 </Button>
                 <Button type="submit" disabled={loading}>

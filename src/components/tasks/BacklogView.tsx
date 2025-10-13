@@ -73,6 +73,7 @@ export default function BacklogView({ projectId, onCreateTask }: BacklogViewProp
   const fetchTasks = async () => {
     try {
       setLoading(true)
+      setError('')
       const response = await fetch(`/api/tasks?project=${projectId}`)
       const data = await response.json()
 
@@ -86,6 +87,10 @@ export default function BacklogView({ projectId, onCreateTask }: BacklogViewProp
     } finally {
       setLoading(false)
     }
+  }
+
+  const refreshTasks = () => {
+    fetchTasks()
   }
 
   const getPriorityColor = (priority: string) => {
@@ -231,10 +236,16 @@ export default function BacklogView({ projectId, onCreateTask }: BacklogViewProp
             Prioritized list of features, bugs, and improvements
           </p>
         </div>
-        <Button onClick={onCreateTask}>
-          <Plus className="h-4 w-4 mr-2" />
-          Add Task
-        </Button>
+        <div className="flex items-center space-x-2">
+          <Button variant="outline" size="sm" onClick={refreshTasks}>
+            <Target className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+          <Button onClick={onCreateTask}>
+            <Plus className="h-4 w-4 mr-2" />
+            Add Task
+          </Button>
+        </div>
       </div>
 
       {error && (

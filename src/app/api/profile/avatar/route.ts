@@ -62,8 +62,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Create uploads directory if it doesn't exist
-    const uploadsDir = join(process.cwd(), 'uploads', 'avatars')
+    // Create uploads directory under public so files are served statically
+    const uploadsDir = join(process.cwd(), 'public', 'uploads', 'avatars')
     if (!existsSync(uploadsDir)) {
       await mkdir(uploadsDir, { recursive: true })
     }

@@ -26,6 +26,23 @@ export async function POST(request: NextRequest) {
 
     const { email, role, firstName, lastName } = await request.json()
 
+    // Validate required fields
+    if (!email || !role) {
+      return NextResponse.json(
+        { error: 'Email and role are required' },
+        { status: 400 }
+      )
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      )
+    }
+
     // Check if user has permission to invite members
     if (!['admin', 'project_manager'].includes(user.role)) {
       return NextResponse.json(

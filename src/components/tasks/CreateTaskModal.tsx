@@ -163,8 +163,12 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[9999]" onClick={(e) => {
+      if (e.target === e.currentTarget) {
+        onClose()
+      }
+    }}>
+      <Card className="w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto bg-background" onClick={(e) => e.stopPropagation()}>
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>

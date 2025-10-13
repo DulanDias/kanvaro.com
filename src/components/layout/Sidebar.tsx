@@ -46,6 +46,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/Popover'
+import { getAppVersion } from '@/lib/version'
 
 interface SidebarProps {
   collapsed: boolean
@@ -404,8 +405,14 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         </nav>
       </div>
 
-      {/* Sticky Sign Out */}
+      {/* Version + Sticky Sign Out */}
       <div className="border-t p-2">
+        {!collapsed && (
+          <div className="px-1 pb-2 text-xs text-muted-foreground flex items-center justify-between">
+            <span>Version</span>
+            <span className="font-mono">{getAppVersion()}</span>
+          </div>
+        )}
         <Button
           variant="ghost"
           className={cn(

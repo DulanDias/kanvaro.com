@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { OrganizationLogo } from '@/components/ui/OrganizationLogo'
 import { useOrganization } from '@/hooks/useOrganization'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { getAppVersion } from '@/lib/version'
 
 function LoginForm() {
   const [email, setEmail] = useState('')
@@ -190,6 +191,11 @@ function LoginForm() {
                 Documentation
               </a>
             </p>
+          </div>
+
+          <div className="mt-6 text-center text-xs text-muted-foreground">
+            <span>Version </span>
+            <span className="font-mono">{getAppVersion()}</span>
           </div>
         </div>
       </div>

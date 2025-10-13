@@ -235,7 +235,7 @@ export default function TaskDetailPage() {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => router.push('/tasks')}>
+            <Button variant="ghost" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
@@ -248,11 +248,28 @@ export default function TaskDetailPage() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => router.push(`/tasks/${taskId}/edit`)}>
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
-            <Button variant="destructive">
+            <Button variant="destructive" onClick={async () => {
+              if (confirm('Are you sure you want to delete this task?')) {
+                try {
+                  const response = await fetch(`/api/tasks/${taskId}`, {
+                    method: 'DELETE'
+                  })
+                  const data = await response.json()
+                  
+                  if (data.success) {
+                    router.push('/tasks')
+                  } else {
+                    alert('Failed to delete task')
+                  }
+                } catch (error) {
+                  alert('Failed to delete task')
+                }
+              }
+            }}>
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </Button>
