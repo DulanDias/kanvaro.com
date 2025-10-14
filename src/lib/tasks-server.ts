@@ -56,8 +56,8 @@ export async function getTasksServer(filters: TaskFilters = {}): Promise<TasksRe
     const PAGE_SIZE = Math.min(limit, 100)
     const sort = { createdAt: -1 as const }
 
-    // Check if user can view all tasks (admin permission)
-    const canViewAllTasks = await PermissionService.hasPermission(userId, Permission.TASK_READ)
+    // Only users with PROJECT_VIEW_ALL can see all tasks; otherwise default to "My Tasks"
+    const canViewAllTasks = await PermissionService.hasPermission(userId, Permission.PROJECT_VIEW_ALL)
 
     // Build filters
     const dbFilters: any = { 
@@ -65,7 +65,7 @@ export async function getTasksServer(filters: TaskFilters = {}): Promise<TasksRe
       archived: false
     }
     
-    // If user can't view all tasks, filter by assigned tasks
+    // If user can't view all tasks, filter to tasks assigned to or created by the user (My Tasks)
     if (!canViewAllTasks) {
       dbFilters.$or = [
         { assignedTo: userId },

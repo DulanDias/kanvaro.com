@@ -19,14 +19,8 @@ export async function GET() {
 
     const { user } = authResult
 
-    // Check if user can read organization
-    const canReadOrganization = await PermissionService.hasPermission(user.id, Permission.ORGANIZATION_READ)
-    if (!canReadOrganization) {
-      return NextResponse.json(
-        { error: 'Insufficient permissions to read organization' },
-        { status: 403 }
-      )
-    }
+    // Allow any authenticated user to read basic organization info
+    // Detailed management actions remain protected in PUT routes
 
     // Check if database is configured
     const isConfigured = await hasDatabaseConfig()

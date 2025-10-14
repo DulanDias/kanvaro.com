@@ -359,7 +359,7 @@ export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProp
   }
 
   const handleColumnsUpdated = () => {
-    fetchProject()
+    fetchProject(selectedProjectId)
   }
 
   if (loading) {
