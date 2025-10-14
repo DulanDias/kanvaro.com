@@ -152,6 +152,12 @@ export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProp
 
   const fetchProject = async (id: string) => {
     try {
+      // Handle "all" case by not fetching a specific project
+      if (id === 'all') {
+        setProject(null) // No specific project for "all" view
+        return
+      }
+      
       const response = await fetch(`/api/projects/${id}`)
       const data = await response.json()
 
@@ -168,7 +174,9 @@ export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProp
   const fetchTasks = async (id: string) => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/tasks?project=${id}`)
+      // Handle "all" case by not passing project parameter
+      const url = id === 'all' ? '/api/tasks' : `/api/tasks?project=${id}`
+      const response = await fetch(url)
       const data = await response.json()
 
       if (data.success) {
@@ -196,6 +204,11 @@ export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProp
   }, [])
 
   const getColumns = () => {
+    // For "all" projects view, use default columns
+    if (selectedProjectId === 'all' || !project) {
+      return defaultColumns
+    }
+    
     if (project?.settings?.kanbanStatuses && project.settings.kanbanStatuses.length > 0) {
       return project.settings.kanbanStatuses
         .sort((a, b) => a.order - b.order)

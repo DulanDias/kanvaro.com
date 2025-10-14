@@ -80,7 +80,9 @@ export default function TaskList({ projectId, onCreateTask }: TaskListProps) {
   const fetchTasks = async () => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/tasks?project=${projectId}`)
+      // Handle "all" case by not passing project parameter
+      const url = projectId === 'all' ? '/api/tasks' : `/api/tasks?project=${projectId}`
+      const response = await fetch(url)
       const data = await response.json()
 
       if (data.success) {

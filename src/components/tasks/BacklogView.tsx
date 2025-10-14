@@ -74,7 +74,8 @@ export default function BacklogView({ projectId, onCreateTask }: BacklogViewProp
     try {
       setLoading(true)
       setError('')
-      const response = await fetch(`/api/tasks?project=${projectId}`)
+      const url = projectId === 'all' ? '/api/tasks' : `/api/tasks?project=${projectId}`
+      const response = await fetch(url)
       const data = await response.json()
 
       if (data.success) {
