@@ -461,11 +461,21 @@ export default function ProjectDetailPage() {
                       <Plus className="mr-2 h-4 w-4" />
                       Add Task
                     </Button>
-                    <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full justify-start"
+                      onClick={() => router.push(`/projects/${projectId}?tab=settings`)}
+                    >
                       <Users className="mr-2 h-4 w-4" />
                       Manage Team
                     </Button>
-                    <Button variant="outline" size="sm" className="w-full justify-start">
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full justify-start"
+                      onClick={() => router.push(`/projects/${projectId}?tab=reports`)}
+                    >
                       <BarChart3 className="mr-2 h-4 w-4" />
                       View Reports
                     </Button>
@@ -545,12 +555,8 @@ export default function ProjectDetailPage() {
                       <Input 
                         id="project-name"
                         value={project?.name || ''} 
-                        onChange={(e) => {
-                          if (project) {
-                            setProject({...project, name: e.target.value})
-                          }
-                        }}
-                        className="mt-1"
+                        readOnly
+                        className="mt-1 bg-muted"
                       />
                     </div>
                     <div>
@@ -558,12 +564,8 @@ export default function ProjectDetailPage() {
                       <Textarea 
                         id="description"
                         value={project?.description || ''} 
-                        onChange={(e) => {
-                          if (project) {
-                            setProject({...project, description: e.target.value})
-                          }
-                        }}
-                        className="mt-1 resize-none"
+                        readOnly
+                        className="mt-1 resize-none bg-muted"
                         rows={3}
                         placeholder="Enter project description..."
                       />
@@ -575,12 +577,8 @@ export default function ProjectDetailPage() {
                           id="start-date"
                           type="date"
                           value={project?.startDate ? new Date(project.startDate).toISOString().split('T')[0] : ''} 
-                          onChange={(e) => {
-                            if (project) {
-                              setProject({...project, startDate: e.target.value})
-                            }
-                          }}
-                          className="mt-1"
+                          readOnly
+                          className="mt-1 bg-muted"
                         />
                       </div>
                       <div>
@@ -589,12 +587,8 @@ export default function ProjectDetailPage() {
                           id="end-date"
                           type="date"
                           value={project?.endDate ? new Date(project.endDate).toISOString().split('T')[0] : ''} 
-                          onChange={(e) => {
-                            if (project) {
-                              setProject({...project, endDate: e.target.value})
-                            }
-                          }}
-                          className="mt-1"
+                          readOnly
+                          className="mt-1 bg-muted"
                         />
                       </div>
                     </div>

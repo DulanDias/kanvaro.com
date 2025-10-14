@@ -5,6 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { 
   Target, 
   Play, 
@@ -21,7 +22,8 @@ import {
   GripVertical,
   MoreHorizontal,
   BarChart3,
-  Settings
+  Settings,
+  ChevronDown
 } from 'lucide-react'
 import {
   DndContext,
@@ -115,6 +117,8 @@ const defaultColumns = [
 
 export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProps) {
   const [project, setProject] = useState<Project | null>(null)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [selectedProjectId, setSelectedProjectId] = useState(projectId)
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -131,9 +135,24 @@ export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProp
     })
   )
 
-  const fetchProject = async () => {
+  const fetchProjects = async () => {
     try {
-      const response = await fetch(`/api/projects/${projectId}`)
+      const response = await fetch('/api/projects')
+      const data = await response.json()
+
+      if (data.success) {
+        setProjects(data.data)
+      } else {
+        setError(data.error || 'Failed to fetch projects')
+      }
+    } catch (err) {
+      setError('Failed to fetch projects')
+    }
+  }
+
+  const fetchProject = async (id: string) => {
+    try {
+      const response = await fetch(`/api/projects/${id}`)
       const data = await response.json()
 
       if (data.success) {
@@ -146,10 +165,10 @@ export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProp
     }
   }
 
-  const fetchTasks = async () => {
+  const fetchTasks = async (id: string) => {
     try {
       setLoading(true)
-      const response = await fetch(`/api/tasks?project=${projectId}`)
+      const response = await fetch(`/api/tasks?project=${id}`)
       const data = await response.json()
 
       if (data.success) {
@@ -164,10 +183,17 @@ export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProp
     }
   }
 
+  const handleProjectChange = (newProjectId: string) => {
+    setSelectedProjectId(newProjectId)
+    fetchProject(newProjectId)
+    fetchTasks(newProjectId)
+  }
+
   useEffect(() => {
-    fetchProject()
-    fetchTasks()
-  }, [projectId])
+    fetchProjects()
+    fetchProject(selectedProjectId)
+    fetchTasks(selectedProjectId)
+  }, [])
 
   const getColumns = () => {
     if (project?.settings?.kanbanStatuses && project.settings.kanbanStatuses.length > 0) {
@@ -315,7 +341,7 @@ export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProp
   }
 
   const handleTaskCreated = () => {
-    fetchTasks()
+    fetchTasks(selectedProjectId)
     onCreateTask()
   }
 
@@ -344,6 +370,19 @@ export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProp
           </p>
         </div>
         <div className="flex items-center space-x-2">
+          <Select value={selectedProjectId} onValueChange={handleProjectChange}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select project" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Projects</SelectItem>
+              {projects.map((project) => (
+                <SelectItem key={project._id} value={project._id}>
+                  {project.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <Button 
             variant="outline" 
             size="sm"

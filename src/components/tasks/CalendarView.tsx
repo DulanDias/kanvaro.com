@@ -135,6 +135,27 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
     return days
   }
 
+  const getWeekDays = (date: Date) => {
+    const startOfWeek = new Date(date)
+    startOfWeek.setDate(date.getDate() - date.getDay())
+    
+    const days = []
+    for (let i = 0; i < 7; i++) {
+      const day = new Date(startOfWeek)
+      day.setDate(startOfWeek.getDate() + i)
+      days.push(day)
+    }
+    return days
+  }
+
+  const getDayHours = () => {
+    const hours = []
+    for (let i = 0; i < 24; i++) {
+      hours.push(i)
+    }
+    return hours
+  }
+
   const navigateMonth = (direction: 'prev' | 'next') => {
     setCurrentDate(prev => {
       const newDate = new Date(prev)
@@ -147,10 +168,52 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
     })
   }
 
+  const navigateWeek = (direction: 'prev' | 'next') => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev)
+      if (direction === 'prev') {
+        newDate.setDate(prev.getDate() - 7)
+      } else {
+        newDate.setDate(prev.getDate() + 7)
+      }
+      return newDate
+    })
+  }
+
+  const navigateDay = (direction: 'prev' | 'next') => {
+    setCurrentDate(prev => {
+      const newDate = new Date(prev)
+      if (direction === 'prev') {
+        newDate.setDate(prev.getDate() - 1)
+      } else {
+        newDate.setDate(prev.getDate() + 1)
+      }
+      return newDate
+    })
+  }
+
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { 
       year: 'numeric', 
       month: 'long' 
+    })
+  }
+
+  const formatWeekDate = (date: Date) => {
+    const startOfWeek = new Date(date)
+    startOfWeek.setDate(date.getDate() - date.getDay())
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(startOfWeek.getDate() + 6)
+    
+    return `${startOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endOfWeek.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+  }
+
+  const formatDayDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', { 
+      weekday: 'long',
+      year: 'numeric', 
+      month: 'long',
+      day: 'numeric'
     })
   }
 
@@ -302,13 +365,57 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
       {view === 'week' && (
         <Card>
           <CardHeader>
-            <CardTitle>Week View</CardTitle>
-            <CardDescription>Week view will be implemented here</CardDescription>
+            <div className="flex items-center justify-between">
+              <CardTitle>{formatWeekDate(currentDate)}</CardTitle>
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" onClick={() => navigateWeek('prev')}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>
+                  Today
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigateWeek('next')}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8">
-              <CalendarIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">Week view coming soon</p>
+            <div className="grid grid-cols-7 gap-1">
+              {getWeekDays(currentDate).map((date, index) => (
+                <div key={index} className="min-h-[200px] p-2 border border-border">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className={`text-sm font-medium ${
+                      isToday(date) ? 'text-primary' : 'text-foreground'
+                    }`}>
+                      {date.toLocaleDateString('en-US', { weekday: 'short' })}
+                    </span>
+                    <span className={`text-sm ${
+                      isToday(date) ? 'text-primary font-medium' : 'text-muted-foreground'
+                    }`}>
+                      {date.getDate()}
+                    </span>
+                  </div>
+                  <div className="space-y-1">
+                    {getTasksForDate(date).map(task => (
+                      <div
+                        key={task._id}
+                        className="text-xs p-2 rounded bg-card border shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                      >
+                        <div className="font-medium truncate">{task.title}</div>
+                        <div className="flex items-center space-x-1 mt-1">
+                          <Badge className={`text-xs ${getPriorityColor(task.priority)}`}>
+                            {task.priority}
+                          </Badge>
+                          <Badge className={`text-xs ${getStatusColor(task.status)}`}>
+                            {task.status.replace('_', ' ')}
+                          </Badge>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>
@@ -317,13 +424,60 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
       {view === 'day' && (
         <Card>
           <CardHeader>
-            <CardTitle>Day View</CardTitle>
-            <CardDescription>Day view will be implemented here</CardDescription>
+            <div className="flex items-center justify-between">
+              <CardTitle>{formatDayDate(currentDate)}</CardTitle>
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" onClick={() => navigateDay('prev')}>
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => setCurrentDate(new Date())}>
+                  Today
+                </Button>
+                <Button variant="outline" size="sm" onClick={() => navigateDay('next')}>
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-center py-8">
-              <CalendarIcon className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">Day view coming soon</p>
+            <div className="grid grid-cols-1 gap-4">
+              {getDayHours().map(hour => (
+                <div key={hour} className="flex items-start space-x-4 p-3 border border-border rounded-lg">
+                  <div className="w-16 text-sm text-muted-foreground">
+                    {hour === 0 ? '12:00 AM' : hour < 12 ? `${hour}:00 AM` : hour === 12 ? '12:00 PM' : `${hour - 12}:00 PM`}
+                  </div>
+                  <div className="flex-1 space-y-2">
+                    {getTasksForDate(currentDate).filter(task => {
+                      if (!task.dueDate) return false
+                      const taskDate = new Date(task.dueDate)
+                      const taskHour = taskDate.getHours()
+                      return taskHour === hour
+                    }).map(task => (
+                      <div
+                        key={task._id}
+                        className="p-3 rounded bg-card border shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                      >
+                        <div className="font-medium">{task.title}</div>
+                        <div className="text-sm text-muted-foreground mt-1">{task.description}</div>
+                        <div className="flex items-center space-x-2 mt-2">
+                          <Badge className={`text-xs ${getPriorityColor(task.priority)}`}>
+                            {task.priority}
+                          </Badge>
+                          <Badge className={`text-xs ${getStatusColor(task.status)}`}>
+                            {task.status.replace('_', ' ')}
+                          </Badge>
+                          {task.assignedTo && (
+                            <div className="flex items-center space-x-1 text-xs text-muted-foreground">
+                              <User className="h-3 w-3" />
+                              <span>{task.assignedTo.firstName} {task.assignedTo.lastName}</span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </div>
           </CardContent>
         </Card>

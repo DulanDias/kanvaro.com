@@ -353,9 +353,9 @@ export default function CreateProjectPage() {
       )}
 
       {success && (
-        <Alert variant="default">
-          <CheckCircle className="h-4 w-4" />
-          <AlertDescription>{success}</AlertDescription>
+        <Alert className="border-green-200 bg-green-50 text-green-800 dark:border-green-800 dark:bg-green-900 dark:text-green-200">
+          <CheckCircle className="h-4 w-4 text-green-600 dark:text-green-400" />
+          <AlertDescription className="text-green-800 dark:text-green-200">{success}</AlertDescription>
         </Alert>
       )}
 
@@ -1236,11 +1236,21 @@ export default function CreateProjectPage() {
                   <CardTitle>Quick Actions</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2">
-                  <Button variant="ghost" size="sm" className="w-full justify-start">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full justify-start"
+                    onClick={() => setCurrentStep(5)}
+                  >
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back to Settings
                   </Button>
-                  <Button variant="ghost" size="sm" className="w-full justify-start">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full justify-start"
+                    onClick={() => setCurrentStep(1)}
+                  >
                     <Settings className="mr-2 h-4 w-4" />
                     Edit Details
                   </Button>

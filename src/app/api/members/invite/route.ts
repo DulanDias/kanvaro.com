@@ -113,7 +113,12 @@ export async function POST(request: NextRequest) {
     const logoMode = organization?.logoMode || 'both'
 
     // Send invitation email
-    const invitationLink = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/accept-invitation?token=${token}`
+    // Dynamically construct the invitation URL using the request origin
+    const origin = request.headers.get('origin') || request.headers.get('host')
+    const protocol = request.headers.get('x-forwarded-proto') || (origin?.includes('localhost') ? 'http' : 'https')
+    const host = origin || process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, '') || 'localhost:3000'
+    const baseUrl = `${protocol}://${host}`
+    const invitationLink = `${baseUrl}/accept-invitation?token=${token}`
     
     const emailHtml = `
     <!DOCTYPE html>
