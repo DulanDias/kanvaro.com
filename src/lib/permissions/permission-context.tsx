@@ -41,11 +41,14 @@ if (typeof window !== 'undefined') {
 
 interface PermissionProviderProps {
   children: ReactNode;
+  initialPermissions?: UserPermissions | null;
 }
 
-export function PermissionProvider({ children }: PermissionProviderProps) {
-  const [permissions, setPermissions] = useState<UserPermissions | null>(permissionsCache);
-  const [loading, setLoading] = useState(!permissionsCache);
+export function PermissionProvider({ children, initialPermissions }: PermissionProviderProps) {
+  // Seed from initialPermissions (server-hydrated) or existing cache
+  const initial = initialPermissions ?? permissionsCache;
+  const [permissions, setPermissions] = useState<UserPermissions | null>(initial);
+  const [loading, setLoading] = useState(!initial);
   const [error, setError] = useState<string | null>(null);
 
   const fetchPermissions = async () => {
@@ -144,8 +147,17 @@ export function PermissionProvider({ children }: PermissionProviderProps) {
   };
 
   useEffect(() => {
+    // If server provided initial permissions, cache them and skip initial fetch
+    if (initialPermissions) {
+      permissionsCache = initialPermissions;
+      cacheTimestamp = Date.now();
+      setPermissions(initialPermissions);
+      setLoading(false);
+      return;
+    }
+    // Otherwise, fetch on mount
     fetchPermissions();
-  }, []);
+  }, [initialPermissions]);
 
   const hasPermission = (permission: Permission, projectId?: string): boolean => {
     // If permissions are still loading, return true to prevent blocking navigation
