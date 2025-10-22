@@ -48,6 +48,9 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
   const [error, setError] = useState('')
   const [users, setUsers] = useState<User[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
+  const [projects, setProjects] = useState<Array<{ _id: string; name: string }>>([])
+  const [loadingProjects, setLoadingProjects] = useState(false)
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('')
   const [subtasks, setSubtasks] = useState<Subtask[]>([])
   const [formData, setFormData] = useState({
     title: '',
@@ -82,10 +85,34 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
     }
   }
 
+  const fetchProjects = async () => {
+    setLoadingProjects(true)
+    try {
+      const res = await fetch('/api/projects')
+      const data = await res.json()
+      if (data.success && Array.isArray(data.data)) {
+        setProjects(data.data)
+        // If no projectId provided, preselect first project if available
+        if (!projectId && data.data.length > 0) {
+          setSelectedProjectId(data.data[0]._id)
+        }
+      } else {
+        setProjects([])
+      }
+    } catch (e) {
+      setProjects([])
+    } finally {
+      setLoadingProjects(false)
+    }
+  }
+
   // Fetch users when modal opens
   useEffect(() => {
     if (isOpen) {
       fetchUsers()
+      if (!projectId) {
+        fetchProjects()
+      }
     }
   }, [isOpen])
 
@@ -121,7 +148,7 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
         },
         body: JSON.stringify({
           ...formData,
-          project: projectId,
+          project: projectId || selectedProjectId,
           assignedTo: formData.assignedTo === 'unassigned' ? undefined : formData.assignedTo || undefined,
           storyPoints: formData.storyPoints ? parseInt(formData.storyPoints) : undefined,
           estimatedHours: formData.estimatedHours ? parseFloat(formData.estimatedHours) : undefined,
@@ -150,6 +177,7 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
           labels: ''
         })
         setSubtasks([])
+        if (!projectId) setSelectedProjectId('')
       } else {
         setError(data.error || 'Failed to create task')
       }
@@ -187,6 +215,35 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
+            )}
+
+            {!projectId && (
+              <div>
+                <label className="text-sm font-medium text-foreground">Project *</label>
+                <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder={loadingProjects ? 'Loading projects...' : 'Select project'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingProjects ? (
+                      <SelectItem value="loading" disabled>
+                        <div className="flex items-center space-x-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Loading projects...</span>
+                        </div>
+                      </SelectItem>
+                    ) : (
+                      projects.length > 0 ? (
+                        projects.map((p) => (
+                          <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-projects" disabled>No projects found</SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
 
             <div className="grid gap-4 md:grid-cols-2">

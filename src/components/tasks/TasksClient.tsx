@@ -121,9 +121,20 @@ export default function TasksClient({
       params.set('limit', '20')
 
       const response = await fetch(`/api/tasks?${params.toString()}`)
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setError('Authentication required. Redirecting to login...')
+          setTimeout(() => router.push('/login'), 1200)
+          return
+        }
+        const text = await response.text()
+        setError(text || 'Failed to fetch tasks')
+        return
+      }
       const data = await response.json()
 
       if (data.success) {
+        setError('')
         if (reset) {
           setTasks(data.data)
         } else {
@@ -149,6 +160,14 @@ export default function TasksClient({
       fetchTasks(true)
     }
   }, [debouncedSearch, statusFilter, priorityFilter, typeFilter, fetchTasks])
+
+  // Initial fetch on mount if no initial tasks were provided
+  useEffect(() => {
+    if (!initialTasks || initialTasks.length === 0) {
+      fetchTasks(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -292,6 +311,13 @@ export default function TasksClient({
           </div>
         </CardHeader>
         <CardContent>
+          {tasks.length === 0 && !loading && (
+            <div className="flex items-center justify-center h-40">
+              <div className="text-center text-muted-foreground">
+                No tasks found.
+              </div>
+            </div>
+          )}
           <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'list' | 'kanban')}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="list">List View</TabsTrigger>
@@ -425,7 +451,7 @@ export default function TasksClient({
         <CreateTaskModal
           isOpen={showCreateTaskModal}
           onClose={() => setShowCreateTaskModal(false)}
-          projectId=""
+          projectId={initialFilters.project || ''}
           onTaskCreated={handleTaskCreated}
         />
       )}

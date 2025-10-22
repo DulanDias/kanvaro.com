@@ -1,48 +1,31 @@
-import { Suspense } from 'react'
+"use client"
+
+import { useMemo } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { PageContent } from '@/components/ui/PageContent'
-import { Loader2 } from 'lucide-react'
-import { getTasksServer } from '@/lib/tasks-server'
 import TasksClient from '@/components/tasks/TasksClient'
 
-interface TasksPageProps {
-  searchParams: {
-    search?: string
-    status?: string
-    priority?: string
-    type?: string
-    project?: string
-  }
-}
+export default function TasksPage() {
+  const searchParams = useSearchParams()
+console.log('searchParams',searchParams);
 
-export default async function TasksPage({ searchParams }: TasksPageProps) {
-  // Fetch initial data on the server
-  const initialResult = await getTasksServer({
-    search: searchParams.search,
-    status: searchParams.status,
-    priority: searchParams.priority,
-    type: searchParams.type,
-    project: searchParams.project,
-    limit: 20
-  })
+  const initialFilters = useMemo(() => ({
+    search: searchParams.get('search') || undefined,
+    status: searchParams.get('status') || undefined,
+    priority: searchParams.get('priority') || undefined,
+    type: searchParams.get('type') || undefined,
+    project: searchParams.get('project') || undefined,
+  }), [searchParams])
 
   return (
     <MainLayout>
       <PageContent>
-        <Suspense fallback={
-          <div className="flex items-center justify-center h-64">
-            <div className="text-center">
-              <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
-              <p className="text-muted-foreground">Loading tasks...</p>
-            </div>
-          </div>
-        }>
-          <TasksClient 
-            initialTasks={initialResult.data}
-            initialPagination={initialResult.pagination}
-            initialFilters={searchParams}
-          />
-        </Suspense>
+        <TasksClient
+          initialTasks={[]}
+          initialPagination={{ pageSize: 20, hasMore: false }}
+          initialFilters={initialFilters}
+        />
       </PageContent>
     </MainLayout>
   )
