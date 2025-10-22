@@ -47,6 +47,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/Popover'
 import { getAppVersion } from '@/lib/version'
+import { usePermissions } from '@/lib/permissions/permission-context'
 
 interface SidebarProps {
   collapsed: boolean
@@ -298,6 +299,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const router = useRouter()
   const { organization, loading } = useOrganization()
   const { theme, resolvedTheme } = useTheme()
+  const { hasPermission } = usePermissions()
 
   // Auto-expand parent sections when child pages are active
   useEffect(() => {
@@ -349,7 +351,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   return (
     <div
       className={cn(
-        'flex h-full flex-col border-r bg-background transition-all duration-300',
+        'flex h-full flex-col border-r bg-background transition-all duration-300 rounded-r-2xl overflow-hidden',
         collapsed ? 'w-16' : 'w-64'
       )}
     >
@@ -376,7 +378,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
           variant="ghost"
           size="icon"
           onClick={onToggle}
-          className="h-8 w-8"
+          className="h-8 w-8 rounded-full"
         >
           {collapsed ? (
             <ChevronRight className="h-4 w-4" />
@@ -391,7 +393,13 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Navigation Items */}
       <div className="flex-1 overflow-y-auto px-2 py-4">
         <nav className="space-y-1">
-          {navigationItems.map((item) => (
+          {navigationItems
+            .filter((item) => hasPermission(item.permission))
+            .map((item) => ({
+              ...item,
+              children: item.children?.filter((child: any) => hasPermission(child.permission)) || []
+            }))
+            .map((item) => (
             <NavigationItem
               key={item.id}
               item={item}
@@ -416,7 +424,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <Button
           variant="ghost"
           className={cn(
-            'w-full justify-start text-muted-foreground hover:text-foreground',
+            'w-full justify-start text-muted-foreground hover:text-foreground rounded-lg',
             collapsed ? 'px-2' : 'px-3'
           )}
           onClick={handleLogout}
@@ -453,14 +461,15 @@ function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpa
             <Button
               variant={isActive ? 'secondary' : 'ghost'}
               className={cn(
-                'w-full justify-center px-2',
+                'w-full justify-center px-2 rounded-xl',
                 isActive && 'bg-secondary text-secondary-foreground'
               )}
+              title={item.label}
             >
               <Icon className="h-4 w-4" />
             </Button>
           </PopoverTrigger>
-          <PopoverContent side="right" align="start" className="w-48 p-1">
+          <PopoverContent side="right" align="start" className="w-48 p-1 rounded-xl">
             <div className="space-y-1">
               <div className="px-2 py-1.5 text-sm font-medium text-foreground border-b">
                 {item.label}
@@ -469,15 +478,13 @@ function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpa
                 <PermissionGate key={child.id} permission={child.permission}>
                   <Button
                     variant={pathname === child.path ? 'secondary' : 'ghost'}
-                    className="w-full justify-start text-sm h-8"
-                    onClick={() => {
-                      startTransition(() => {
-                        router.push(child.path)
-                      })
-                    }}
+                    className="w-full justify-start text-sm h-8 rounded-md"
+                    asChild
                   >
-                    <child.icon className="mr-2 h-4 w-4" />
-                    {child.label}
+                    <Link href={child.path} prefetch onMouseEnter={() => router.prefetch(child.path)}>
+                      <child.icon className="mr-2 h-4 w-4" />
+                      {child.label}
+                    </Link>
                   </Button>
                 </PermissionGate>
               ))}
@@ -492,39 +499,59 @@ function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpa
   return (
     <PermissionGate permission={item.permission}>
       <div className="space-y-1">
-        <Button
-          variant={isActive ? 'secondary' : 'ghost'}
-          className={cn(
-            'w-full justify-start',
-            collapsed ? 'px-2' : 'px-3',
-            isActive && 'bg-secondary text-secondary-foreground'
-          )}
-          onClick={() => {
-            if (hasChildren && !collapsed) {
-              onToggleExpanded(item.id)
-            } else {
-              // Use startTransition for non-blocking navigation
-              startTransition(() => {
-                router.push(item.path)
-              })
-            }
-          }}
-        >
-          <Icon className={cn('h-4 w-4', collapsed ? 'mx-auto' : 'mr-2')} />
-          {!collapsed && (
-            <>
-              <span className="flex-1 text-left">{item.label}</span>
-              {hasChildren && (
-                <ChevronRight
-                  className={cn(
-                    'h-4 w-4 transition-transform',
-                    isExpanded && 'rotate-90'
+        {hasChildren && !collapsed ? (
+          <Button
+            variant={isActive ? 'secondary' : 'ghost'}
+            className={cn(
+              'w-full justify-start rounded-lg',
+              collapsed ? 'px-2' : 'px-3',
+              isActive && 'bg-secondary text-secondary-foreground'
+            )}
+            onClick={() => onToggleExpanded(item.id)}
+          >
+            <Icon className={cn('h-4 w-4', collapsed ? 'mx-auto' : 'mr-2')} />
+            {!collapsed && (
+              <>
+                <span className="flex-1 text-left">{item.label}</span>
+                {hasChildren && (
+                  <ChevronRight
+                    className={cn(
+                      'h-4 w-4 transition-transform',
+                      isExpanded && 'rotate-90'
+                    )}
+                  />
+                )}
+              </>
+            )}
+          </Button>
+        ) : (
+          <Button
+            variant={isActive ? 'secondary' : 'ghost'}
+            className={cn(
+              'w-full justify-start rounded-lg',
+              collapsed ? 'px-2' : 'px-3',
+              isActive && 'bg-secondary text-secondary-foreground'
+            )}
+            asChild
+          >
+            <Link href={item.path} prefetch onMouseEnter={() => router.prefetch(item.path)} title={item.label}>
+              <Icon className={cn('h-4 w-4', collapsed ? 'mx-auto' : 'mr-2')} />
+              {!collapsed && (
+                <>
+                  <span className="flex-1 text-left">{item.label}</span>
+                  {hasChildren && (
+                    <ChevronRight
+                      className={cn(
+                        'h-4 w-4 transition-transform',
+                        isExpanded && 'rotate-90'
+                      )}
+                    />
                   )}
-                />
+                </>
               )}
-            </>
-          )}
-        </Button>
+            </Link>
+          </Button>
+        )}
 
         {/* Sub-navigation */}
         {hasChildren && isExpanded && !collapsed && (
@@ -533,16 +560,13 @@ function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpa
               <PermissionGate key={child.id} permission={child.permission}>
                 <Button
                   variant={pathname === child.path ? 'secondary' : 'ghost'}
-                  className="w-full justify-start text-sm"
-                  onClick={() => {
-                    // Use startTransition for non-blocking navigation
-                    startTransition(() => {
-                      router.push(child.path)
-                    })
-                  }}
+                  className="w-full justify-start text-sm rounded-md"
+                  asChild
                 >
-                  <child.icon className="mr-2 h-4 w-4" />
-                  {child.label}
+                  <Link href={child.path} prefetch onMouseEnter={() => router.prefetch(child.path)}>
+                    <child.icon className="mr-2 h-4 w-4" />
+                    {child.label}
+                  </Link>
                 </Button>
               </PermissionGate>
             ))}
