@@ -25,51 +25,44 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || ''
     const status = searchParams.get('status') || ''
     const priority = searchParams.get('priority') || ''
+    const projectFilter = searchParams.get('project') || ''
 
-    // Build filters
-    const filters: any = { organization: organizationId }
+    // Build filters (Epic schema has no 'organization' field)
+    const filters: any = { archived: false }
     
     if (search) {
       filters.$or = [
-        { name: { $regex: search, $options: 'i' } },
+        { title: { $regex: search, $options: 'i' } },
         { description: { $regex: search, $options: 'i' } }
       ]
     }
     
-    if (status) {
-      filters.status = status
-    }
-    
-    if (priority) {
-      filters.priority = priority
+    if (status) filters.status = status
+    if (priority) filters.priority = priority
+    if (projectFilter) filters.project = projectFilter
+
+    const PAGE_SIZE = Math.min(limit, 100)
+
+    // Get epics created by the user (similar to sprints). You can re-add assignedTo if desired.
+    const epicQuery = {
+      ...filters,
+      createdBy: userId,
     }
 
-    // Get epics where user is assigned or creator
-    const epics = await Epic.find({
-      ...filters,
-      $or: [
-        { createdBy: userId },
-        { assignedTo: userId }
-      ]
-    })
+    const epics = await Epic.find(epicQuery)
       .populate('project', 'name')
       .populate('assignedTo', 'firstName lastName email')
       .populate('createdBy', 'firstName lastName email')
       .sort({ priority: -1, createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
+      .skip((page - 1) * PAGE_SIZE)
+      .limit(PAGE_SIZE)
+      .lean()
 
-    const total = await Epic.countDocuments({
-      ...filters,
-      $or: [
-        { createdBy: userId },
-        { assignedTo: userId }
-      ]
-    })
+    const total = await Epic.countDocuments(epicQuery)
 
     // Calculate progress for each epic (this would typically come from stories)
     const epicsWithProgress = epics.map(epic => ({
-      ...epic.toObject(),
+      ...epic,
       progress: {
         completionPercentage: 0,
         storiesCompleted: 0,
@@ -84,9 +77,9 @@ export async function GET(request: NextRequest) {
       data: epicsWithProgress,
       pagination: {
         page,
-        limit,
+        limit: PAGE_SIZE,
         total,
-        totalPages: Math.ceil(total / limit)
+        totalPages: Math.ceil(total / PAGE_SIZE)
       }
     })
 
@@ -116,6 +109,7 @@ export async function POST(request: NextRequest) {
     const organizationId = user.organization
 
     const {
+      title,
       name,
       description,
       project,
@@ -128,27 +122,27 @@ export async function POST(request: NextRequest) {
     } = await request.json()
 
     // Validate required fields
-    if (!name || !project) {
+    const finalTitle = title || name
+    if (!finalTitle || !project) {
       return NextResponse.json(
-        { error: 'Name and project are required' },
+        { error: 'Title and project are required' },
         { status: 400 }
       )
     }
 
     // Create epic
     const epic = new Epic({
-      name,
+      title: finalTitle,
       description,
-      status: 'todo',
+      status: 'backlog',
       priority: priority || 'medium',
-      organization: organizationId,
       project,
       createdBy: userId,
       assignedTo: assignedTo || undefined,
       dueDate: dueDate ? new Date(dueDate) : undefined,
       estimatedHours: estimatedHours || undefined,
       storyPoints: storyPoints || undefined,
-      labels: labels || []
+      tags: labels || []
     })
 
     await epic.save()
