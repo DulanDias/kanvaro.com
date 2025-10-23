@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { usePathname, useRouter } from 'next/navigation'
 import { startTransition } from 'react'
+import Link from 'next/link'
 import { X, Menu, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
@@ -10,6 +11,7 @@ import { OrganizationLogo } from '@/components/ui/OrganizationLogo'
 import { useOrganization } from '@/hooks/useOrganization'
 import { PermissionGate } from '@/lib/permissions/permission-components'
 import { Permission } from '@/lib/permissions/permission-definitions'
+import { usePermissions } from '@/lib/permissions/permission-context'
 import { 
   LayoutDashboard,
   FolderOpen,
@@ -285,6 +287,7 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
   const pathname = usePathname()
   const router = useRouter()
   const { organization, loading } = useOrganization()
+  const { hasPermission } = usePermissions()
 
   const toggleExpanded = (itemId: string) => {
     setExpandedItems(prev => 
@@ -351,7 +354,13 @@ export function MobileMenu({ isOpen, onClose }: MobileMenuProps) {
         {/* Navigation Items */}
         <div className="px-2 py-4">
           <nav className="space-y-1">
-            {navigationItems.map((item) => (
+            {navigationItems
+              .filter((item) => hasPermission(item.permission))
+              .map((item) => ({
+                ...item,
+                children: item.children?.filter((child: any) => hasPermission(child.permission)) || []
+              }))
+              .map((item) => (
               <MobileNavigationItem
                 key={item.id}
                 item={item}
@@ -397,30 +406,35 @@ function MobileNavigationItem({ item, pathname, expandedItems, onToggleExpanded,
   return (
     <PermissionGate permission={item.permission}>
       <div className="space-y-1">
-        <Button
-          variant={isActive ? 'secondary' : 'ghost'}
-          className="w-full justify-start px-3"
-          onClick={() => {
-            if (hasChildren) {
-              onToggleExpanded(item.id)
-            } else {
-              startTransition(() => {
-                router.push(item.path)
-              })
-            }
-          }}
-        >
-          <Icon className="h-4 w-4 mr-2" />
-          <span className="flex-1 text-left">{item.label}</span>
-          {hasChildren && (
-            <ChevronRight
-              className={cn(
-                'h-4 w-4 transition-transform',
-                isExpanded && 'rotate-90'
-              )}
-            />
-          )}
-        </Button>
+        {hasChildren ? (
+          <Button
+            variant={isActive ? 'secondary' : 'ghost'}
+            className="w-full justify-start px-3"
+            onClick={() => onToggleExpanded(item.id)}
+          >
+            <Icon className="h-4 w-4 mr-2" />
+            <span className="flex-1 text-left">{item.label}</span>
+            {hasChildren && (
+              <ChevronRight
+                className={cn(
+                  'h-4 w-4 transition-transform',
+                  isExpanded && 'rotate-90'
+                )}
+              />
+            )}
+          </Button>
+        ) : (
+          <Button
+            variant={isActive ? 'secondary' : 'ghost'}
+            className="w-full justify-start px-3"
+            asChild
+          >
+            <Link href={item.path} prefetch onMouseEnter={() => router.prefetch(item.path)}>
+              <Icon className="h-4 w-4 mr-2" />
+              <span className="flex-1 text-left">{item.label}</span>
+            </Link>
+          </Button>
+        )}
 
         {/* Sub-navigation */}
         {hasChildren && isExpanded && (
@@ -430,14 +444,12 @@ function MobileNavigationItem({ item, pathname, expandedItems, onToggleExpanded,
                 <Button
                   variant={pathname === child.path ? 'secondary' : 'ghost'}
                   className="w-full justify-start text-sm"
-                  onClick={() => {
-                    startTransition(() => {
-                      router.push(child.path)
-                    })
-                  }}
+                  asChild
                 >
-                  <child.icon className="mr-2 h-4 w-4" />
-                  {child.label}
+                  <Link href={child.path} prefetch onMouseEnter={() => router.prefetch(child.path)}>
+                    <child.icon className="mr-2 h-4 w-4" />
+                    {child.label}
+                  </Link>
                 </Button>
               </PermissionGate>
             ))}

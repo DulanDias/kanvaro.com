@@ -16,15 +16,20 @@ interface TasksPageProps {
 }
 
 export default async function TasksPage({ searchParams }: TasksPageProps) {
-  // Fetch initial data on the server
-  const initialResult = await getTasksServer({
-    search: searchParams.search,
-    status: searchParams.status,
-    priority: searchParams.priority,
-    type: searchParams.type,
-    project: searchParams.project,
-    limit: 20
-  })
+  let initialResult: any = {
+    data: [],
+    pagination: { pageSize: 20, hasMore: false, nextCursor: null, page: 1, total: 0, totalPages: 0 }
+  }
+  try {
+    initialResult = await getTasksServer({
+      search: searchParams.search,
+      status: searchParams.status,
+      priority: searchParams.priority,
+      type: searchParams.type,
+      project: searchParams.project,
+      limit: 20
+    })
+  } catch {}
 
   return (
     <MainLayout>
