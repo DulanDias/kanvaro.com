@@ -228,15 +228,15 @@ export default function TeamReportsPage() {
           </p>
         </div>
         <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
+          <Button type="button" variant="outline" size="sm" onClick={() => setShowFilters(!showFilters)}>
             <Filter className="h-4 w-4 mr-2" />
             Filters
           </Button>
-          <Button variant="outline" size="sm" onClick={fetchTeamReports}>
+          <Button type="button" variant="outline" size="sm" onClick={fetchTeamReports}>
             <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button variant="outline" size="sm" onClick={() => exportReport('pdf')}>
+          <Button type="button" variant="outline" size="sm" onClick={() => exportReport('csv')}>
             <Download className="h-4 w-4 mr-2" />
             Export
           </Button>

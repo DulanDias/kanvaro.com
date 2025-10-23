@@ -104,8 +104,15 @@ export default function GanttReportPage() {
   }
 
   const handleExport = () => {
-    // Export Gantt data as CSV or image
-    console.log('Export Gantt chart')
+    const params = new URLSearchParams()
+    if (filters.project) params.append('projectId', filters.project)
+    if (filters.sprint) params.append('sprintId', filters.sprint)
+    if (filters.assignee) params.append('assigneeId', filters.assignee)
+    if (filters.startDate) params.append('startDate', filters.startDate)
+    if (filters.endDate) params.append('endDate', filters.endDate)
+    params.append('format', 'csv')
+    // Trigger browser download
+    window.location.href = `/api/reports/gantt/export?${params.toString()}`
   }
 
   const handleFilterChange = (key: string, value: string) => {
