@@ -184,14 +184,17 @@ export async function GET(request: NextRequest) {
     const startTime = Date.now()
     const { searchParams } = new URL(request.url)
     
-    const query = searchParams.get('q') || ''
+    const query = (searchParams.get('q') || '').trim()
     const limit = parseInt(searchParams.get('limit') || '20')
     const offset = parseInt(searchParams.get('offset') || '0')
     const sortBy = searchParams.get('sortBy') || 'score'
     const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc'
     const includeArchived = searchParams.get('includeArchived') === 'true'
-    
-    if (query.length < 2) {
+
+    const isProjectNumber = /^\d+$/.test(query)
+    const isTaskDisplayId = /^\d+\.\d+$/.test(query)
+
+    if (query.length < 2 && !isProjectNumber && !isTaskDisplayId) {
       return NextResponse.json({
         results: [],
         total: 0,
@@ -211,6 +214,64 @@ export async function GET(request: NextRequest) {
     
     const { searchText, filters } = parseQuery(query)
     const results: SearchResult[] = []
+
+    // Fast path: exact ID searches
+    if (isProjectNumber) {
+      const pn = parseInt(query, 10)
+      const projects = await Project.find({ projectNumber: pn }).lean()
+      for (const project of projects) {
+        results.push({
+          id: (project._id as any).toString(),
+          title: project.name,
+          description: project.description,
+          type: 'project',
+          url: `/projects/${(project._id as any).toString()}`,
+          score: 100,
+          highlights: [query],
+          metadata: {
+            status: project.status,
+            createdAt: project.createdAt.toISOString(),
+            updatedAt: project.updatedAt.toISOString()
+          }
+        })
+      }
+      return NextResponse.json({
+        results: results.slice(0, limit),
+        total: results.length,
+        aggregations: { types: { project: results.length }, statuses: {}, priorities: {}, projects: {} },
+        suggestions: [],
+        took: Date.now() - startTime
+      })
+    }
+
+    if (isTaskDisplayId) {
+      const tasks = await Task.find({ displayId: query }).lean()
+      for (const task of tasks) {
+        results.push({
+          id: (task._id as any).toString(),
+          title: task.title,
+          description: task.description,
+          type: 'task',
+          url: `/tasks/${(task._id as any).toString()}`,
+          score: 100,
+          highlights: [query],
+          metadata: {
+            status: task.status,
+            priority: task.priority,
+            project: task.project?.toString(),
+            createdAt: task.createdAt.toISOString(),
+            updatedAt: task.updatedAt.toISOString()
+          }
+        })
+      }
+      return NextResponse.json({
+        results: results.slice(0, limit),
+        total: results.length,
+        aggregations: { types: { task: results.length }, statuses: {}, priorities: {}, projects: {} },
+        suggestions: [],
+        took: Date.now() - startTime
+      })
+    }
     
     // Search Projects
     if (!filters.type || filters.type.includes('project')) {
@@ -291,8 +352,8 @@ export async function GET(request: NextRequest) {
             metadata: {
               status: task.status,
               priority: task.priority,
-              assignee: task.assigneeId?.toString(),
-              project: task.projectId?.toString(),
+              assignee: (task as any).assignedTo ? ((task as any).assignedTo?._id?.toString?.() || (task as any).assignedTo?.toString?.()) : undefined,
+              project: (task as any).project?.toString?.(),
               createdAt: task.createdAt.toISOString(),
               updatedAt: task.updatedAt.toISOString()
             }
@@ -374,9 +435,48 @@ export async function GET(request: NextRequest) {
             metadata: {
               status: epic.status,
               priority: epic.priority,
-              project: epic.projectId?.toString(),
+              project: (epic as any).project?.toString?.(),
               createdAt: epic.createdAt.toISOString(),
               updatedAt: epic.updatedAt.toISOString()
+            }
+          })
+        }
+      }
+    }
+
+    // Search Sprints
+    if (!filters.type || filters.type.includes('sprint')) {
+      const sprintQuery: any = {
+        $or: [
+          { name: { $regex: searchText, $options: 'i' } },
+          { description: { $regex: searchText, $options: 'i' } }
+        ]
+      }
+
+      if (!includeArchived) {
+        sprintQuery.archived = { $ne: true }
+      }
+
+      const sprints = await Sprint.find(sprintQuery)
+        .limit(limit)
+        .skip(offset)
+        .lean()
+
+      for (const sprint of sprints) {
+        const score = calculateScore(searchText, sprint.name, 'sprint')
+        if (score > 0) {
+          results.push({
+            id: (sprint._id as any).toString(),
+            title: sprint.name,
+            description: sprint.description,
+            type: 'sprint',
+            url: `/sprints/${(sprint._id as any).toString()}`,
+            score,
+            highlights: generateHighlights(searchText, sprint.name),
+            metadata: {
+              status: sprint.status,
+              createdAt: sprint.createdAt.toISOString(),
+              updatedAt: sprint.updatedAt.toISOString()
             }
           })
         }
@@ -389,7 +489,8 @@ export async function GET(request: NextRequest) {
         $or: [
           { firstName: { $regex: searchText, $options: 'i' } },
           { lastName: { $regex: searchText, $options: 'i' } },
-          { email: { $regex: searchText, $options: 'i' } }
+          { email: { $regex: searchText, $options: 'i' } },
+          { role: { $regex: searchText, $options: 'i' } }
         ]
       }
       

@@ -156,6 +156,27 @@ export function GlobalSearch({ className, placeholder = "Search projects, tasks,
     }, 200)
   }
 
+  const handleInputKeyDown = async (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key !== 'Enter') return
+    const q = query.trim()
+    const isProjectNumber = /^\d+$/.test(q)
+    const isTaskDisplayId = /^\d+\.\d+$/.test(q)
+    if (!isProjectNumber && !isTaskDisplayId) return
+    e.preventDefault()
+    try {
+      const resp = await fetch(`/api/search?q=${encodeURIComponent(q)}&limit=1`)
+      if (!resp.ok) return
+      const data = await resp.json()
+      if (data?.results?.length) {
+        const first = data.results[0]
+        window.location.href = first.url
+        closeSearch()
+      }
+    } catch {
+      // no-op
+    }
+  }
+
   const handleFilterChange = (filterType: keyof SearchFilters, value: string) => {
     const currentFilters = { ...filters }
     const currentValues = currentFilters[filterType] || []
@@ -356,6 +377,7 @@ export function GlobalSearch({ className, placeholder = "Search projects, tasks,
           onChange={(e) => handleInputChange(e.target.value)}
           onFocus={handleInputFocus}
           onBlur={handleInputBlur}
+          onKeyDown={handleInputKeyDown}
           className="pl-10 pr-20"
           role="combobox"
           aria-expanded={isOpen}

@@ -115,8 +115,11 @@ export function useGlobalSearch(): SearchState & SearchActions {
   // Search function with caching and abort controller
   const search = useCallback(async (query?: string) => {
     const searchQuery = query || state.query
-    
-    if (searchQuery.length < 2) {
+    const isProjectNumber = /^\d+$/.test(searchQuery)
+    const isTaskDisplayId = /^\d+\.\d+$/.test(searchQuery)
+
+
+    if (searchQuery.length < 2 && !isProjectNumber && !isTaskDisplayId) {
       setState(prev => ({
         ...prev,
         results: [],
