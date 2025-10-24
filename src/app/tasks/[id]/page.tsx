@@ -32,6 +32,7 @@ import {
 interface Task {
   _id: string
   title: string
+  displayId: string
   description: string
   status: 'todo' | 'in_progress' | 'review' | 'testing' | 'done' | 'cancelled'
   priority: 'low' | 'medium' | 'high' | 'critical'
@@ -242,7 +243,7 @@ export default function TaskDetailPage() {
             <div>
               <h1 className="text-3xl font-bold text-foreground flex items-center space-x-2">
                 {getTypeIcon(task.type)}
-                <span>{task.title}</span>
+                <span>{task.title} {task.displayId}</span>
               </h1>
               <p className="text-muted-foreground">Task Details</p>
             </div>

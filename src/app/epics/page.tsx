@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/Progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/DropdownMenu'
 import { 
   Plus, 
   Search, 
@@ -34,7 +35,11 @@ import {
   TrendingUp,
   Calendar as CalendarIcon,
   Star,
-  Layers
+  Layers,
+  Eye,
+  Settings,
+  Edit,
+  Trash2
 } from 'lucide-react'
 
 interface Epic {
@@ -135,6 +140,20 @@ export default function EpicsPage() {
       setError('Failed to fetch epics')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteEpic = async (epicId: string) => {
+    try {
+      const res = await fetch(`/api/epics/${epicId}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setEpics(prev => prev.filter(e => e._id !== epicId))
+      } else {
+        setError(data.error || 'Failed to delete epic')
+      }
+    } catch (e) {
+      setError('Failed to delete epic')
     }
   }
 
@@ -305,12 +324,49 @@ export default function EpicsPage() {
                               {epic?.description || 'No description'}
                             </CardDescription>
                           </div>
-                          <Button variant="ghost" size="sm" onClick={(e) => {
-                            e.stopPropagation()
-                            // Handle menu actions
-                          }}>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/epics/${epic._id}`)
+                                }}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Epic
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/epics/${epic._id}?tab=settings`)
+                                }}>
+                                  <Settings className="h-4 w-4 mr-2" />
+                                  Settings
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/epics/${epic._id}/edit`)
+                                }}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Epic
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (confirm('Are you sure you want to delete this epic? This action cannot be undone.')) {
+                                      handleDeleteEpic(epic._id)
+                                    }
+                                  }}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Epic
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4">
@@ -446,12 +502,49 @@ export default function EpicsPage() {
                                 />
                               </div>
                             </div>
-                            <Button variant="ghost" size="sm" onClick={(e) => {
-                              e.stopPropagation()
-                              // Handle menu actions
-                            }}>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/epics/${epic._id}`)
+                                }}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Epic
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/epics/${epic._id}?tab=settings`)
+                                }}>
+                                  <Settings className="h-4 w-4 mr-2" />
+                                  Settings
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/epics/${epic._id}/edit`)
+                                }}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Epic
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (confirm('Are you sure you want to delete this epic? This action cannot be undone.')) {
+                                      handleDeleteEpic(epic._id)
+                                    }
+                                  }}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Epic
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       </CardContent>

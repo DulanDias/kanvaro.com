@@ -5,6 +5,7 @@ import { authenticateUser } from '@/lib/auth-utils'
  
 export async function GET(request: NextRequest) {
   try {
+    
     await connectDB()
 
     const authResult = await authenticateUser()

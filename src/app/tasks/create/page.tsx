@@ -47,6 +47,7 @@ export default function CreateTaskPage() {
   const [formData, setFormData] = useState({
     title: '',
     description: '',
+    displayId: '',
     project: '',
     story: '',
     parentTask: '',
@@ -256,6 +257,15 @@ export default function CreateTaskPage() {
                       onChange={(e) => handleChange('title', e.target.value)}
                       placeholder="Enter task title"
                       required
+                    />
+                  </div>
+
+                  <div>
+                    <label className="text-sm font-medium text-foreground">Task ID</label>
+                    <Input
+                      value={formData.displayId}
+                      onChange={(e) => handleChange('displayId', e.target.value)}
+                      placeholder="e.g. 3.2"
                     />
                   </div>
 

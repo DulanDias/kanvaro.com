@@ -49,6 +49,7 @@ interface Task {
   status: 'todo' | 'in_progress' | 'review' | 'testing' | 'done' | 'cancelled'
   priority: 'low' | 'medium' | 'high' | 'critical'
   type: 'bug' | 'feature' | 'improvement' | 'task' | 'subtask'
+  displayId?: string
   project: {
     _id: string
     name: string
@@ -126,7 +127,6 @@ export default function TasksClient({
   // Fetch tasks with current filters
   const fetchTasks = useCallback(async (reset = false) => {
     try {
-      console.log('fetching tasks');
       
       setLoading(true)
       const params = new URLSearchParams()
@@ -141,7 +141,6 @@ export default function TasksClient({
       params.set('limit', '20')
 
       const response = await fetch(`/api/tasks?${params?.toString()}`)
-      console.log('response',response);
       
       if (!response.ok) {
         if (response.status === 401 || response.status === 403) {
@@ -154,7 +153,6 @@ export default function TasksClient({
         return
       }
       const data = await response.json()
-console.log('task data',data);
 
       if (data.success) {
         setError('')
@@ -397,6 +395,9 @@ console.log('task data',data);
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2 mb-2">
                                     <h3 className="font-medium text-foreground">{task.title}</h3>
+                                    {task.displayId && (
+                                      <Badge variant="outline">{task.displayId}</Badge>
+                                    )}
                                     <Badge className={getStatusColor(task.status)}>
                                       {getStatusIcon(task.status)}
                                       <span className="ml-1">{task.status.replace('_', ' ')}</span>
