@@ -9,6 +9,7 @@ import { Permission } from '@/lib/permissions/permission-definitions'
 import { notificationService } from '@/lib/notification-service'
 import { cache, invalidateCache } from '@/lib/redis'
 import crypto from 'crypto'
+import { Counter } from '@/models/Counter'
 
 export async function GET(request: NextRequest) {
   try {
@@ -168,6 +169,23 @@ export async function POST(request: NextRequest) {
     ).sort({ position: -1 })
     const nextPosition = maxPosition ? maxPosition.position + 1 : 0
 
+    // Resolve project number and next task number for this project
+    const projectDoc = await Project.findById(project).select('projectNumber organization')
+    if (!projectDoc) {
+      return NextResponse.json(
+        { error: 'Project not found' },
+        { status: 400 }
+      )
+    }
+
+    const taskCounter = await Counter.findOneAndUpdate(
+      { scope: 'task', project: projectDoc._id },
+      { $inc: { seq: 1 }, $setOnInsert: { updatedAt: new Date() } },
+      { new: true, upsert: true }
+    )
+    const taskNumber = taskCounter.seq
+    const displayId = `${projectDoc.projectNumber}.${taskNumber}`
+
     // Create task
     const task = new Task({
       title,
@@ -177,6 +195,8 @@ export async function POST(request: NextRequest) {
       type: type || 'task',
       organization: user.organization,
       project,
+      taskNumber,
+      displayId,
       story: story || undefined,
       parentTask: parentTask || undefined,
       assignedTo: assignedTo || undefined,

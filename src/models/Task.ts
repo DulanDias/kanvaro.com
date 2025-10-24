@@ -8,6 +8,8 @@ export interface ITask extends Document {
   type: 'bug' | 'feature' | 'improvement' | 'task' | 'subtask'
   organization: mongoose.Types.ObjectId
   project: mongoose.Types.ObjectId
+  taskNumber: number
+  displayId: string
   story?: mongoose.Types.ObjectId
   parentTask?: mongoose.Types.ObjectId
   assignedTo?: mongoose.Types.ObjectId
@@ -79,6 +81,16 @@ const TaskSchema = new Schema<ITask>({
     type: Schema.Types.ObjectId,
     ref: 'Project',
     required: true
+  },
+  taskNumber: {
+    type: Number,
+    required: true
+  },
+  displayId: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 50
   },
   story: {
     type: Schema.Types.ObjectId,
@@ -166,6 +178,7 @@ const TaskSchema = new Schema<ITask>({
 // Indexes
 TaskSchema.index({ organization: 1 })
 TaskSchema.index({ project: 1 })
+TaskSchema.index({ project: 1, taskNumber: 1 }, { unique: true })
 TaskSchema.index({ story: 1 })
 TaskSchema.index({ parentTask: 1 })
 TaskSchema.index({ createdBy: 1 })

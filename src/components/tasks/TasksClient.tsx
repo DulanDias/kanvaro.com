@@ -26,11 +26,17 @@ import {
   Zap,
   BarChart3,
   List,
-  Kanban
+  Kanban,
+  Eye,
+  Settings,
+  Edit,
+  Trash2
 } from 'lucide-react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useDebounce } from '@/hooks/useDebounce'
 import dynamic from 'next/dynamic'
+import { Permission, PermissionGate } from '@/lib/permissions'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/DropdownMenu'
 
 // Dynamically import heavy modals
 const CreateTaskModal = dynamic(() => import('./CreateTaskModal'), { ssr: false })
@@ -242,6 +248,23 @@ console.log('task data',data);
     }
   }
 
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'DELETE'
+      })
+      const data = await response.json()
+
+      if (data.success) {
+        setTasks(tasks.filter(p => p._id !== taskId))
+      } else {
+        setError(data.error || 'Failed to delete project')
+      }
+    } catch (err) {
+      setError('Failed to delete project')
+    }
+  }
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -422,9 +445,54 @@ console.log('task data',data);
                                     </div>
                                   )}
                                 </div>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
+                                 <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/tasks/${task._id}`)
+                            }}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Task
+                            </DropdownMenuItem>
+                            <PermissionGate permission={Permission.TASK_UPDATE} projectId={task.project._id}>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation()
+                                router.push(`/tasks/${task._id}?tab=settings`)
+                              }}>
+                                <Settings className="h-4 w-4 mr-2" />
+                                Settings
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation()
+                                router.push(`/tasks/${task._id}/edit`)
+                              }}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Task
+                              </DropdownMenuItem>
+                            </PermissionGate>
+                            <PermissionGate permission={Permission.TASK_DELETE} projectId={task.project._id}>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  // Handle delete with confirmation
+                                  if (confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
+                                    handleDeleteTask(task._id)
+                                  }
+                                }}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Task
+                              </DropdownMenuItem>
+                            </PermissionGate>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                               </div>
                             </div>
                           </CardContent>

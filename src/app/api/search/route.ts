@@ -184,14 +184,17 @@ export async function GET(request: NextRequest) {
     const startTime = Date.now()
     const { searchParams } = new URL(request.url)
     
-    const query = searchParams.get('q') || ''
+    const query = (searchParams.get('q') || '').trim()
     const limit = parseInt(searchParams.get('limit') || '20')
     const offset = parseInt(searchParams.get('offset') || '0')
     const sortBy = searchParams.get('sortBy') || 'score'
     const sortOrder = (searchParams.get('sortOrder') || 'desc') as 'asc' | 'desc'
     const includeArchived = searchParams.get('includeArchived') === 'true'
-    
-    if (query.length < 2) {
+
+    const isProjectNumber = /^\d+$/.test(query)
+    const isTaskDisplayId = /^\d+\.\d+$/.test(query)
+
+    if (query.length < 2 && !isProjectNumber && !isTaskDisplayId) {
       return NextResponse.json({
         results: [],
         total: 0,
@@ -211,6 +214,64 @@ export async function GET(request: NextRequest) {
     
     const { searchText, filters } = parseQuery(query)
     const results: SearchResult[] = []
+
+    // Fast path: exact ID searches
+    if (isProjectNumber) {
+      const pn = parseInt(query, 10)
+      const projects = await Project.find({ projectNumber: pn }).lean()
+      for (const project of projects) {
+        results.push({
+          id: (project._id as any).toString(),
+          title: project.name,
+          description: project.description,
+          type: 'project',
+          url: `/projects/${(project._id as any).toString()}`,
+          score: 100,
+          highlights: [query],
+          metadata: {
+            status: project.status,
+            createdAt: project.createdAt.toISOString(),
+            updatedAt: project.updatedAt.toISOString()
+          }
+        })
+      }
+      return NextResponse.json({
+        results: results.slice(0, limit),
+        total: results.length,
+        aggregations: { types: { project: results.length }, statuses: {}, priorities: {}, projects: {} },
+        suggestions: [],
+        took: Date.now() - startTime
+      })
+    }
+
+    if (isTaskDisplayId) {
+      const tasks = await Task.find({ displayId: query }).lean()
+      for (const task of tasks) {
+        results.push({
+          id: (task._id as any).toString(),
+          title: task.title,
+          description: task.description,
+          type: 'task',
+          url: `/tasks/${(task._id as any).toString()}`,
+          score: 100,
+          highlights: [query],
+          metadata: {
+            status: task.status,
+            priority: task.priority,
+            project: task.project?.toString(),
+            createdAt: task.createdAt.toISOString(),
+            updatedAt: task.updatedAt.toISOString()
+          }
+        })
+      }
+      return NextResponse.json({
+        results: results.slice(0, limit),
+        total: results.length,
+        aggregations: { types: { task: results.length }, statuses: {}, priorities: {}, projects: {} },
+        suggestions: [],
+        took: Date.now() - startTime
+      })
+    }
     
     // Search Projects
     if (!filters.type || filters.type.includes('project')) {

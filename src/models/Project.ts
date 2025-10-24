@@ -9,6 +9,7 @@ export interface IProject extends Document {
   createdBy: mongoose.Types.ObjectId
   teamMembers: mongoose.Types.ObjectId[]
   client?: mongoose.Types.ObjectId
+  projectNumber: number
   // Project-specific roles for team members
   projectRoles: {
     user: mongoose.Types.ObjectId
@@ -85,6 +86,7 @@ const ProjectSchema = new Schema<IProject>({
   isDraft: { type: Boolean, default: false },
   organization: { type: Schema.Types.ObjectId, ref: 'Organization', required: true },
   createdBy: { type: Schema.Types.ObjectId, ref: 'User', required: true },
+  projectNumber: { type: Number, required: true },
   teamMembers: [{ type: Schema.Types.ObjectId, ref: 'User' }],
   client: { type: Schema.Types.ObjectId, ref: 'User' },
   // Project-specific roles
@@ -163,5 +165,6 @@ ProjectSchema.index({ teamMembers: 1 })
 ProjectSchema.index({ startDate: 1, endDate: 1 })
 ProjectSchema.index({ archived: 1 })
 ProjectSchema.index({ organization: 1, archived: 1 })
+ProjectSchema.index({ organization: 1, projectNumber: 1 }, { unique: true })
 
 export const Project = mongoose.models.Project || mongoose.model<IProject>('Project', ProjectSchema)
