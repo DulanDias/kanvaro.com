@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db-config'
 import { Sprint } from '@/models/Sprint'
 import { authenticateUser } from '@/lib/auth-utils'
-
+ 
 export async function GET(request: NextRequest) {
   try {
     await connectDB()
@@ -25,66 +25,69 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search') || ''
     const status = searchParams.get('status') || ''
 
-    // Build filters
-    const filters: any = { organization: organizationId }
-    
+    // Build filters (Sprint schema has no 'organization' field)
+    const filters: any = {
+      archived: false,
+    }
+
     if (search) {
       filters.$or = [
         { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } }
+        { description: { $regex: search, $options: 'i' } },
       ]
     }
-    
+
     if (status) {
       filters.status = status
     }
 
-    // Get sprints where user is team member or creator
-    const sprints = await Sprint.find({
+    // Query sprints created by the user (like "My Sprints"). Optionally scope by project.
+    const sprintQueryFilters: any = {
       ...filters,
-      $or: [
-        { createdBy: userId },
-        { teamMembers: userId }
-      ]
-    })
+      createdBy: userId,
+    }
+    const projectFilter = searchParams.get('project')
+    if (projectFilter) {
+      sprintQueryFilters.project = projectFilter
+    }
+
+    const PAGE_SIZE = Math.min(limit, 100)
+
+    // Fetch sprints
+    const sprints = await Sprint.find(sprintQueryFilters)
       .populate('project', 'name')
       .populate('createdBy', 'firstName lastName email')
-      .populate('teamMembers', 'firstName lastName email')
       .sort({ createdAt: -1 })
-      .skip((page - 1) * limit)
-      .limit(limit)
+      .skip((page - 1) * PAGE_SIZE)
+      .limit(PAGE_SIZE)
+      .lean()
 
-    const total = await Sprint.countDocuments({
-      ...filters,
-      $or: [
-        { createdBy: userId },
-        { teamMembers: userId }
-      ]
-    })
+    // Count total for pagination
+    const total = await Sprint.countDocuments(sprintQueryFilters)
 
-    // Calculate progress for each sprint (this would typically come from tasks)
-    const sprintsWithProgress = sprints.map(sprint => ({
-      ...sprint.toObject(),
+    // Add placeholder progress stats for now
+    const sprintsWithProgress = sprints.map((sprint) => ({
+      ...sprint,
       progress: {
         completionPercentage: 0,
         tasksCompleted: 0,
         totalTasks: 0,
         storyPointsCompleted: 0,
-        totalStoryPoints: 0
-      }
+        totalStoryPoints: 0,
+      },
     }))
 
+    // ✅ Unified JSON response structure (same as /api/tasks)
     return NextResponse.json({
       success: true,
       data: sprintsWithProgress,
       pagination: {
         page,
-        limit,
+        limit: PAGE_SIZE,
         total,
-        totalPages: Math.ceil(total / limit)
-      }
+        totalPages: Math.ceil(total / PAGE_SIZE),
+      },
     })
-
   } catch (error) {
     console.error('Get sprints error:', error)
     return NextResponse.json(
@@ -93,7 +96,6 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
 export async function POST(request: NextRequest) {
   try {
     await connectDB()
@@ -117,8 +119,7 @@ export async function POST(request: NextRequest) {
       startDate,
       endDate,
       goal,
-      capacity,
-      teamMembers
+      capacity
     } = await request.json()
 
     // Validate required fields
@@ -137,7 +138,6 @@ export async function POST(request: NextRequest) {
       organization: organizationId,
       project,
       createdBy: userId,
-      teamMembers: teamMembers || [],
       startDate: new Date(startDate),
       endDate: new Date(endDate),
       goal: goal || '',
@@ -151,7 +151,6 @@ export async function POST(request: NextRequest) {
     const populatedSprint = await Sprint.findById(sprint._id)
       .populate('project', 'name')
       .populate('createdBy', 'firstName lastName email')
-      .populate('teamMembers', 'firstName lastName email')
 
     return NextResponse.json({
       success: true,

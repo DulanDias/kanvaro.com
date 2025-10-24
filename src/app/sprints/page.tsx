@@ -280,20 +280,20 @@ export default function SprintsPage() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="flex items-center space-x-2">
-                          <Badge className={getStatusColor(sprint.status)}>
-                            {getStatusIcon(sprint.status)}
-                            <span className="ml-1">{sprint.status}</span>
+                          <Badge className={getStatusColor(sprint?.status)}>
+                            {getStatusIcon(sprint?.status)}
+                            <span className="ml-1">{sprint?.status}</span>
                           </Badge>
                         </div>
 
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Progress</span>
-                            <span className="font-medium">{sprint.progress?.completionPercentage || 0}%</span>
+                            <span className="font-medium">{sprint?.progress?.completionPercentage || 0}%</span>
                           </div>
-                          <Progress value={sprint.progress?.completionPercentage || 0} className="h-2" />
+                          <Progress value={sprint?.progress?.completionPercentage || 0} className="h-2" />
                           <div className="text-xs text-muted-foreground">
-                            {sprint.progress?.tasksCompleted || 0} of {sprint.progress?.totalTasks || 0} tasks completed
+                            {sprint?.progress?.tasksCompleted || 0} of {sprint?.progress?.totalTasks || 0} tasks completed
                           </div>
                         </div>
 
@@ -301,32 +301,32 @@ export default function SprintsPage() {
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Story Points</span>
                             <span className="font-medium">
-                              {sprint.progress?.storyPointsCompleted || 0} / {sprint.progress?.totalStoryPoints || 0}
+                              {sprint?.progress?.storyPointsCompleted || 0} / {sprint?.progress?.totalStoryPoints || 0}
                             </span>
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Velocity</span>
-                            <span className="font-medium">{sprint.velocity || 0}</span>
+                            <span className="font-medium">{sprint?.velocity || 0}</span>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between text-sm text-muted-foreground">
                           <div className="flex items-center space-x-1">
                             <Users className="h-4 w-4" />
-                            <span>{sprint.teamMembers.length} members</span>
+                            <span>{sprint?.teamMembers?.length} members</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <Calendar className="h-4 w-4" />
-                            <span>{new Date(sprint.startDate).toLocaleDateString()}</span>
+                            <span>{new Date(sprint?.startDate).toLocaleDateString()}</span>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between text-sm">
                           <div className="text-muted-foreground">
-                            {new Date(sprint.startDate).toLocaleDateString()} - {new Date(sprint.endDate).toLocaleDateString()}
+                            {new Date(sprint?.startDate).toLocaleDateString()} - {new Date(sprint?.endDate).toLocaleDateString()}
                           </div>
                           <div className="text-muted-foreground">
-                            {Math.ceil((new Date(sprint.endDate).getTime() - new Date(sprint.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                            {Math.ceil((new Date(sprint?.endDate).getTime() - new Date(sprint?.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
                           </div>
                         </div>
                       </CardContent>
@@ -339,51 +339,51 @@ export default function SprintsPage() {
                 <div className="space-y-4">
                   {filteredSprints.map((sprint) => (
                     <Card 
-                      key={sprint._id} 
+                      key={sprint?._id} 
                       className="hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => router.push(`/sprints/${sprint._id}`)}
+                      onClick={() => router.push(`/sprints/${sprint?._id}`)}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-2">
-                                <h3 className="font-medium text-foreground">{sprint.name}</h3>
-                                <Badge className={getStatusColor(sprint.status)}>
-                                  {getStatusIcon(sprint.status)}
-                                  <span className="ml-1">{sprint.status}</span>
+                                <h3 className="font-medium text-foreground">{sprint?.name}</h3>
+                                <Badge className={getStatusColor(sprint?.status)}>
+                                  {getStatusIcon(sprint?.status)}
+                                  <span className="ml-1">{sprint?.status}</span>
                                 </Badge>
                               </div>
                               <p className="text-sm text-muted-foreground mb-2">
-                                {sprint.description || 'No description'}
+                                {sprint?.description || 'No description'}
                               </p>
                               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                                 <div className="flex items-center space-x-1">
                                   <Target className="h-4 w-4" />
-                                  <span>{sprint.project.name}</span>
+                                  <span>{sprint?.project?.name}</span>
                                 </div>
                                 <div className="flex items-center space-x-1">
                                   <Users className="h-4 w-4" />
-                                  <span>{sprint.teamMembers.length} members</span>
+                                  <span>{sprint?.teamMembers?.length} members</span>
                                 </div>
                                 <div className="flex items-center space-x-1">
                                   <Calendar className="h-4 w-4" />
-                                  <span>{new Date(sprint.startDate).toLocaleDateString()} - {new Date(sprint.endDate).toLocaleDateString()}</span>
+                                  <span>{new Date(sprint?.startDate).toLocaleDateString()} - {new Date(sprint?.endDate).toLocaleDateString()}</span>
                                 </div>
                                 <div className="flex items-center space-x-1">
                                   <TrendingUp className="h-4 w-4" />
-                                  <span>Velocity: {sprint.velocity || 0}</span>
+                                  <span>Velocity: {sprint?.velocity || 0}</span>
                                 </div>
                               </div>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
                             <div className="text-right">
-                              <div className="text-sm font-medium text-foreground">{sprint.progress?.completionPercentage || 0}%</div>
+                              <div className="text-sm font-medium text-foreground">{sprint?.progress?.completionPercentage || 0}%</div>
                               <div className="w-20 bg-gray-200 rounded-full h-2">
                                 <div 
                                   className="bg-blue-600 h-2 rounded-full"
-                                  style={{ width: `${sprint.progress?.completionPercentage || 0}%` }}
+                                  style={{ width: `${sprint?.progress?.completionPercentage || 0}%` }}
                                 />
                               </div>
                             </div>

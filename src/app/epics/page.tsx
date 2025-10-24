@@ -174,12 +174,12 @@ export default function EpicsPage() {
 
   const filteredEpics = epics.filter(epic => {
     const matchesSearch = !searchQuery || 
-      epic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      epic.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      epic.project.name.toLowerCase().includes(searchQuery.toLowerCase())
+      epic?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      epic?.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      epic?.project?.name?.toLowerCase().includes(searchQuery.toLowerCase())
     
-    const matchesStatus = statusFilter === 'all' || epic.status === statusFilter
-    const matchesPriority = priorityFilter === 'all' || epic.priority === priorityFilter
+    const matchesStatus = statusFilter === 'all' || epic?.status === statusFilter
+    const matchesPriority = priorityFilter === 'all' || epic?.priority === priorityFilter
 
     return matchesSearch && matchesStatus && matchesPriority
   })
@@ -290,19 +290,19 @@ export default function EpicsPage() {
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {filteredEpics.map((epic) => (
                     <Card 
-                      key={epic._id} 
+                      key={epic?._id} 
                       className="hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => router.push(`/epics/${epic._id}`)}
+                      onClick={() => router.push(`/epics/${epic?._id}`)}
                     >
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div className="space-y-1">
                             <CardTitle className="text-lg flex items-center space-x-2">
                               <Layers className="h-5 w-5 text-purple-600" />
-                              <span>{epic.name}</span>
+                              <span>{epic?.name}</span>
                             </CardTitle>
                             <CardDescription className="line-clamp-2">
-                              {epic.description || 'No description'}
+                              {epic?.description || 'No description'}
                             </CardDescription>
                           </div>
                           <Button variant="ghost" size="sm" onClick={(e) => {
@@ -315,23 +315,23 @@ export default function EpicsPage() {
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="flex items-center space-x-2">
-                          <Badge className={getStatusColor(epic.status)}>
-                            {getStatusIcon(epic.status)}
-                            <span className="ml-1">{epic.status.replace('_', ' ')}</span>
+                          <Badge className={getStatusColor(epic?.status)}>
+                            {getStatusIcon(epic?.status)}
+                            <span className="ml-1">{epic?.status?.replace('_', ' ')}</span>
                           </Badge>
-                          <Badge className={getPriorityColor(epic.priority)}>
-                            {epic.priority}
+                          <Badge className={getPriorityColor(epic?.priority)}>
+                            {epic?.priority}
                           </Badge>
                         </div>
 
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Progress</span>
-                            <span className="font-medium">{epic.progress?.completionPercentage || 0}%</span>
+                            <span className="font-medium">{epic?.progress?.completionPercentage || 0}%</span>
                           </div>
-                          <Progress value={epic.progress?.completionPercentage || 0} className="h-2" />
+                          <Progress value={epic?.progress?.completionPercentage || 0} className="h-2" />
                           <div className="text-xs text-muted-foreground">
-                            {epic.progress?.storiesCompleted || 0} of {epic.progress?.totalStories || 0} stories completed
+                            {epic?.progress?.storiesCompleted || 0} of {epic?.progress?.totalStories || 0} stories completed
                           </div>
                         </div>
 
@@ -339,7 +339,7 @@ export default function EpicsPage() {
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Story Points</span>
                             <span className="font-medium">
-                              {epic.progress?.storyPointsCompleted || 0} / {epic.progress?.totalStoryPoints || 0}
+                              {epic?.progress?.storyPointsCompleted || 0} / {epic?.progress?.totalStoryPoints || 0}
                             </span>
                           </div>
                         </div>
@@ -347,26 +347,26 @@ export default function EpicsPage() {
                         <div className="flex items-center justify-between text-sm text-muted-foreground">
                           <div className="flex items-center space-x-1">
                             <Target className="h-4 w-4" />
-                            <span>{epic.project.name}</span>
+                            <span>{epic?.project?.name}</span>
                           </div>
-                          {epic.dueDate && (
+                          {epic?.dueDate && (
                             <div className="flex items-center space-x-1">
                               <Calendar className="h-4 w-4" />
-                              <span>Due {new Date(epic.dueDate).toLocaleDateString()}</span>
+                              <span>Due {new Date(epic?.dueDate).toLocaleDateString()}</span>
                             </div>
                           )}
                         </div>
 
-                        {epic.labels.length > 0 && (
+                        {epic?.labels?.length > 0 && (
                           <div className="flex flex-wrap gap-1">
-                            {epic.labels.slice(0, 3).map((label, index) => (
+                            {epic?.labels?.slice(0, 3).map((label, index) => (
                               <Badge key={index} variant="outline" className="text-xs">
                                 {label}
                               </Badge>
                             ))}
-                            {epic.labels.length > 3 && (
+                            {epic?.labels?.length > 3 && (
                               <Badge variant="outline" className="text-xs">
-                                +{epic.labels.length - 3} more
+                                +{epic?.labels?.length - 3} more
                               </Badge>
                             )}
                           </div>
@@ -381,9 +381,9 @@ export default function EpicsPage() {
                 <div className="space-y-4">
                   {filteredEpics.map((epic) => (
                     <Card 
-                      key={epic._id} 
+                      key={epic?._id} 
                       className="hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => router.push(`/epics/${epic._id}`)}
+                      onClick={() => router.push(`/epics/${epic?._id}`)}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -391,46 +391,46 @@ export default function EpicsPage() {
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-2">
                                 <Layers className="h-5 w-5 text-purple-600" />
-                                <h3 className="font-medium text-foreground">{epic.name}</h3>
-                                <Badge className={getStatusColor(epic.status)}>
-                                  {getStatusIcon(epic.status)}
-                                  <span className="ml-1">{epic.status.replace('_', ' ')}</span>
+                                <h3 className="font-medium text-foreground">{epic?.name}</h3>
+                                <Badge className={getStatusColor(epic?.status)}>
+                                  {getStatusIcon(epic?.status)}
+                                  <span className="ml-1">{epic?.status?.replace('_', ' ')}</span>
                                 </Badge>
-                                <Badge className={getPriorityColor(epic.priority)}>
-                                  {epic.priority}
+                                <Badge className={getPriorityColor(epic?.priority)}>
+                                  {epic?.priority}
                                 </Badge>
                               </div>
                               <p className="text-sm text-muted-foreground mb-2">
-                                {epic.description || 'No description'}
+                                {epic?.description || 'No description'}
                               </p>
                               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                                 <div className="flex items-center space-x-1">
                                   <Target className="h-4 w-4" />
-                                  <span>{epic.project.name}</span>
+                                  <span>{epic?.project?.name}</span>
                                 </div>
-                                {epic.dueDate && (
+                                {epic?.dueDate && (
                                   <div className="flex items-center space-x-1">
                                     <Calendar className="h-4 w-4" />
-                                    <span>Due {new Date(epic.dueDate).toLocaleDateString()}</span>
+                                    <span>Due {new Date(epic?.dueDate).toLocaleDateString()}</span>
                                   </div>
                                 )}
-                                {epic.storyPoints && (
+                                {epic?.storyPoints && (
                                   <div className="flex items-center space-x-1">
                                     <BarChart3 className="h-4 w-4" />
-                                    <span>{epic.storyPoints} points</span>
+                                    <span>{epic?.storyPoints} points</span>
                                   </div>
                                 )}
-                                {epic.estimatedHours && (
+                                {epic?.estimatedHours && (
                                   <div className="flex items-center space-x-1">
                                     <Clock className="h-4 w-4" />
-                                    <span>{epic.estimatedHours}h estimated</span>
+                                    <span>{epic?.estimatedHours}h estimated</span>
                                   </div>
                                 )}
-                                {epic.labels.length > 0 && (
+                                {epic?.labels?.length > 0 && (
                                   <div className="flex items-center space-x-1">
                                     <Star className="h-4 w-4" />
-                                    <span>{epic.labels.slice(0, 2).join(', ')}</span>
-                                    {epic.labels.length > 2 && <span>+{epic.labels.length - 2} more</span>}
+                                    <span>{epic?.labels?.slice(0, 2).join(', ')}</span>
+                                    {epic?.labels?.length > 2 && <span>+{epic?.labels?.length - 2} more</span>}
                                   </div>
                                 )}
                               </div>
@@ -438,11 +438,11 @@ export default function EpicsPage() {
                           </div>
                           <div className="flex items-center space-x-2">
                             <div className="text-right">
-                              <div className="text-sm font-medium text-foreground">{epic.progress?.completionPercentage || 0}%</div>
+                              <div className="text-sm font-medium text-foreground">{epic?.progress?.completionPercentage || 0}%</div>
                               <div className="w-20 bg-gray-200 rounded-full h-2">
                                 <div 
                                   className="bg-purple-600 h-2 rounded-full"
-                                  style={{ width: `${epic.progress?.completionPercentage || 0}%` }}
+                                  style={{ width: `${epic?.progress?.completionPercentage || 0}%` }}
                                 />
                               </div>
                             </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -84,6 +84,8 @@ export default function TasksClient({
   initialFilters = {} 
 }: TasksClientProps) {
   const router = useRouter()
+    const searchParams = useSearchParams()
+  
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [pagination, setPagination] = useState(initialPagination)
   const [loading, setLoading] = useState(false)
@@ -94,7 +96,15 @@ export default function TasksClient({
   const [typeFilter, setTypeFilter] = useState(initialFilters.type || 'all')
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
-
+  useEffect(() => {
+    const q = searchParams.get('search') || ''
+    const s = searchParams.get('status') || 'all'
+    const p = searchParams.get('priority') || 'all'
+    setSearchQuery(q)
+    setStatusFilter(s)
+    setPriorityFilter(p)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   // Debounce search query
   const debouncedSearch = useDebounce(searchQuery, 300)
 
@@ -110,20 +120,38 @@ export default function TasksClient({
   // Fetch tasks with current filters
   const fetchTasks = useCallback(async (reset = false) => {
     try {
+      console.log('fetching tasks');
+      
       setLoading(true)
       const params = new URLSearchParams()
       
       if (debouncedSearch) params.set('search', debouncedSearch)
+              if (searchQuery) params.set('search', searchQuery)
+
       if (statusFilter !== 'all') params.set('status', statusFilter)
       if (priorityFilter !== 'all') params.set('priority', priorityFilter)
       if (typeFilter !== 'all') params.set('type', typeFilter)
       if (pagination.nextCursor && !reset) params.set('after', pagination.nextCursor)
       params.set('limit', '20')
 
-      const response = await fetch(`/api/tasks?${params.toString()}`)
+      const response = await fetch(`/api/tasks?${params?.toString()}`)
+      console.log('response',response);
+      
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setError('Authentication required. Redirecting to login...')
+          setTimeout(() => router.push('/login'), 1200)
+          return
+        }
+        const text = await response.text()
+        setError(text || 'Failed to fetch tasks')
+        return
+      }
       const data = await response.json()
+console.log('task data',data);
 
       if (data.success) {
+        setError('')
         if (reset) {
           setTasks(data.data)
         } else {
@@ -149,6 +177,14 @@ export default function TasksClient({
       fetchTasks(true)
     }
   }, [debouncedSearch, statusFilter, priorityFilter, typeFilter, fetchTasks])
+
+  // Initial fetch on mount if no initial tasks were provided
+  useEffect(() => {
+    if (!initialTasks || initialTasks.length === 0) {
+      fetchTasks(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -292,6 +328,13 @@ export default function TasksClient({
           </div>
         </CardHeader>
         <CardContent>
+          {tasks.length === 0 && !loading && (
+            <div className="flex items-center justify-center h-40">
+              <div className="text-center text-muted-foreground">
+                No tasks found.
+              </div>
+            </div>
+          )}
           <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'list' | 'kanban')}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="list">List View</TabsTrigger>
@@ -425,7 +468,7 @@ export default function TasksClient({
         <CreateTaskModal
           isOpen={showCreateTaskModal}
           onClose={() => setShowCreateTaskModal(false)}
-          projectId=""
+          projectId={initialFilters.project || ''}
           onTaskCreated={handleTaskCreated}
         />
       )}
