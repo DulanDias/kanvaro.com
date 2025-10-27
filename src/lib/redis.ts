@@ -4,24 +4,30 @@ let redisClient: ReturnType<typeof createClient> | null = null
 
 export async function getRedisClient() {
   if (!redisClient) {
-    const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379'
-    
+    const redisUrl = process.env.REDIS_URL
+    if (!redisUrl) {
+      throw new Error('Redis disabled: REDIS_URL not set')
+    }
+
     redisClient = createClient({
       url: redisUrl,
       socket: {
-        reconnectStrategy: (retries) => Math.min(retries * 50, 500)
+        reconnectStrategy: (retries) => Math.min(retries * 50, 500),
+        connectTimeout: 300
       }
     })
 
     redisClient.on('error', (err) => {
-      console.error('Redis Client Error:', err)
+    //  console.error('Redis Client Error:', err)
     })
 
     redisClient.on('connect', () => {
-      console.log('Connected to Redis')
+    //  console.log('Connected to Redis')
     })
 
-    await redisClient.connect()
+    const connectPromise = redisClient.connect()
+    const timeout = new Promise<never>((_, reject) => setTimeout(() => reject(new Error('Redis connect timeout')), 350))
+    await Promise.race([connectPromise, timeout])
   }
 
   return redisClient
@@ -47,7 +53,7 @@ export async function cache<T>(
     
     return result
   } catch (error) {
-    console.error('Cache error:', error)
+    // console.error('Cache error:', error)
     // Fallback to direct execution if Redis fails
     return await fn()
   }
@@ -62,7 +68,7 @@ export async function invalidateCache(pattern: string) {
       await client.del(keys)
     }
   } catch (error) {
-    console.error('Cache invalidation error:', error)
+    // console.error('Cache invalidation error:', error)
   }
 }
 
@@ -71,7 +77,7 @@ export async function publishEvent(channel: string, data: any) {
     const client = await getRedisClient()
     await client.publish(channel, JSON.stringify(data))
   } catch (error) {
-    console.error('Publish error:', error)
+    // console.error('Publish error:', error)
   }
 }
 
@@ -88,11 +94,11 @@ export async function subscribeToEvents(
           const data = JSON.parse(message)
           callback(channel, data)
         } catch (error) {
-          console.error('Message parsing error:', error)
+          // console.error('Message parsing error:', error)
         }
       })
     }
   } catch (error) {
-    console.error('Subscribe error:', error)
+    // console.error('Subscribe error:', error)
   }
 }

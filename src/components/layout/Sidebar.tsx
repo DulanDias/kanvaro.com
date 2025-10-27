@@ -456,6 +456,7 @@ function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpa
                 'w-full justify-center px-2',
                 isActive && 'bg-secondary text-secondary-foreground'
               )}
+              title={item.label}
             >
               <Icon className="h-4 w-4" />
             </Button>
@@ -499,6 +500,7 @@ function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpa
             collapsed ? 'px-2' : 'px-3',
             isActive && 'bg-secondary text-secondary-foreground'
           )}
+          title={collapsed ? item.label : undefined}
           onClick={() => {
             if (hasChildren && !collapsed) {
               onToggleExpanded(item.id)

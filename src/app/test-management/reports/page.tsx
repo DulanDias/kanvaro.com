@@ -102,6 +102,63 @@ export default function TestReportsPage() {
     }
   }
 
+  const buildCsv = (headers: string[], rows: (string | number | null | undefined)[][]) => {
+    const escape = (val: any) => {
+      if (val === null || val === undefined) return ''
+      const s = String(val)
+      if (s.includes('"') || s.includes(',') || s.includes('\n')) {
+        return '"' + s.replace(/"/g, '""') + '"'
+      }
+      return s
+    }
+    const lines = [headers.map(escape).join(',')]
+    for (const row of rows) lines.push(row.map(escape).join(','))
+    return lines.join('\n')
+  }
+
+  const handleExport = () => {
+    const parts: string[] = []
+    // Summary
+    parts.push('# Summary')
+    parts.push(buildCsv(
+      ['metric', 'value'],
+      [
+        ['totalTestCases', testSummary.totalTestCases],
+        ['executed', testSummary.executed],
+        ['passed', testSummary.passed],
+        ['failed', testSummary.failed],
+        ['blocked', testSummary.blocked],
+        ['passRate', `${testSummary.passRate}%`],
+        ['executionRate', `${testSummary.executionRate}%`],
+      ]
+    ))
+    parts.push('')
+    // Project Stats
+    parts.push('# Project Statistics')
+    parts.push(buildCsv(
+      ['name', 'totalCases', 'executed', 'passed', 'failed', 'blocked', 'passRate'],
+      projectStats.map(p => [p.name, p.totalCases, p.executed, p.passed, p.failed, p.blocked, `${p.passRate}%`])
+    ))
+    parts.push('')
+    // Recent Executions
+    parts.push('# Recent Executions')
+    parts.push(buildCsv(
+      ['testCase', 'project', 'status', 'executedBy', 'executedAt'],
+      recentExecutions.map(e => [e.testCase, e.project, e.status, e.executedBy, new Date(e.executedAt).toISOString()])
+    ))
+
+    const csv = parts.join('\n') + '\n'
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = `test-reports-${new Date().toISOString().split('T')[0]}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+  }
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -112,7 +169,7 @@ export default function TestReportsPage() {
               Comprehensive test execution reports and analytics
             </p>
           </div>
-          <Button>
+          <Button onClick={handleExport}>
             <Download className="mr-2 h-4 w-4" />
             Export Report
           </Button>

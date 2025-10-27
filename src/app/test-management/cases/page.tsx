@@ -71,6 +71,8 @@ export default function TestCasesPage() {
   }
 
   const handleEditTestCase = (testCase: TestCase) => {
+    console.log('inside handleEditTestCase');
+    
     // Convert TestCase to FormTestCase
     const formTestCase: FormTestCase = {
       _id: testCase._id,

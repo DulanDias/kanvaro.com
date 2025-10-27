@@ -43,6 +43,9 @@ import BacklogView from '@/components/tasks/BacklogView'
 import ReportsView from '@/components/tasks/ReportsView'
 import TestSuiteTree from '@/components/test-management/TestSuiteTree'
 import TestCaseList from '@/components/test-management/TestCaseList'
+import { ResponsiveDialog } from '@/components/ui/ResponsiveDialog'
+import { TestSuiteForm } from '@/components/test-management/TestSuiteForm'
+import { TestCaseForm } from '@/components/test-management/TestCaseForm'
 
 interface Project {
   _id: string
@@ -110,6 +113,16 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
+  const [suiteDialogOpen, setSuiteDialogOpen] = useState(false)
+  const [suiteSaving, setSuiteSaving] = useState(false)
+  const [editingSuite, setEditingSuite] = useState<any | null>(null)
+  const [parentSuiteIdForCreate, setParentSuiteIdForCreate] = useState<string | undefined>(undefined)
+  const [suitesRefreshCounter, setSuitesRefreshCounter] = useState(0)
+  const [testCaseDialogOpen, setTestCaseDialogOpen] = useState(false)
+  const [testCaseSaving, setTestCaseSaving] = useState(false)
+  const [editingTestCase, setEditingTestCase] = useState<any | null>(null)
+  const [createCaseSuiteId, setCreateCaseSuiteId] = useState<string | undefined>(undefined)
+  const [testCasesRefreshCounter, setTestCasesRefreshCounter] = useState(0)
 
   useEffect(() => {
     if (projectId) {
@@ -517,18 +530,32 @@ export default function ProjectDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1">
                 <TestSuiteTree
+                  key={`${projectId}-${suitesRefreshCounter}`}
                   projectId={projectId}
                   onSuiteSelect={(suite) => console.log('Selected suite:', suite)}
-                  onSuiteCreate={(parentSuiteId) => console.log('Create suite:', parentSuiteId)}
-                  onSuiteEdit={(suite) => console.log('Edit suite:', suite)}
+                  onSuiteCreate={(parentSuiteId) => {
+                    setEditingSuite(null)
+                    setParentSuiteIdForCreate(parentSuiteId)
+                    setSuiteDialogOpen(true)
+                  }}
+                  onSuiteEdit={(suite) => {
+                    setEditingSuite(suite)
+                    setParentSuiteIdForCreate(undefined)
+                    setSuiteDialogOpen(true)
+                  }}
                   onSuiteDelete={(suiteId) => console.log('Delete suite:', suiteId)}
                 />
               </div>
               <div className="lg:col-span-2">
                 <TestCaseList
                   projectId={projectId}
+                  key={`${projectId}-${testCasesRefreshCounter}`}
                   onTestCaseSelect={(testCase) => console.log('Selected test case:', testCase)}
-                  onTestCaseCreate={(testSuiteId) => console.log('Create test case:', testSuiteId)}
+                  onTestCaseCreate={(testSuiteId) => {
+                    setEditingTestCase(null)
+                    setCreateCaseSuiteId(testSuiteId)
+                    setTestCaseDialogOpen(true)
+                  }}
                   onTestCaseEdit={(testCase) => console.log('Edit test case:', testCase)}
                   onTestCaseDelete={(testCaseId) => console.log('Delete test case:', testCaseId)}
                   onTestCaseExecute={(testCase) => console.log('Execute test case:', testCase)}
@@ -536,243 +563,101 @@ export default function ProjectDetailPage() {
               </div>
             </div>
           </TabsContent>
-
-          <TabsContent value="reports" className="space-y-4">
-            <ReportsView projectId={projectId} />
-          </TabsContent>
-
-          <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Settings</CardTitle>
-                <CardDescription>Configure project settings and preferences</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="project-name" className="text-sm font-medium text-foreground">Project Name</Label>
-                      <Input 
-                        id="project-name"
-                        value={project?.name || ''} 
-                        readOnly
-                        className="mt-1 bg-muted"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="description" className="text-sm font-medium text-foreground">Description</Label>
-                      <Textarea 
-                        id="description"
-                        value={project?.description || ''} 
-                        readOnly
-                        className="mt-1 resize-none bg-muted"
-                        rows={3}
-                        placeholder="Enter project description..."
-                      />
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div>
-                        <Label htmlFor="start-date" className="text-sm font-medium text-foreground">Start Date</Label>
-                        <Input 
-                          id="start-date"
-                          type="date"
-                          value={project?.startDate ? new Date(project.startDate).toISOString().split('T')[0] : ''} 
-                          readOnly
-                          className="mt-1 bg-muted"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="end-date" className="text-sm font-medium text-foreground">End Date</Label>
-                        <Input 
-                          id="end-date"
-                          type="date"
-                          value={project?.endDate ? new Date(project.endDate).toISOString().split('T')[0] : ''} 
-                          readOnly
-                          className="mt-1 bg-muted"
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-foreground">Status</label>
-                      <Select 
-                        value={project?.status || 'planning'} 
-                        onValueChange={(value) => {
-                          if (project) {
-                            setProject({...project, status: value as any})
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="planning">Planning</SelectItem>
-                          <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="on_hold">On Hold</SelectItem>
-                          <SelectItem value="completed">Completed</SelectItem>
-                          <SelectItem value="cancelled">Cancelled</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <label className="text-sm font-medium text-foreground">Priority</label>
-                      <Select 
-                        value={project?.priority || 'medium'} 
-                        onValueChange={(value) => {
-                          if (project) {
-                            setProject({...project, priority: value as any})
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">Low</SelectItem>
-                          <SelectItem value="medium">Medium</SelectItem>
-                          <SelectItem value="high">High</SelectItem>
-                          <SelectItem value="critical">Critical</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-medium text-foreground">Time Tracking Settings</h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <input 
-                            type="checkbox" 
-                            checked={project?.settings?.allowTimeTracking ?? true}
-                            onChange={(e) => {
-                              if (project) {
-                                setProject({
-                                  ...project, 
-                                  settings: {
-                                    ...project.settings,
-                                    allowTimeTracking: e.target.checked
-                                  }
-                                })
-                              }
-                            }}
-                            className="rounded"
-                          />
-                          <label className="text-sm text-foreground">Allow time tracking</label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input 
-                            type="checkbox" 
-                            checked={project?.settings?.allowManualTimeSubmission ?? true}
-                            onChange={(e) => {
-                              if (project) {
-                                setProject({
-                                  ...project, 
-                                  settings: {
-                                    ...project.settings,
-                                    allowManualTimeSubmission: e.target.checked
-                                  }
-                                })
-                              }
-                            }}
-                            className="rounded"
-                          />
-                          <label className="text-sm text-foreground">Allow manual time submission</label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input 
-                            type="checkbox" 
-                            checked={project?.settings?.allowExpenseTracking ?? true}
-                            onChange={(e) => {
-                              if (project) {
-                                setProject({
-                                  ...project, 
-                                  settings: {
-                                    ...project.settings,
-                                    allowExpenseTracking: e.target.checked
-                                  }
-                                })
-                              }
-                            }}
-                            className="rounded"
-                          />
-                          <label className="text-sm text-foreground">Allow expense tracking</label>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Team Member Hourly Rates */}
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-lg font-medium text-foreground">Team Member Hourly Rates</h4>
-                    <p className="text-sm text-muted-foreground">Configure hourly rates for team members on this project</p>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="text-sm text-muted-foreground">
-                      Hourly rates will be automatically applied when team members track time on this project.
-                    </div>
-                    
-                    <div className="p-4 border border-dashed border-muted-foreground/25 rounded-lg">
-                      <div className="text-center text-muted-foreground">
-                        <User className="h-8 w-8 mx-auto mb-2" />
-                        <p className="text-sm">Team member hourly rates will be configured here</p>
-                        <p className="text-xs mt-1">This feature will be available when team management is implemented</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => {
-                    // Reset to original project data
-                    fetchProject()
-                  }}>
-                    Cancel
-                  </Button>
-                  <Button onClick={async () => {
-                    try {
-                      const response = await fetch(`/api/projects/${projectId}`, {
-                        method: 'PUT',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(project)
-                      })
-                      const data = await response.json()
-                      
-                      if (data.success) {
-                        // Show success message
-                        alert('Project settings updated successfully!')
-                      } else {
-                        alert('Failed to update project settings')
-                      }
-                    } catch (error) {
-                      alert('Failed to update project settings')
-                    }
-                  }}>
-                    Save Changes
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
         </Tabs>
-      </div>
 
-      <CreateTaskModal
-        isOpen={showCreateTaskModal}
-        onClose={() => setShowCreateTaskModal(false)}
-        projectId={projectId}
-        onTaskCreated={() => {
-          // Refresh project data to update task counts
-          fetchProject()
-        }}
-      />
+        <ResponsiveDialog
+          open={suiteDialogOpen}
+          onOpenChange={setSuiteDialogOpen}
+          title={editingSuite ? 'Edit Test Suite' : 'Create Test Suite'}
+        >
+          <TestSuiteForm
+            testSuite={editingSuite || (parentSuiteIdForCreate ? { name: '', description: '', parentSuite: parentSuiteIdForCreate, project: projectId } as any : undefined)}
+            projectId={projectId}
+            onSave={async (suiteData) => {
+              setSuiteSaving(true)
+              try {
+                const isEdit = !!editingSuite?._id
+                const res = await fetch('/api/test-suites', {
+                  method: isEdit ? 'PUT' : 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    ...(isEdit ? { suiteId: editingSuite._id } : {}),
+                    name: suiteData.name,
+                    description: suiteData.description,
+                    projectId: projectId,
+                    parentSuiteId: suiteData.parentSuite || parentSuiteIdForCreate,
+                  })
+                })
+                if (res.ok) {
+                  setSuiteDialogOpen(false)
+                  setEditingSuite(null)
+                  setParentSuiteIdForCreate(undefined)
+                  setSuitesRefreshCounter(c => c + 1)
+                } else {
+                  const data = await res.json().catch(() => ({}))
+                  console.error('Failed to save test suite', data)
+                }
+              } catch (e) {
+                console.error('Error saving test suite:', e)
+              } finally {
+                setSuiteSaving(false)
+              }
+            }}
+            onCancel={() => {
+              setSuiteDialogOpen(false)
+              setEditingSuite(null)
+              setParentSuiteIdForCreate(undefined)
+            }}
+            loading={suiteSaving}
+          />
+        </ResponsiveDialog>
+
+        <ResponsiveDialog
+          open={testCaseDialogOpen}
+          onOpenChange={setTestCaseDialogOpen}
+          title={editingTestCase ? 'Edit Test Case' : 'Create Test Case'}
+        >
+          <TestCaseForm
+            testCase={editingTestCase || (createCaseSuiteId ? { testSuite: createCaseSuiteId } as any : undefined)}
+            projectId={projectId}
+            onSave={async (testCaseData: any) => {
+              setTestCaseSaving(true)
+              try {
+                const isEdit = !!editingTestCase?._id
+                const res = await fetch('/api/test-cases', {
+                  method: isEdit ? 'PUT' : 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    ...(isEdit ? { testCaseId: editingTestCase._id } : {}),
+                    ...testCaseData,
+                    projectId,
+                  })
+                })
+                if (res.ok) {
+                  setTestCaseDialogOpen(false)
+                  setEditingTestCase(null)
+                  setCreateCaseSuiteId(undefined)
+                  setTestCasesRefreshCounter(c => c + 1)
+                } else {
+                  const data = await res.json().catch(() => ({}))
+                  console.error('Failed to save test case', data)
+                }
+              } catch (e) {
+                console.error('Error saving test case:', e)
+              } finally {
+                setTestCaseSaving(false)
+              }
+            }}
+            onCancel={() => {
+              setTestCaseDialogOpen(false)
+              setEditingTestCase(null)
+              setCreateCaseSuiteId(undefined)
+            }}
+            loading={testCaseSaving}
+          />
+        </ResponsiveDialog>
+
+      </div>
     </MainLayout>
   )
 }

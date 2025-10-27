@@ -10,6 +10,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { ResponsiveDialog } from '@/components/ui/ResponsiveDialog'
 import { TestPlanForm } from '@/components/test-management/TestPlanForm'
 import { TestExecutionForm } from '@/components/test-management/TestExecutionForm'
+import { TestSuiteForm } from '@/components/test-management/TestSuiteForm'
+import { TestCaseForm } from '@/components/test-management/TestCaseForm'
 import { 
   TestTube, 
   Play, 
@@ -52,6 +54,19 @@ export default function TestManagementPage() {
   const [testPlanDialogOpen, setTestPlanDialogOpen] = useState(false)
   const [testExecutionDialogOpen, setTestExecutionDialogOpen] = useState(false)
   const [saving, setSaving] = useState(false)
+  const [suiteDialogOpen, setSuiteDialogOpen] = useState(false)
+  const [suiteSaving, setSuiteSaving] = useState(false)
+  const [editingSuite, setEditingSuite] = useState<any | null>(null)
+  const [parentSuiteIdForCreate, setParentSuiteIdForCreate] = useState<string | undefined>(undefined)
+  const [suitesRefreshCounter, setSuitesRefreshCounter] = useState(0)
+  const [selectedSuiteId, setSelectedSuiteId] = useState<string | null>(null)
+  const [selectedSuiteDetails, setSelectedSuiteDetails] = useState<any | null>(null)
+  const [suiteDetailsLoading, setSuiteDetailsLoading] = useState(false)
+  const [testCaseDialogOpen, setTestCaseDialogOpen] = useState(false)
+  const [testCaseSaving, setTestCaseSaving] = useState(false)
+  const [editingTestCase, setEditingTestCase] = useState<any | null>(null)
+  const [createCaseSuiteId, setCreateCaseSuiteId] = useState<string | undefined>(undefined)
+  const [testCasesRefreshCounter, setTestCasesRefreshCounter] = useState(0)
   const router = useRouter()
 
   useEffect(() => {
@@ -74,6 +89,42 @@ export default function TestManagementPage() {
       console.error('Error fetching projects:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteSuite = async (suiteId: string) => {
+    try {
+      const res = await fetch(`/api/test-suites/${suiteId}`, { method: 'DELETE' })
+      if (res.ok) {
+        setSuitesRefreshCounter(c => c + 1)
+        // Clear details panel if the deleted suite was selected
+        if (selectedSuiteId === suiteId) {
+          setSelectedSuiteId(null)
+          setSelectedSuiteDetails(null)
+        }
+      } else {
+        const data = await res.json().catch(() => ({}))
+        console.error('Failed to delete test suite', data)
+      }
+    } catch (err) {
+      console.error('Error deleting test suite:', err)
+    }
+  }
+
+  const fetchSuiteDetails = async (suiteId: string) => {
+    try {
+      setSuiteDetailsLoading(true)
+      const res = await fetch(`/api/test-suites/${suiteId}`)
+      const data = await res.json()
+      if (res.ok && data?.success) {
+        setSelectedSuiteDetails(data.data)
+      } else {
+        setSelectedSuiteDetails(null)
+      }
+    } catch (e) {
+      setSelectedSuiteDetails(null)
+    } finally {
+      setSuiteDetailsLoading(false)
     }
   }
 
@@ -335,11 +386,24 @@ export default function TestManagementPage() {
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-1">
                   <TestSuiteTree
+                    key={`${selectedProject}-${suitesRefreshCounter}`}
                     projectId={selectedProject}
-                    onSuiteSelect={(suite) => console.log('Selected suite:', suite)}
-                    onSuiteCreate={(parentSuiteId) => console.log('Create suite:', parentSuiteId)}
-                    onSuiteEdit={(suite) => console.log('Edit suite:', suite)}
-                    onSuiteDelete={(suiteId) => console.log('Delete suite:', suiteId)}
+                    selectedSuiteId={selectedSuiteId || undefined}
+                    onSuiteSelect={(suite) => {
+                      setSelectedSuiteId(suite._id)
+                      fetchSuiteDetails(suite._id)
+                    }}
+                    onSuiteCreate={(parentSuiteId) => {
+                      setEditingSuite(null)
+                      setParentSuiteIdForCreate(parentSuiteId)
+                      setSuiteDialogOpen(true)
+                    }}
+                    onSuiteEdit={(suite) => {
+                      setEditingSuite(suite)
+                      setParentSuiteIdForCreate(undefined)
+                      setSuiteDialogOpen(true)
+                    }}
+                    onSuiteDelete={(suiteId) => handleDeleteSuite(suiteId)}
                   />
                 </div>
                 <div className="lg:col-span-2">
@@ -348,10 +412,57 @@ export default function TestManagementPage() {
                       <CardTitle>Test Suite Details</CardTitle>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-center py-8 text-muted-foreground">
-                        <Folder className="h-8 w-8 mx-auto mb-2" />
-                        <p>Select a test suite to view details</p>
-                      </div>
+                      {!selectedSuiteId || suiteDetailsLoading ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Folder className="h-8 w-8 mx-auto mb-2" />
+                          <p>{suiteDetailsLoading ? 'Loading suite details…' : 'Select a test suite to view details'}</p>
+                        </div>
+                      ) : selectedSuiteDetails ? (
+                        <div className="space-y-4">
+                          <div className="flex items-start justify-between">
+                            <div>
+                              <h2 className="text-xl font-semibold">{selectedSuiteDetails.name}</h2>
+                              <p className="text-sm text-muted-foreground">
+                                {selectedSuiteDetails.description || 'No description'}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <Button size="sm" onClick={() => {
+                                setEditingSuite({
+                                  _id: selectedSuiteDetails._id,
+                                  name: selectedSuiteDetails.name,
+                                  description: selectedSuiteDetails.description,
+                                  parentSuite: selectedSuiteDetails.parentSuite?._id,
+                                  project: selectedProject,
+                                })
+                                setParentSuiteIdForCreate(undefined)
+                                setSuiteDialogOpen(true)
+                              }}>Edit</Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleDeleteSuite(selectedSuiteDetails._id)}>Delete</Button>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                              <div className="text-xs text-muted-foreground">Project</div>
+                              <div className="text-sm">{selectedSuiteDetails.project?.name || '—'}</div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-xs text-muted-foreground">Parent Suite</div>
+                              <div className="text-sm">{selectedSuiteDetails.parentSuite?.name || 'Root'}</div>
+                            </div>
+                            <div className="space-y-1">
+                              <div className="text-xs text-muted-foreground">Created By</div>
+                              <div className="text-sm">{selectedSuiteDetails.createdBy ? `${selectedSuiteDetails.createdBy.firstName || ''} ${selectedSuiteDetails.createdBy.lastName || ''}`.trim() || selectedSuiteDetails.createdBy.email : '—'}</div>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <Folder className="h-8 w-8 mx-auto mb-2" />
+                          <p>Unable to load suite details</p>
+                        </div>
+                      )}
                     </CardContent>
                   </Card>
                 </div>
@@ -361,8 +472,13 @@ export default function TestManagementPage() {
             <TabsContent value="cases" className="space-y-6">
               <TestCaseList
                 projectId={selectedProject}
+                key={`${selectedProject}-${testCasesRefreshCounter}-${selectedSuiteId ?? 'all'}`}
                 onTestCaseSelect={(testCase) => console.log('Selected test case:', testCase)}
-                onTestCaseCreate={(testSuiteId) => console.log('Create test case:', testSuiteId)}
+                onTestCaseCreate={(testSuiteId) => {
+                  setEditingTestCase(null)
+                  setCreateCaseSuiteId(testSuiteId)
+                  setTestCaseDialogOpen(true)
+                }}
                 onTestCaseEdit={(testCase) => console.log('Edit test case:', testCase)}
                 onTestCaseDelete={(testCaseId) => console.log('Delete test case:', testCaseId)}
                 onTestCaseExecute={(testCase) => console.log('Execute test case:', testCase)}
@@ -413,6 +529,98 @@ export default function TestManagementPage() {
             onSave={handleSaveTestExecution}
             onCancel={() => setTestExecutionDialogOpen(false)}
             loading={saving}
+          />
+        </ResponsiveDialog>
+
+        <ResponsiveDialog
+          open={suiteDialogOpen}
+          onOpenChange={setSuiteDialogOpen}
+          title={editingSuite ? 'Edit Test Suite' : 'Create Test Suite'}
+        >
+          <TestSuiteForm
+            testSuite={editingSuite || (parentSuiteIdForCreate ? { name: '', description: '', parentSuite: parentSuiteIdForCreate, project: selectedProject } as any : undefined)}
+            projectId={selectedProject}
+            onSave={async (suiteData) => {
+              setSuiteSaving(true)
+              try {
+                const isEdit = !!editingSuite?._id
+                const res = await fetch('/api/test-suites', {
+                  method: isEdit ? 'PUT' : 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    ...(isEdit ? { suiteId: editingSuite._id } : {}),
+                    name: suiteData.name,
+                    description: suiteData.description,
+                    projectId: selectedProject,
+                    parentSuiteId: suiteData.parentSuite || parentSuiteIdForCreate,
+                  })
+                })
+                if (res.ok) {
+                  setSuiteDialogOpen(false)
+                  setEditingSuite(null)
+                  setParentSuiteIdForCreate(undefined)
+                  setSuitesRefreshCounter(c => c + 1)
+                } else {
+                  const data = await res.json().catch(() => ({}))
+                  console.error('Failed to save test suite', data)
+                }
+              } catch (e) {
+                console.error('Error saving test suite:', e)
+              } finally {
+                setSuiteSaving(false)
+              }
+            }}
+            onCancel={() => {
+              setSuiteDialogOpen(false)
+              setEditingSuite(null)
+              setParentSuiteIdForCreate(undefined)
+            }}
+            loading={suiteSaving}
+          />
+        </ResponsiveDialog>
+
+        <ResponsiveDialog
+          open={testCaseDialogOpen}
+          onOpenChange={setTestCaseDialogOpen}
+          title={editingTestCase ? 'Edit Test Case' : 'Create Test Case'}
+        >
+          <TestCaseForm
+            testCase={editingTestCase || (createCaseSuiteId ? { testSuiteId: createCaseSuiteId } as any : undefined)}
+            projectId={selectedProject}
+            onSave={async (testCaseData: any) => {
+              setTestCaseSaving(true)
+              try {
+                const isEdit = !!editingTestCase?._id
+                const res = await fetch('/api/test-cases', {
+                  method: isEdit ? 'PUT' : 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    ...(isEdit ? { testCaseId: editingTestCase._id } : {}),
+                    ...testCaseData,
+                    projectId: selectedProject,
+                  })
+                })
+                if (res.ok) {
+                  setTestCaseDialogOpen(false)
+                  setEditingTestCase(null)
+                  setCreateCaseSuiteId(undefined)
+                  setTestCasesRefreshCounter(c => c + 1)
+                } else {
+                  const data = await res.json().catch(() => ({}))
+                  console.error('Failed to save test case', data)
+                }
+              } catch (e) {
+                console.error('Error saving test case:', e)
+              } finally {
+                setTestCaseSaving(false)
+              }
+            }}
+            onCancel={() => {
+              setTestCaseDialogOpen(false)
+              setEditingTestCase(null)
+              setCreateCaseSuiteId(undefined)
+            }}
+            loading={testCaseSaving}
           />
         </ResponsiveDialog>
       </div>

@@ -41,6 +41,9 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
   const [timeEntries, setTimeEntries] = useState<TimeEntry[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [resolvedUserId, setResolvedUserId] = useState<string>(userId || '')
+  const [resolvedOrgId, setResolvedOrgId] = useState<string>(organizationId || '')
+  const [authResolving, setAuthResolving] = useState<boolean>(!userId || !organizationId)
   const [selectedEntries, setSelectedEntries] = useState<string[]>([])
   const [filters, setFilters] = useState({
     startDate: '',
@@ -56,15 +59,44 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
     pages: 0
   })
 
+  // Resolve auth if props are missing
+  useEffect(() => {
+    const resolveAuth = async () => {
+      if (resolvedUserId && resolvedOrgId) {
+        setAuthResolving(false)
+        return
+      }
+      try {
+        const res = await fetch('/api/auth/me')
+        if (res.ok) {
+          const me = await res.json()
+          setResolvedUserId(me.id)
+          setResolvedOrgId(me.organization)
+          setError('')
+        } else {
+          setError('Unable to resolve user. Please log in again.')
+        }
+      } catch (e) {
+        setError('Failed to resolve user information')
+      } finally {
+        setAuthResolving(false)
+      }
+    }
+    if (!resolvedUserId || !resolvedOrgId) {
+      resolveAuth()
+    }
+  }, [resolvedUserId, resolvedOrgId])
+
   // Load time entries
   const loadTimeEntries = useCallback(async () => {
+    if (!resolvedUserId || !resolvedOrgId) return
     setIsLoading(true)
     setError('')
 
     try {
       const params = new URLSearchParams({
-        userId,
-        organizationId,
+        userId: resolvedUserId,
+        organizationId: resolvedOrgId,
         page: pagination.page.toString(),
         limit: pagination.limit.toString()
       })
@@ -91,11 +123,13 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
     } finally {
       setIsLoading(false)
     }
-  }, [userId, organizationId, projectId, taskId, pagination.page, pagination.limit, filters])
+  }, [resolvedUserId, resolvedOrgId, projectId, taskId, pagination.page, pagination.limit, filters])
 
   useEffect(() => {
-    loadTimeEntries()
-  }, [loadTimeEntries])
+    if (!authResolving) {
+      loadTimeEntries()
+    }
+  }, [authResolving, loadTimeEntries])
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60)
@@ -111,6 +145,16 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
       hour: '2-digit',
       minute: '2-digit'
     })
+  }
+
+  const formatDateParts = (dateString: string) => {
+    const d = new Date(dateString)
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    const date = `${yyyy}-${mm}-${dd}`
+    const time = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true })
+    return { date, time }
   }
 
   const handleDeleteEntry = async (entryId: string) => {
@@ -142,7 +186,7 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           timeEntryIds: selectedEntries,
-          approvedBy: userId,
+          approvedBy: resolvedUserId,
           action
         })
       })
@@ -189,11 +233,17 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Clock className="h-5 w-5" />
-          Time Logs
+          {/* <Clock className="h-5 w-5" />
+          Time Logs */}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {authResolving && (
+          <div className="text-center py-8">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+            <p className="text-muted-foreground mt-2">Loading your time entries...</p>
+          </div>
+        )}
         {error && (
           <Alert variant="destructive">
             <AlertDescription>{error}</AlertDescription>
@@ -311,14 +361,13 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
                     onCheckedChange={handleSelectAll}
                   />
                 </div>
-                <div className="col-span-3">Description</div>
-                <div className="col-span-2">Project</div>
+                <div className="col-span-4">Description</div>
+                <div className="col-span-2">Project (Task)</div>
+                <div className="col-span-1">Start Time</div>
+                <div className="col-span-1">End Time</div>
                 <div className="col-span-1">Duration</div>
-                <div className="col-span-1">Cost</div>
                 <div className="col-span-1">Status</div>
                 <div className="col-span-1">Billable</div>
-                <div className="col-span-1">Approved</div>
-                <div className="col-span-1">Actions</div>
               </div>
 
               {/* Table Rows */}
@@ -330,34 +379,29 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
                       onCheckedChange={(checked) => handleSelectEntry(entry._id, checked as boolean)}
                     />
                   </div>
-                  <div className="col-span-3">
-                    <div className="font-medium">{entry.description}</div>
-                    {entry.category && (
-                      <Badge variant="secondary" className="text-xs mt-1">
-                        {entry.category}
-                      </Badge>
-                    )}
-                    {entry.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mt-1">
-                        {entry.tags.map((tag, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {tag}
-                          </Badge>
-                        ))}
-                      </div>
+                  <div className="col-span-4 truncate">
+                    <div className="font-medium truncate" title={entry.description}>{entry.description}</div>
+                  </div>
+                  <div className="col-span-2 text-sm truncate">
+                    <span title={entry.project.name}>{entry.project.name}</span>
+                    {entry.task && (
+                      <span className="text-muted-foreground"> ({entry.task.title})</span>
                     )}
                   </div>
-                  <div className="col-span-2">
-                    <div className="text-sm">{entry.project.name}</div>
-                    {entry.task && (
-                      <div className="text-xs text-muted-foreground">{entry.task.title}</div>
-                    )}
+                  <div className="col-span-1 text-sm leading-tight">
+                    {(() => { const p = formatDateParts(entry.startTime); return (<>
+                      <div>{p.date}</div>
+                      <div className="text-muted-foreground">{p.time}</div>
+                    </>) })()}
+                  </div>
+                  <div className="col-span-1 text-sm leading-tight">
+                    {entry.endTime ? (() => { const p = formatDateParts(entry.endTime as string); return (<>
+                      <div>{p.date}</div>
+                      <div className="text-muted-foreground">{p.time}</div>
+                    </>) })() : '-'}
                   </div>
                   <div className="col-span-1 text-sm">
                     {formatDuration(entry.duration)}
-                  </div>
-                  <div className="col-span-1 text-sm">
-                    {entry.hourlyRate ? `$${((entry.hourlyRate * entry.duration) / 60).toFixed(2)}` : '-'}
                   </div>
                   <div className="col-span-1">
                     <Badge variant={entry.status === 'completed' ? 'default' : 'secondary'}>
@@ -368,21 +412,6 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
                     <Badge variant={entry.isBillable ? 'default' : 'outline'}>
                       {entry.isBillable ? 'Yes' : 'No'}
                     </Badge>
-                  </div>
-                  <div className="col-span-1">
-                    <Badge variant={entry.isApproved ? 'default' : 'destructive'}>
-                      {entry.isApproved ? 'Yes' : 'No'}
-                    </Badge>
-                  </div>
-                  <div className="col-span-1 flex gap-1">
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={() => handleDeleteEntry(entry._id)}
-                      disabled={entry.isApproved}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
                   </div>
                 </div>
               ))}
