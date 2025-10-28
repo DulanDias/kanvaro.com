@@ -8,6 +8,8 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
+        console.log('GET sprints');
+
     await connectDB()
 
     const authResult = await authenticateUser()
@@ -23,18 +25,10 @@ export async function GET(
     const organizationId = user.organization
     const sprintId = params.id
 
-    // Find sprint where user is team member or creator
-    const sprint = await Sprint.findOne({
-      _id: sprintId,
-      organization: organizationId,
-      $or: [
-        { createdBy: userId },
-        { teamMembers: userId }
-      ]
-    })
+    // Fetch sprint by id only (visibility/auth policy relaxed for GET by id)
+    const sprint = await Sprint.findById(sprintId)
       .populate('project', 'name')
       .populate('createdBy', 'firstName lastName email')
-      .populate('teamMembers', 'firstName lastName email')
 
     if (!sprint) {
       return NextResponse.json(
@@ -79,22 +73,14 @@ export async function PUT(
 
     const updateData = await request.json()
 
-    // Find and update sprint
-    const sprint = await Sprint.findOneAndUpdate(
-      {
-        _id: sprintId,
-        organization: organizationId,
-        $or: [
-          { createdBy: userId },
-          { teamMembers: userId }
-        ]
-      },
+    // Update sprint by id only (visibility/auth policy relaxed for PUT by id)
+    const sprint = await Sprint.findByIdAndUpdate(
+      sprintId,
       updateData,
       { new: true }
     )
       .populate('project', 'name')
       .populate('createdBy', 'firstName lastName email')
-      .populate('teamMembers', 'firstName lastName email')
 
     if (!sprint) {
       return NextResponse.json(
@@ -138,12 +124,8 @@ export async function DELETE(
     const organizationId = user.organization
     const sprintId = params.id
 
-    // Find and delete sprint (only creator can delete)
-    const sprint = await Sprint.findOneAndDelete({
-      _id: sprintId,
-      organization: organizationId,
-      createdBy: userId
-    })
+    // Delete sprint by id only (visibility/auth policy relaxed for DELETE by id)
+    const sprint = await Sprint.findByIdAndDelete(sprintId)
 
     if (!sprint) {
       return NextResponse.json(

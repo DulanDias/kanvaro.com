@@ -73,6 +73,7 @@ export default function SprintDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [authError, setAuthError] = useState('')
+  const [deleting, setDeleting] = useState(false)
 
   const checkAuth = useCallback(async () => {
     try {
@@ -116,7 +117,7 @@ export default function SprintDetailPage() {
       setLoading(true)
       const response = await fetch(`/api/sprints/${sprintId}`)
       const data = await response.json()
-
+      console.log('data', data);
       if (data.success) {
         setSprint(data.data)
       } else {
@@ -126,6 +127,24 @@ export default function SprintDetailPage() {
       setError('Failed to fetch sprint')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      if (!confirm('Are you sure you want to delete this sprint? This action cannot be undone.')) return
+      setDeleting(true)
+      const res = await fetch(`/api/sprints/${sprintId}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        router.push('/sprints')
+      } else {
+        setError(data?.error || 'Failed to delete sprint')
+      }
+    } catch (e) {
+      setError('Failed to delete sprint')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -152,7 +171,7 @@ export default function SprintDetailPage() {
   const getDaysRemaining = () => {
     if (!sprint) return 0
     const now = new Date()
-    const endDate = new Date(sprint.endDate)
+    const endDate = new Date(sprint?.endDate)
     const diffTime = endDate.getTime() - now.getTime()
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24))
   }
@@ -211,19 +230,19 @@ export default function SprintDetailPage() {
             <div>
               <h1 className="text-3xl font-bold text-foreground flex items-center space-x-2">
                 <Target className="h-8 w-8 text-blue-600" />
-                <span>{sprint.name}</span>
+                <span>{sprint?.name}</span>
               </h1>
               <p className="text-muted-foreground">Sprint Details</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => router.push(`/sprints/${sprintId}/edit`)}>
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
-            <Button variant="destructive">
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               <Trash2 className="h-4 w-4 mr-2" />
-              Delete
+              {deleting ? 'Deleting...' : 'Delete'}
             </Button>
           </div>
         </div>
@@ -236,18 +255,18 @@ export default function SprintDetailPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  {sprint.description || 'No description provided'}
+                  {sprint?.description || 'No description provided'}
                 </p>
               </CardContent>
             </Card>
 
-            {sprint.goal && (
+            {sprint?.goal && (
               <Card>
                 <CardHeader>
                   <CardTitle>Sprint Goal</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <p className="text-muted-foreground">{sprint.goal}</p>
+                  <p className="text-muted-foreground">{sprint?.goal}</p>
                 </CardContent>
               </Card>
             )}
@@ -261,9 +280,9 @@ export default function SprintDetailPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Overall Progress</span>
-                    <span className="font-medium">{sprint.progress?.completionPercentage || 0}%</span>
+                    <span className="font-medium">{sprint?.progress?.completionPercentage || 0}%</span>
                   </div>
-                  <Progress value={sprint.progress?.completionPercentage || 0} className="h-2" />
+                  <Progress value={sprint?.progress?.completionPercentage || 0} className="h-2" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -271,15 +290,15 @@ export default function SprintDetailPage() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Tasks</span>
                       <span className="font-medium">
-                        {sprint.progress?.tasksCompleted || 0} / {sprint.progress?.totalTasks || 0}
+                        {sprint?.progress?.tasksCompleted || 0} / {sprint?.progress?.totalTasks || 0}
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-blue-600 h-2 rounded-full"
                         style={{ 
-                          width: `${sprint.progress?.totalTasks ? 
-                            ((sprint.progress.tasksCompleted / sprint.progress.totalTasks) * 100) : 0}%` 
+                          width: `${sprint?.progress?.totalTasks ? 
+                            ((sprint?.progress?.tasksCompleted / sprint?.progress?.totalTasks) * 100) : 0}%` 
                         }}
                       />
                     </div>
@@ -289,15 +308,15 @@ export default function SprintDetailPage() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Story Points</span>
                       <span className="font-medium">
-                        {sprint.progress?.storyPointsCompleted || 0} / {sprint.progress?.totalStoryPoints || 0}
+                        {sprint?.progress?.storyPointsCompleted || 0} / {sprint?.progress?.totalStoryPoints || 0}
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-green-600 h-2 rounded-full"
                         style={{ 
-                          width: `${sprint.progress?.totalStoryPoints ? 
-                            ((sprint.progress.storyPointsCompleted / sprint.progress.totalStoryPoints) * 100) : 0}%` 
+                          width: `${sprint?.progress?.totalStoryPoints ? 
+                            ((sprint?.progress?.storyPointsCompleted / sprint?.progress?.totalStoryPoints) * 100) : 0}%` 
                         }}
                       />
                     </div>
@@ -315,35 +334,35 @@ export default function SprintDetailPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Status</span>
-                  <Badge className={getStatusColor(sprint.status)}>
-                    {getStatusIcon(sprint.status)}
-                    <span className="ml-1">{sprint.status}</span>
+                  <Badge className={getStatusColor(sprint?.status)}>
+                    {getStatusIcon(sprint?.status)}
+                    <span className="ml-1">{sprint?.status}</span>
                   </Badge>
                 </div>
                 
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Project</span>
-                  <span className="font-medium">{sprint.project.name}</span>
+                  <span className="font-medium">{sprint?.project?.name}</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Duration</span>
                   <span className="font-medium">
-                    {Math.ceil((new Date(sprint.endDate).getTime() - new Date(sprint.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                    {Math.ceil((new Date(sprint?.endDate).getTime() - new Date(sprint?.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
                   </span>
                 </div>
                 
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Start Date</span>
                   <span className="font-medium">
-                    {new Date(sprint.startDate).toLocaleDateString()}
+                    {new Date(sprint?.startDate).toLocaleDateString()}
                   </span>
                 </div>
                 
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">End Date</span>
                   <span className="font-medium">
-                    {new Date(sprint.endDate).toLocaleDateString()}
+                    {new Date(sprint?.endDate).toLocaleDateString()}
                   </span>
                 </div>
                 
@@ -356,12 +375,12 @@ export default function SprintDetailPage() {
                 
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Capacity</span>
-                  <span className="font-medium">{sprint.capacity}h</span>
+                  <span className="font-medium">{sprint?.capacity}h</span>
                 </div>
                 
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Velocity</span>
-                  <span className="font-medium">{sprint.velocity}</span>
+                  <span className="font-medium">{sprint?.velocity}</span>
                 </div>
               </CardContent>
             </Card>
@@ -369,11 +388,11 @@ export default function SprintDetailPage() {
             <Card>
               <CardHeader>
                 <CardTitle>Team Members</CardTitle>
-                <CardDescription>{sprint.teamMembers.length} members</CardDescription>
+                <CardDescription>{sprint?.teamMembers?.length} members</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-2">
-                  {sprint.teamMembers.map((member, index) => (
+                  {sprint?.teamMembers?.map((member, index) => (
                     <div key={index} className="flex items-center space-x-2">
                       <User className="h-4 w-4 text-muted-foreground" />
                       <span className="text-sm">
@@ -393,11 +412,11 @@ export default function SprintDetailPage() {
                 <div className="flex items-center space-x-2">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">
-                    {sprint.createdBy.firstName} {sprint.createdBy.lastName}
+                    {sprint?.createdBy?.firstName} {sprint?.createdBy?.lastName}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {new Date(sprint.createdAt).toLocaleDateString()}
+                  {new Date(sprint?.createdAt).toLocaleDateString()}
                 </p>
               </CardContent>
             </Card>

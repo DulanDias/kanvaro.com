@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/Progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/DropdownMenu'
 import { 
   Plus, 
   Search, 
@@ -32,7 +33,11 @@ import {
   Kanban,
   Users,
   TrendingUp,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Eye,
+  Settings,
+  Edit,
+  Trash2
 } from 'lucide-react'
 
 interface Sprint {
@@ -132,6 +137,20 @@ export default function SprintsPage() {
       setError('Failed to fetch sprints')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteSprint = async (sprintId: string) => {
+    try {
+      const res = await fetch(`/api/sprints/${sprintId}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setSprints(prev => prev.filter(s => s._id !== sprintId))
+      } else {
+        setError(data.error || 'Failed to delete sprint')
+      }
+    } catch (e) {
+      setError('Failed to delete sprint')
     }
   }
 
@@ -270,30 +289,67 @@ export default function SprintsPage() {
                               {sprint.description || 'No description'}
                             </CardDescription>
                           </div>
-                          <Button variant="ghost" size="sm" onClick={(e) => {
-                            e.stopPropagation()
-                            // Handle menu actions
-                          }}>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation()
+                                router.push(`/sprints/${sprint._id}`)
+                              }}>
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Sprint
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation()
+                                router.push(`/sprints/${sprint._id}?tab=settings`)
+                              }}>
+                                <Settings className="h-4 w-4 mr-2" />
+                                Settings
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation()
+                                router.push(`/sprints/${sprint._id}/edit`)
+                              }}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Sprint
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  if (confirm('Are you sure you want to delete this sprint? This action cannot be undone.')) {
+                                    handleDeleteSprint(sprint._id)
+                                  }
+                                }}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Sprint
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="flex items-center space-x-2">
-                          <Badge className={getStatusColor(sprint.status)}>
-                            {getStatusIcon(sprint.status)}
-                            <span className="ml-1">{sprint.status}</span>
+                          <Badge className={getStatusColor(sprint?.status)}>
+                            {getStatusIcon(sprint?.status)}
+                            <span className="ml-1">{sprint?.status}</span>
                           </Badge>
                         </div>
 
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Progress</span>
-                            <span className="font-medium">{sprint.progress?.completionPercentage || 0}%</span>
+                            <span className="font-medium">{sprint?.progress?.completionPercentage || 0}%</span>
                           </div>
-                          <Progress value={sprint.progress?.completionPercentage || 0} className="h-2" />
+                          <Progress value={sprint?.progress?.completionPercentage || 0} className="h-2" />
                           <div className="text-xs text-muted-foreground">
-                            {sprint.progress?.tasksCompleted || 0} of {sprint.progress?.totalTasks || 0} tasks completed
+                            {sprint?.progress?.tasksCompleted || 0} of {sprint?.progress?.totalTasks || 0} tasks completed
                           </div>
                         </div>
 
@@ -301,32 +357,32 @@ export default function SprintsPage() {
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Story Points</span>
                             <span className="font-medium">
-                              {sprint.progress?.storyPointsCompleted || 0} / {sprint.progress?.totalStoryPoints || 0}
+                              {sprint?.progress?.storyPointsCompleted || 0} / {sprint?.progress?.totalStoryPoints || 0}
                             </span>
                           </div>
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Velocity</span>
-                            <span className="font-medium">{sprint.velocity || 0}</span>
+                            <span className="font-medium">{sprint?.velocity || 0}</span>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between text-sm text-muted-foreground">
                           <div className="flex items-center space-x-1">
                             <Users className="h-4 w-4" />
-                            <span>{sprint.teamMembers.length} members</span>
+                            <span>{sprint?.teamMembers?.length} members</span>
                           </div>
                           <div className="flex items-center space-x-1">
                             <Calendar className="h-4 w-4" />
-                            <span>{new Date(sprint.startDate).toLocaleDateString()}</span>
+                            <span>{new Date(sprint?.startDate).toLocaleDateString()}</span>
                           </div>
                         </div>
 
                         <div className="flex items-center justify-between text-sm">
                           <div className="text-muted-foreground">
-                            {new Date(sprint.startDate).toLocaleDateString()} - {new Date(sprint.endDate).toLocaleDateString()}
+                            {new Date(sprint?.startDate).toLocaleDateString()} - {new Date(sprint?.endDate).toLocaleDateString()}
                           </div>
                           <div className="text-muted-foreground">
-                            {Math.ceil((new Date(sprint.endDate).getTime() - new Date(sprint.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
+                            {Math.ceil((new Date(sprint?.endDate).getTime() - new Date(sprint?.startDate).getTime()) / (1000 * 60 * 60 * 24))} days
                           </div>
                         </div>
                       </CardContent>
@@ -339,60 +395,97 @@ export default function SprintsPage() {
                 <div className="space-y-4">
                   {filteredSprints.map((sprint) => (
                     <Card 
-                      key={sprint._id} 
+                      key={sprint?._id} 
                       className="hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => router.push(`/sprints/${sprint._id}`)}
+                      onClick={() => router.push(`/sprints/${sprint?._id}`)}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center space-x-4">
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-2">
-                                <h3 className="font-medium text-foreground">{sprint.name}</h3>
-                                <Badge className={getStatusColor(sprint.status)}>
-                                  {getStatusIcon(sprint.status)}
-                                  <span className="ml-1">{sprint.status}</span>
+                                <h3 className="font-medium text-foreground">{sprint?.name}</h3>
+                                <Badge className={getStatusColor(sprint?.status)}>
+                                  {getStatusIcon(sprint?.status)}
+                                  <span className="ml-1">{sprint?.status}</span>
                                 </Badge>
                               </div>
                               <p className="text-sm text-muted-foreground mb-2">
-                                {sprint.description || 'No description'}
+                                {sprint?.description || 'No description'}
                               </p>
                               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                                 <div className="flex items-center space-x-1">
                                   <Target className="h-4 w-4" />
-                                  <span>{sprint.project.name}</span>
+                                  <span>{sprint?.project?.name}</span>
                                 </div>
                                 <div className="flex items-center space-x-1">
                                   <Users className="h-4 w-4" />
-                                  <span>{sprint.teamMembers.length} members</span>
+                                  <span>{sprint?.teamMembers?.length} members</span>
                                 </div>
                                 <div className="flex items-center space-x-1">
                                   <Calendar className="h-4 w-4" />
-                                  <span>{new Date(sprint.startDate).toLocaleDateString()} - {new Date(sprint.endDate).toLocaleDateString()}</span>
+                                  <span>{new Date(sprint?.startDate).toLocaleDateString()} - {new Date(sprint?.endDate).toLocaleDateString()}</span>
                                 </div>
                                 <div className="flex items-center space-x-1">
                                   <TrendingUp className="h-4 w-4" />
-                                  <span>Velocity: {sprint.velocity || 0}</span>
+                                  <span>Velocity: {sprint?.velocity || 0}</span>
                                 </div>
                               </div>
                             </div>
                           </div>
                           <div className="flex items-center space-x-2">
                             <div className="text-right">
-                              <div className="text-sm font-medium text-foreground">{sprint.progress?.completionPercentage || 0}%</div>
+                              <div className="text-sm font-medium text-foreground">{sprint?.progress?.completionPercentage || 0}%</div>
                               <div className="w-20 bg-gray-200 rounded-full h-2">
                                 <div 
                                   className="bg-blue-600 h-2 rounded-full"
-                                  style={{ width: `${sprint.progress?.completionPercentage || 0}%` }}
+                                  style={{ width: `${sprint?.progress?.completionPercentage || 0}%` }}
                                 />
                               </div>
                             </div>
-                            <Button variant="ghost" size="sm" onClick={(e) => {
-                              e.stopPropagation()
-                              // Handle menu actions
-                            }}>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/sprints/${sprint._id}`)
+                                }}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Sprint
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/sprints/${sprint._id}?tab=settings`)
+                                }}>
+                                  <Settings className="h-4 w-4 mr-2" />
+                                  Settings
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/sprints/${sprint._id}/edit`)
+                                }}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Sprint
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (confirm('Are you sure you want to delete this sprint? This action cannot be undone.')) {
+                                      handleDeleteSprint(sprint._id)
+                                    }
+                                  }}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Sprint
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       </CardContent>

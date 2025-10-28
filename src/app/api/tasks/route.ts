@@ -9,155 +9,109 @@ import { Permission } from '@/lib/permissions/permission-definitions'
 import { notificationService } from '@/lib/notification-service'
 import { cache, invalidateCache } from '@/lib/redis'
 import crypto from 'crypto'
+import { Counter } from '@/models/Counter'
 
 export async function GET(request: NextRequest) {
   try {
-    await connectDB()
+    
+    await connectDB();
 
-    const authResult = await authenticateUser()
+    const authResult = await authenticateUser();
     if ('error' in authResult) {
       return NextResponse.json(
         { error: authResult.error },
         { status: authResult.status }
-      )
+      );
     }
 
-    const { user } = authResult
-    const userId = user.id
-    const organizationId = user.organization
+    const { user } = authResult;
+    const userId = user.id;
+    const organizationId = user.organization;
 
-    const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '20')
-    const after = searchParams.get('after')
-    const search = searchParams.get('search') || ''
-    const status = searchParams.get('status') || ''
-    const priority = searchParams.get('priority') || ''
-    const type = searchParams.get('type') || ''
-    const project = searchParams.get('project') || ''
+    const { searchParams } = new URL(request.url);
+    
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '20');
+    const after = searchParams.get('after');
+    const search = searchParams.get('search') || '';
+    const status = searchParams.get('status') || '';
+    const priority = searchParams.get('priority') || '';
+    const type = searchParams.get('type') || '';
+    const project = searchParams.get('project') || '';
 
-    // Use cursor pagination if 'after' is provided, otherwise fallback to skip/limit
-    const useCursorPagination = !!after
-    const PAGE_SIZE = Math.min(limit, 100)
-    const sort = { createdAt: -1 as const }
+    const useCursorPagination = !!after;
+    const PAGE_SIZE = Math.min(limit, 100);
+    const sort = { createdAt: -1 as const };
 
-    // Only users with PROJECT_VIEW_ALL can see all tasks; otherwise default to "My Tasks"
-    const canViewAllTasks = await PermissionService.hasPermission(userId, Permission.PROJECT_VIEW_ALL)
-
-    // Build filters
-    const filters: any = { 
+    const canViewAllTasks = await PermissionService.hasPermission(
+      userId,
+      Permission.PROJECT_VIEW_ALL
+    );
+    const filters: any = {
       organization: organizationId,
-      archived: false
-    }
-    
-    // If user can't view all tasks, filter to tasks assigned to or created by the user (My Tasks)
+      archived: false,
+    };
+
     if (!canViewAllTasks) {
-      filters.$or = [
-        { assignedTo: userId },
-        { createdBy: userId }
-      ]
+      filters.$or = [{ assignedTo: userId }, { createdBy: userId }];
     }
-    
-    // Optimized search: use text index for longer queries, regex for short ones
+
     if (search) {
       if (search.length >= 3) {
-        filters.$text = { $search: search }
+        filters.$text = { $search: search };
       } else {
         filters.$and = [
           {
             $or: [
               { title: { $regex: search, $options: 'i' } },
-              { description: { $regex: search, $options: 'i' } }
-            ]
-          }
-        ]
+              { description: { $regex: search, $options: 'i' } },
+            ],
+          },
+        ];
       }
     }
-    
-    if (status) {
-      filters.status = status
-    }
-    
-    if (priority) {
-      filters.priority = priority
-    }
-    
-    if (type) {
-      filters.type = type
-    }
-    
-    if (project) {
-      filters.project = project
-    }
 
-    // Add cursor filter for cursor pagination
+    if (status) filters.status = status;
+    if (priority) filters.priority = priority;
+    if (type) filters.type = type;
+    if (project) filters.project = project;
+
     if (useCursorPagination && after) {
-      filters.createdAt = { $lt: new Date(after) }
+      filters.createdAt = { $lt: new Date(after) };
     }
 
-    // Create cache key
-    const filterHash = crypto.createHash('md5').update(JSON.stringify(filters)).digest('hex')
-    const cacheKey = `tasks:v2:org:${organizationId}:user:${userId}:f:${filterHash}:after:${after || 'null'}:l:${PAGE_SIZE}`
+    const taskQueryFilters: any = { ...filters };
 
-    // Use Redis cache with 30s TTL
-    const result = await cache(cacheKey, 30, async () => {
-      // Define fields to project (only what we need for list/kanban)
-      const fields = 'title status priority type project position labels createdAt updatedAt assignedTo createdBy storyPoints dueDate estimatedHours actualHours'
+    const items = await Task.find(taskQueryFilters)
+      .populate('project', 'name')
+      .populate('assignedTo', 'firstName lastName email')
+      .populate('createdBy', 'firstName lastName email')
+      .sort(sort)
+      .skip((page - 1) * PAGE_SIZE)
+      .limit(PAGE_SIZE)
+      .lean();
 
-      let query = Task.find(filters, fields)
-        .populate('project', 'name')
-        .populate('assignedTo', 'firstName lastName email')
-        .populate('createdBy', 'firstName lastName email')
-        .sort(sort)
-        .lean()
-
-      if (useCursorPagination) {
-        // Cursor pagination: fetch one extra to determine if there are more
-        const items = await query.limit(PAGE_SIZE + 1)
-        const hasMore = items.length > PAGE_SIZE
-        const data = hasMore ? items.slice(0, PAGE_SIZE) : items
-        const nextCursor = hasMore ? data[data.length - 1].createdAt.toISOString() : null
-        
-        return {
-          data,
-          pagination: {
-            nextCursor,
-            pageSize: PAGE_SIZE,
-            hasMore
-          }
-        }
-      } else {
-        // Legacy skip/limit pagination
-        const skip = (page - 1) * PAGE_SIZE
-        const items = await query.skip(skip).limit(PAGE_SIZE)
-        const total = await Task.countDocuments(filters)
-        
-        return {
-          data: items,
-          pagination: {
-            page,
-            limit: PAGE_SIZE,
-            total,
-            totalPages: Math.ceil(total / PAGE_SIZE)
-          }
-        }
-      }
-    })
+    const total = await Task.countDocuments(taskQueryFilters);
 
     return NextResponse.json({
       success: true,
-      data: result.data,
-      pagination: result.pagination
-    })
-
+      data: items,
+      pagination: {
+        page,
+        limit: PAGE_SIZE,
+        total,
+        totalPages: Math.ceil(total / PAGE_SIZE),
+      },
+    });
   } catch (error) {
-    console.error('Get tasks error:', error)
+    console.error('Get tasks error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
-    )
+    );
   }
 }
+
 
 export async function POST(request: NextRequest) {
   try {
@@ -215,6 +169,23 @@ export async function POST(request: NextRequest) {
     ).sort({ position: -1 })
     const nextPosition = maxPosition ? maxPosition.position + 1 : 0
 
+    // Resolve project number and next task number for this project
+    const projectDoc = await Project.findById(project).select('projectNumber organization')
+    if (!projectDoc) {
+      return NextResponse.json(
+        { error: 'Project not found' },
+        { status: 400 }
+      )
+    }
+
+    const taskCounter = await Counter.findOneAndUpdate(
+      { scope: 'task', project: projectDoc._id },
+      { $inc: { seq: 1 }, $setOnInsert: { updatedAt: new Date() } },
+      { new: true, upsert: true }
+    )
+    const taskNumber = taskCounter.seq
+    const displayId = `${projectDoc.projectNumber}.${taskNumber}`
+
     // Create task
     const task = new Task({
       title,
@@ -224,6 +195,8 @@ export async function POST(request: NextRequest) {
       type: type || 'task',
       organization: user.organization,
       project,
+      taskNumber,
+      displayId,
       story: story || undefined,
       parentTask: parentTask || undefined,
       assignedTo: assignedTo || undefined,

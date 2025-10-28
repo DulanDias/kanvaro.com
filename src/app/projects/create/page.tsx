@@ -41,6 +41,7 @@ interface ProjectFormData {
   description: string
   status: 'planning' | 'active' | 'on_hold' | 'completed' | 'cancelled'
   priority: 'low' | 'medium' | 'high' | 'critical'
+  projectNumber?: number
   
   // Timeline
   startDate: string
@@ -98,6 +99,7 @@ export default function CreateProjectPage() {
     description: '',
     status: 'planning',
     priority: 'medium',
+    projectNumber: undefined,
     startDate: '',
     endDate: '',
     budget: {
@@ -392,6 +394,18 @@ export default function CreateProjectPage() {
                 {validationErrors.name && (
                   <p className="text-sm text-red-600">{validationErrors.name}</p>
                 )}
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="projectNumber">Project Number</Label>
+                <Input
+                  id="projectNumber"
+                  type="number"
+                  value={typeof formData.projectNumber === 'number' ? formData.projectNumber : ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, projectNumber: e.target.value === '' ? undefined : parseInt(e.target.value, 10) || 0 }))}                
+                  placeholder="e.g. 3"
+                  min={0}
+                />
               </div>
 
               <div className="space-y-2">
@@ -951,6 +965,10 @@ export default function CreateProjectPage() {
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-muted-foreground">Project Name</span>
                           <span className="text-sm text-foreground font-medium">{formData.name || 'Not set'}</span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-muted-foreground">Project Number</span>
+                          <span className="text-sm text-foreground font-medium">{typeof formData.projectNumber === 'number' ? `#${formData.projectNumber}` : 'Not set'}</span>
                         </div>
                         <div className="flex items-center justify-between">
                           <span className="text-sm font-medium text-muted-foreground">Status</span>

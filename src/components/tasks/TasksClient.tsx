@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -26,11 +26,17 @@ import {
   Zap,
   BarChart3,
   List,
-  Kanban
+  Kanban,
+  Eye,
+  Settings,
+  Edit,
+  Trash2
 } from 'lucide-react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useDebounce } from '@/hooks/useDebounce'
 import dynamic from 'next/dynamic'
+import { Permission, PermissionGate } from '@/lib/permissions'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/DropdownMenu'
 
 // Dynamically import heavy modals
 const CreateTaskModal = dynamic(() => import('./CreateTaskModal'), { ssr: false })
@@ -43,6 +49,7 @@ interface Task {
   status: 'todo' | 'in_progress' | 'review' | 'testing' | 'done' | 'cancelled'
   priority: 'low' | 'medium' | 'high' | 'critical'
   type: 'bug' | 'feature' | 'improvement' | 'task' | 'subtask'
+  displayId?: string
   project: {
     _id: string
     name: string
@@ -84,6 +91,8 @@ export default function TasksClient({
   initialFilters = {} 
 }: TasksClientProps) {
   const router = useRouter()
+    const searchParams = useSearchParams()
+  
   const [tasks, setTasks] = useState<Task[]>(initialTasks)
   const [pagination, setPagination] = useState(initialPagination)
   const [loading, setLoading] = useState(false)
@@ -94,7 +103,15 @@ export default function TasksClient({
   const [typeFilter, setTypeFilter] = useState(initialFilters.type || 'all')
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
-
+  useEffect(() => {
+    const q = searchParams.get('search') || ''
+    const s = searchParams.get('status') || 'all'
+    const p = searchParams.get('priority') || 'all'
+    setSearchQuery(q)
+    setStatusFilter(s)
+    setPriorityFilter(p)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   // Debounce search query
   const debouncedSearch = useDebounce(searchQuery, 300)
 
@@ -110,20 +127,35 @@ export default function TasksClient({
   // Fetch tasks with current filters
   const fetchTasks = useCallback(async (reset = false) => {
     try {
+      
       setLoading(true)
       const params = new URLSearchParams()
       
       if (debouncedSearch) params.set('search', debouncedSearch)
+              if (searchQuery) params.set('search', searchQuery)
+
       if (statusFilter !== 'all') params.set('status', statusFilter)
       if (priorityFilter !== 'all') params.set('priority', priorityFilter)
       if (typeFilter !== 'all') params.set('type', typeFilter)
       if (pagination.nextCursor && !reset) params.set('after', pagination.nextCursor)
       params.set('limit', '20')
 
-      const response = await fetch(`/api/tasks?${params.toString()}`)
+      const response = await fetch(`/api/tasks?${params?.toString()}`)
+      
+      if (!response.ok) {
+        if (response.status === 401 || response.status === 403) {
+          setError('Authentication required. Redirecting to login...')
+          setTimeout(() => router.push('/login'), 1200)
+          return
+        }
+        const text = await response.text()
+        setError(text || 'Failed to fetch tasks')
+        return
+      }
       const data = await response.json()
 
       if (data.success) {
+        setError('')
         if (reset) {
           setTasks(data.data)
         } else {
@@ -149,6 +181,14 @@ export default function TasksClient({
       fetchTasks(true)
     }
   }, [debouncedSearch, statusFilter, priorityFilter, typeFilter, fetchTasks])
+
+  // Initial fetch on mount if no initial tasks were provided
+  useEffect(() => {
+    if (!initialTasks || initialTasks.length === 0) {
+      fetchTasks(true)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -206,6 +246,23 @@ export default function TasksClient({
     }
   }
 
+
+  const handleDeleteTask = async (taskId: string) => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'DELETE'
+      })
+      const data = await response.json()
+
+      if (data.success) {
+        setTasks(tasks.filter(p => p._id !== taskId))
+      } else {
+        setError(data.error || 'Failed to delete project')
+      }
+    } catch (err) {
+      setError('Failed to delete project')
+    }
+  }
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
@@ -292,6 +349,13 @@ export default function TasksClient({
           </div>
         </CardHeader>
         <CardContent>
+          {tasks.length === 0 && !loading && (
+            <div className="flex items-center justify-center h-40">
+              <div className="text-center text-muted-foreground">
+                No tasks found.
+              </div>
+            </div>
+          )}
           <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'list' | 'kanban')}>
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="list">List View</TabsTrigger>
@@ -331,6 +395,9 @@ export default function TasksClient({
                                 <div className="flex-1">
                                   <div className="flex items-center space-x-2 mb-2">
                                     <h3 className="font-medium text-foreground">{task.title}</h3>
+                                    {task.displayId && (
+                                      <Badge variant="outline">{task.displayId}</Badge>
+                                    )}
                                     <Badge className={getStatusColor(task.status)}>
                                       {getStatusIcon(task.status)}
                                       <span className="ml-1">{task.status.replace('_', ' ')}</span>
@@ -379,9 +446,54 @@ export default function TasksClient({
                                     </div>
                                   )}
                                 </div>
-                                <Button variant="ghost" size="sm">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
+                                 <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={(e) => {
+                              e.stopPropagation()
+                              router.push(`/tasks/${task._id}`)
+                            }}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              View Task
+                            </DropdownMenuItem>
+                            <PermissionGate permission={Permission.TASK_UPDATE} projectId={task.project._id}>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation()
+                                router.push(`/tasks/${task._id}?tab=settings`)
+                              }}>
+                                <Settings className="h-4 w-4 mr-2" />
+                                Settings
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => {
+                                e.stopPropagation()
+                                router.push(`/tasks/${task._id}/edit`)
+                              }}>
+                                <Edit className="h-4 w-4 mr-2" />
+                                Edit Task
+                              </DropdownMenuItem>
+                            </PermissionGate>
+                            <PermissionGate permission={Permission.TASK_DELETE} projectId={task.project._id}>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  // Handle delete with confirmation
+                                  if (confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
+                                    handleDeleteTask(task._id)
+                                  }
+                                }}
+                                className="text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Delete Task
+                              </DropdownMenuItem>
+                            </PermissionGate>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                               </div>
                             </div>
                           </CardContent>
@@ -425,7 +537,7 @@ export default function TasksClient({
         <CreateTaskModal
           isOpen={showCreateTaskModal}
           onClose={() => setShowCreateTaskModal(false)}
-          projectId=""
+          projectId={initialFilters.project || ''}
           onTaskCreated={handleTaskCreated}
         />
       )}

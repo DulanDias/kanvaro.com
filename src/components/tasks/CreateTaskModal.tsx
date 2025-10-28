@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Textarea } from '@/components/ui/textarea'
@@ -19,6 +20,7 @@ import {
   Loader2,
   Trash2
 } from 'lucide-react'
+import { Check } from 'lucide-react'
 
 interface CreateTaskModalProps {
   isOpen: boolean
@@ -44,10 +46,15 @@ interface Subtask {
 }
 
 export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCreated, defaultStatus, availableStatuses }: CreateTaskModalProps) {
+  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [users, setUsers] = useState<User[]>([])
   const [loadingUsers, setLoadingUsers] = useState(false)
+  const [projects, setProjects] = useState<Array<{ _id: string; name: string }>>([])
+  const [loadingProjects, setLoadingProjects] = useState(false)
+  const [selectedProjectId, setSelectedProjectId] = useState<string>('')
   const [subtasks, setSubtasks] = useState<Subtask[]>([])
   const [formData, setFormData] = useState({
     title: '',
@@ -82,10 +89,34 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
     }
   }
 
+  const fetchProjects = async () => {
+    setLoadingProjects(true)
+    try {
+      const res = await fetch('/api/projects')
+      const data = await res.json()
+      if (data.success && Array.isArray(data.data)) {
+        setProjects(data.data)
+        // If no projectId provided, preselect first project if available
+        if (!projectId && data.data.length > 0) {
+          setSelectedProjectId(data.data[0]._id)
+        }
+      } else {
+        setProjects([])
+      }
+    } catch (e) {
+      setProjects([])
+    } finally {
+      setLoadingProjects(false)
+    }
+  }
+
   // Fetch users when modal opens
   useEffect(() => {
     if (isOpen) {
       fetchUsers()
+      if (!projectId) {
+        fetchProjects()
+      }
     }
   }, [isOpen])
 
@@ -112,7 +143,7 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
     e.preventDefault()
     setLoading(true)
     setError('')
-
+    setSuccess('')
     try {
       const response = await fetch('/api/tasks', {
         method: 'POST',
@@ -121,7 +152,7 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
         },
         body: JSON.stringify({
           ...formData,
-          project: projectId,
+          project: projectId || selectedProjectId,
           assignedTo: formData.assignedTo === 'unassigned' ? undefined : formData.assignedTo || undefined,
           storyPoints: formData.storyPoints ? parseInt(formData.storyPoints) : undefined,
           estimatedHours: formData.estimatedHours ? parseFloat(formData.estimatedHours) : undefined,
@@ -135,7 +166,13 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
       
       if (data.success) {
         onTaskCreated()
+        const newId = data?.data?._id
         onClose()
+        setTimeout(() => {
+          if (newId) {
+            router.push(`/tasks/${newId}`)
+          }
+        }, 300)
         // Reset form
         setFormData({
           title: '',
@@ -150,15 +187,30 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
           labels: ''
         })
         setSubtasks([])
+        if (!projectId) setSelectedProjectId('')
       } else {
-        setError(data.error || 'Failed to create task')
+        onClose()
       }
     } catch (error) {
-      setError('Failed to create task')
+      onClose()
     } finally {
       setLoading(false)
     }
   }
+
+  useEffect(() => {
+    if (success) {
+      const t = setTimeout(() => setSuccess(''), 2500)
+      return () => clearTimeout(t)
+    }
+  }, [success])
+
+  useEffect(() => {
+    if (error) {
+      const t = setTimeout(() => setError(''), 3000)
+      return () => clearTimeout(t)
+    }
+  }, [error])
 
   if (!isOpen) return null
 
@@ -182,11 +234,45 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
+            {success && (
+              <Alert>
+                <AlertDescription>{success}</AlertDescription>
+              </Alert>
+            )}
             {error && (
               <Alert variant="destructive">
                 <AlertTriangle className="h-4 w-4" />
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
+            )}
+
+            {!projectId && (
+              <div>
+                <label className="text-sm font-medium text-foreground">Project *</label>
+                <Select value={selectedProjectId} onValueChange={setSelectedProjectId}>
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder={loadingProjects ? 'Loading projects...' : 'Select project'} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {loadingProjects ? (
+                      <SelectItem value="loading" disabled>
+                        <div className="flex items-center space-x-2">
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          <span>Loading projects...</span>
+                        </div>
+                      </SelectItem>
+                    ) : (
+                      projects.length > 0 ? (
+                        projects.map((p) => (
+                          <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
+                        ))
+                      ) : (
+                        <SelectItem value="no-projects" disabled>No projects found</SelectItem>
+                      )
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             )}
 
             <div className="grid gap-4 md:grid-cols-2">
@@ -442,6 +528,18 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
           </form>
         </CardContent>
       </Card>
+      {(success || error) && (
+        <div className="fixed bottom-6 right-6 z-[10000]">
+          <div
+            className={`flex items-center space-x-2 rounded-md px-4 py-3 shadow-lg ${success ? 'bg-green-600 text-white' : 'bg-red-600 text-white'}`}
+            role="status"
+            aria-live="polite"
+          >
+            {success ? <Check className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
+            <span className="text-sm font-medium">{success || error}</span>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

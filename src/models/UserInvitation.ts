@@ -66,7 +66,6 @@ const UserInvitationSchema = new Schema<IUserInvitation>({
 
 // Indexes
 UserInvitationSchema.index({ email: 1, organization: 1 })
-UserInvitationSchema.index({ token: 1 })
 UserInvitationSchema.index({ expiresAt: 1 })
 UserInvitationSchema.index({ isAccepted: 1 })
 

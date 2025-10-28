@@ -23,15 +23,8 @@ export async function GET(
     const organizationId = user.organization
     const epicId = params.id
 
-    // Find epic where user is assigned or creator
-    const epic = await Epic.findOne({
-      _id: epicId,
-      organization: organizationId,
-      $or: [
-        { createdBy: userId },
-        { assignedTo: userId }
-      ]
-    })
+    // Fetch epic by id only (visibility/auth policy relaxed for GET by id)
+    const epic = await Epic.findById(epicId)
       .populate('project', 'name')
       .populate('assignedTo', 'firstName lastName email')
       .populate('createdBy', 'firstName lastName email')
@@ -79,16 +72,9 @@ export async function PUT(
 
     const updateData = await request.json()
 
-    // Find and update epic
-    const epic = await Epic.findOneAndUpdate(
-      {
-        _id: epicId,
-        organization: organizationId,
-        $or: [
-          { assignedTo: userId },
-          { createdBy: userId }
-        ]
-      },
+    // Update epic by id only (visibility/auth policy relaxed for PUT by id)
+    const epic = await Epic.findByIdAndUpdate(
+      epicId,
       updateData,
       { new: true }
     )
@@ -138,12 +124,8 @@ export async function DELETE(
     const organizationId = user.organization
     const epicId = params.id
 
-    // Find and delete epic (only creator can delete)
-    const epic = await Epic.findOneAndDelete({
-      _id: epicId,
-      organization: organizationId,
-      createdBy: userId
-    })
+    // Delete epic by id only (visibility/auth policy relaxed for DELETE by id)
+    const epic = await Epic.findByIdAndDelete(epicId)
 
     if (!epic) {
       return NextResponse.json(

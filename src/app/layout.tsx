@@ -14,21 +14,36 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // Server-side fetch to hydrate permissions early
+  let initialPermissions: any = null
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL ?? ''}/api/auth/permissions`, {
+      // Ensure we don't cache user-scoped permissions
+      cache: 'no-store',
+      // Next.js server fetch will forward cookies automatically for same-origin URLs
+    })
+    if (res.ok) {
+      initialPermissions = await res.json()
+    }
+  } catch (_) {
+    // Silently ignore; client will fall back to fetching
+  }
+
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+      <body className={`${inter.className} min-h-screen overflow-x-hidden antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"
           enableSystem
           disableTransitionOnChange
         >
-          <PermissionProvider>
+          <PermissionProvider initialPermissions={initialPermissions}>
             {children}
           </PermissionProvider>
         </ThemeProvider>

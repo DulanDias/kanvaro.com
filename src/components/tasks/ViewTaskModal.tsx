@@ -26,6 +26,7 @@ interface ViewTaskModalProps {
 
 export default function ViewTaskModal({ isOpen, onClose, task, onEdit, onDelete }: ViewTaskModalProps) {
   if (!isOpen || !task) return null
+console.log('task', task);
 
   const getPriorityColor = (priority: string) => {
     switch (priority) {
@@ -61,7 +62,7 @@ export default function ViewTaskModal({ isOpen, onClose, task, onEdit, onDelete 
             <div>
               <CardTitle className="flex items-center space-x-2">
                 <Target className="h-5 w-5" />
-                <span>{task.title}</span>
+                <span>{task.title} {task.displayId}</span>
               </CardTitle>
               <CardDescription>Task Details</CardDescription>
             </div>

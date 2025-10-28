@@ -1,7 +1,8 @@
+
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -46,6 +47,7 @@ interface Project {
   isDraft: boolean
   startDate: string
   endDate?: string
+  projectNumber?: number
   budget?: {
     total: number
     spent: number
@@ -76,6 +78,7 @@ interface Project {
 
 export default function ProjectsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [projects, setProjects] = useState<Project[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -84,6 +87,17 @@ export default function ProjectsPage() {
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+
+  // Seed filters from URL search params on mount
+  useEffect(() => {
+    const q = searchParams.get('search') || ''
+    const s = searchParams.get('status') || 'all'
+    const p = searchParams.get('priority') || 'all'
+    setSearchQuery(q)
+    setStatusFilter(s)
+    setPriorityFilter(p)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const checkAuth = useCallback(async () => {
     try {
@@ -125,7 +139,12 @@ export default function ProjectsPage() {
   const fetchProjects = async () => {
     try {
       setLoading(true)
-      const response = await fetch('/api/projects')
+      const params = new URLSearchParams()
+      if (searchQuery) params.set('search', searchQuery)
+      if (statusFilter !== 'all') params.set('status', statusFilter)
+      if (priorityFilter !== 'all') params.set('priority', priorityFilter)
+
+      const response = await fetch(`/api/projects?${params.toString()}`)
       const data = await response.json()
 
       if (data.success) {
@@ -329,6 +348,9 @@ export default function ProjectsPage() {
                         <div className="space-y-1">
                           <div className="flex items-center space-x-2">
                             <CardTitle className="text-lg">{project.name}</CardTitle>
+                            {typeof project.projectNumber !== 'undefined' && (
+                              <Badge variant="outline">#{project.projectNumber}</Badge>
+                            )}
                             {project.isDraft && (
                               <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                                 Draft
@@ -457,6 +479,9 @@ export default function ProjectsPage() {
                           <div className="flex-1">
                             <div className="flex items-center space-x-2 mb-2">
                               <h3 className="font-medium">{project.name}</h3>
+                              {typeof project.projectNumber !== 'undefined' && (
+                                <Badge variant="outline">#{project.projectNumber}</Badge>
+                              )}
                               {project.isDraft && (
                                 <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                                   Draft

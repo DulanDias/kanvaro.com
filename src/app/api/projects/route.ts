@@ -6,6 +6,7 @@ import { authenticateUser } from '@/lib/auth-utils'
 import { PermissionService } from '@/lib/permissions/permission-service'
 import { Permission } from '@/lib/permissions/permission-definitions'
 import { notificationService } from '@/lib/notification-service'
+import { Counter } from '@/models/Counter'
 
 export async function GET(request: NextRequest) {
   try {
@@ -136,6 +137,14 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Generate sequential project number for this organization
+    const counter = await Counter.findOneAndUpdate(
+      { scope: 'project', organization: organizationId },
+      { $inc: { seq: 1 }, $setOnInsert: { updatedAt: new Date() } },
+      { new: true, upsert: true }
+    )
+    const projectNumber = counter.seq
+
     // Create project
     const project = new Project({
       name: name || 'Untitled Project',
@@ -144,6 +153,7 @@ export async function POST(request: NextRequest) {
       isDraft: isDraft || false,
       organization: organizationId,
       createdBy: userId,
+      projectNumber,
       teamMembers: teamMembers || [],
       client: clients?.[0], // For now, only support one client
       startDate: startDate ? new Date(startDate) : new Date(),

@@ -56,6 +56,7 @@ interface Project {
   isDraft: boolean
   startDate: string
   endDate?: string
+  projectNumber?: number
   budget?: {
     total: number
     spent: number
@@ -229,6 +230,9 @@ export default function ProjectDetailPage() {
             <div>
               <div className="flex items-center space-x-3">
                 <h1 className="text-3xl font-bold text-foreground">{project.name}</h1>
+                {typeof project.projectNumber !== 'undefined' && (
+                  <Badge variant="outline">#{project.projectNumber}</Badge>
+                )}
                 {project.isDraft && (
                   <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
                     Draft

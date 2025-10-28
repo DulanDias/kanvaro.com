@@ -31,10 +31,18 @@ export interface TasksResult {
 export async function getTasksServer(filters: TaskFilters = {}): Promise<TasksResult> {
   try {
     await connectDB()
-
     const authResult = await authenticateUser()
+    
     if ('error' in authResult) {
-      throw new Error(authResult.error)
+      const defaultPageSize = Math.min(filters.limit || 20, 100)
+      return {
+        data: [],
+        pagination: {
+          nextCursor: null,
+          pageSize: defaultPageSize,
+          hasMore: false
+        }
+      }
     }
 
     const { user } = authResult
@@ -161,6 +169,14 @@ export async function getTasksServer(filters: TaskFilters = {}): Promise<TasksRe
     return result as any
   } catch (error) {
     console.error('Get tasks server error:', error)
-    throw error
+    const defaultPageSize = Math.min(filters.limit || 20, 100)
+    return {
+      data: [],
+      pagination: {
+        nextCursor: null,
+        pageSize: defaultPageSize,
+        hasMore: false
+      }
+    }
   }
 }

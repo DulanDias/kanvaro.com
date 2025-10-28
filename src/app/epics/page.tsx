@@ -11,6 +11,7 @@ import { Progress } from '@/components/ui/Progress'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/DropdownMenu'
 import { 
   Plus, 
   Search, 
@@ -34,7 +35,11 @@ import {
   TrendingUp,
   Calendar as CalendarIcon,
   Star,
-  Layers
+  Layers,
+  Eye,
+  Settings,
+  Edit,
+  Trash2
 } from 'lucide-react'
 
 interface Epic {
@@ -138,6 +143,20 @@ export default function EpicsPage() {
     }
   }
 
+  const handleDeleteEpic = async (epicId: string) => {
+    try {
+      const res = await fetch(`/api/epics/${epicId}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setEpics(prev => prev.filter(e => e._id !== epicId))
+      } else {
+        setError(data.error || 'Failed to delete epic')
+      }
+    } catch (e) {
+      setError('Failed to delete epic')
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'todo': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
@@ -174,12 +193,12 @@ export default function EpicsPage() {
 
   const filteredEpics = epics.filter(epic => {
     const matchesSearch = !searchQuery || 
-      epic.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      epic.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      epic.project.name.toLowerCase().includes(searchQuery.toLowerCase())
+      epic?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      epic?.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      epic?.project?.name?.toLowerCase().includes(searchQuery.toLowerCase())
     
-    const matchesStatus = statusFilter === 'all' || epic.status === statusFilter
-    const matchesPriority = priorityFilter === 'all' || epic.priority === priorityFilter
+    const matchesStatus = statusFilter === 'all' || epic?.status === statusFilter
+    const matchesPriority = priorityFilter === 'all' || epic?.priority === priorityFilter
 
     return matchesSearch && matchesStatus && matchesPriority
   })
@@ -290,48 +309,85 @@ export default function EpicsPage() {
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                   {filteredEpics.map((epic) => (
                     <Card 
-                      key={epic._id} 
+                      key={epic?._id} 
                       className="hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => router.push(`/epics/${epic._id}`)}
+                      onClick={() => router.push(`/epics/${epic?._id}`)}
                     >
                       <CardHeader>
                         <div className="flex items-start justify-between">
                           <div className="space-y-1">
                             <CardTitle className="text-lg flex items-center space-x-2">
                               <Layers className="h-5 w-5 text-purple-600" />
-                              <span>{epic.name}</span>
+                              <span>{epic?.name}</span>
                             </CardTitle>
                             <CardDescription className="line-clamp-2">
-                              {epic.description || 'No description'}
+                              {epic?.description || 'No description'}
                             </CardDescription>
                           </div>
-                          <Button variant="ghost" size="sm" onClick={(e) => {
-                            e.stopPropagation()
-                            // Handle menu actions
-                          }}>
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/epics/${epic._id}`)
+                                }}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Epic
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/epics/${epic._id}?tab=settings`)
+                                }}>
+                                  <Settings className="h-4 w-4 mr-2" />
+                                  Settings
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/epics/${epic._id}/edit`)
+                                }}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Epic
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (confirm('Are you sure you want to delete this epic? This action cannot be undone.')) {
+                                      handleDeleteEpic(epic._id)
+                                    }
+                                  }}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Epic
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                       </CardHeader>
                       <CardContent className="space-y-4">
                         <div className="flex items-center space-x-2">
-                          <Badge className={getStatusColor(epic.status)}>
-                            {getStatusIcon(epic.status)}
-                            <span className="ml-1">{epic.status.replace('_', ' ')}</span>
+                          <Badge className={getStatusColor(epic?.status)}>
+                            {getStatusIcon(epic?.status)}
+                            <span className="ml-1">{epic?.status?.replace('_', ' ')}</span>
                           </Badge>
-                          <Badge className={getPriorityColor(epic.priority)}>
-                            {epic.priority}
+                          <Badge className={getPriorityColor(epic?.priority)}>
+                            {epic?.priority}
                           </Badge>
                         </div>
 
                         <div className="space-y-2">
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Progress</span>
-                            <span className="font-medium">{epic.progress?.completionPercentage || 0}%</span>
+                            <span className="font-medium">{epic?.progress?.completionPercentage || 0}%</span>
                           </div>
-                          <Progress value={epic.progress?.completionPercentage || 0} className="h-2" />
+                          <Progress value={epic?.progress?.completionPercentage || 0} className="h-2" />
                           <div className="text-xs text-muted-foreground">
-                            {epic.progress?.storiesCompleted || 0} of {epic.progress?.totalStories || 0} stories completed
+                            {epic?.progress?.storiesCompleted || 0} of {epic?.progress?.totalStories || 0} stories completed
                           </div>
                         </div>
 
@@ -339,7 +395,7 @@ export default function EpicsPage() {
                           <div className="flex items-center justify-between text-sm">
                             <span className="text-muted-foreground">Story Points</span>
                             <span className="font-medium">
-                              {epic.progress?.storyPointsCompleted || 0} / {epic.progress?.totalStoryPoints || 0}
+                              {epic?.progress?.storyPointsCompleted || 0} / {epic?.progress?.totalStoryPoints || 0}
                             </span>
                           </div>
                         </div>
@@ -347,26 +403,26 @@ export default function EpicsPage() {
                         <div className="flex items-center justify-between text-sm text-muted-foreground">
                           <div className="flex items-center space-x-1">
                             <Target className="h-4 w-4" />
-                            <span>{epic.project.name}</span>
+                            <span>{epic?.project?.name}</span>
                           </div>
-                          {epic.dueDate && (
+                          {epic?.dueDate && (
                             <div className="flex items-center space-x-1">
                               <Calendar className="h-4 w-4" />
-                              <span>Due {new Date(epic.dueDate).toLocaleDateString()}</span>
+                              <span>Due {new Date(epic?.dueDate).toLocaleDateString()}</span>
                             </div>
                           )}
                         </div>
 
-                        {epic.labels.length > 0 && (
+                        {epic?.labels?.length > 0 && (
                           <div className="flex flex-wrap gap-1">
-                            {epic.labels.slice(0, 3).map((label, index) => (
+                            {epic?.labels?.slice(0, 3).map((label, index) => (
                               <Badge key={index} variant="outline" className="text-xs">
                                 {label}
                               </Badge>
                             ))}
-                            {epic.labels.length > 3 && (
+                            {epic?.labels?.length > 3 && (
                               <Badge variant="outline" className="text-xs">
-                                +{epic.labels.length - 3} more
+                                +{epic?.labels?.length - 3} more
                               </Badge>
                             )}
                           </div>
@@ -381,9 +437,9 @@ export default function EpicsPage() {
                 <div className="space-y-4">
                   {filteredEpics.map((epic) => (
                     <Card 
-                      key={epic._id} 
+                      key={epic?._id} 
                       className="hover:shadow-md transition-shadow cursor-pointer"
-                      onClick={() => router.push(`/epics/${epic._id}`)}
+                      onClick={() => router.push(`/epics/${epic?._id}`)}
                     >
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
@@ -391,46 +447,46 @@ export default function EpicsPage() {
                             <div className="flex-1">
                               <div className="flex items-center space-x-2 mb-2">
                                 <Layers className="h-5 w-5 text-purple-600" />
-                                <h3 className="font-medium text-foreground">{epic.name}</h3>
-                                <Badge className={getStatusColor(epic.status)}>
-                                  {getStatusIcon(epic.status)}
-                                  <span className="ml-1">{epic.status.replace('_', ' ')}</span>
+                                <h3 className="font-medium text-foreground">{epic?.name}</h3>
+                                <Badge className={getStatusColor(epic?.status)}>
+                                  {getStatusIcon(epic?.status)}
+                                  <span className="ml-1">{epic?.status?.replace('_', ' ')}</span>
                                 </Badge>
-                                <Badge className={getPriorityColor(epic.priority)}>
-                                  {epic.priority}
+                                <Badge className={getPriorityColor(epic?.priority)}>
+                                  {epic?.priority}
                                 </Badge>
                               </div>
                               <p className="text-sm text-muted-foreground mb-2">
-                                {epic.description || 'No description'}
+                                {epic?.description || 'No description'}
                               </p>
                               <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                                 <div className="flex items-center space-x-1">
                                   <Target className="h-4 w-4" />
-                                  <span>{epic.project.name}</span>
+                                  <span>{epic?.project?.name}</span>
                                 </div>
-                                {epic.dueDate && (
+                                {epic?.dueDate && (
                                   <div className="flex items-center space-x-1">
                                     <Calendar className="h-4 w-4" />
-                                    <span>Due {new Date(epic.dueDate).toLocaleDateString()}</span>
+                                    <span>Due {new Date(epic?.dueDate).toLocaleDateString()}</span>
                                   </div>
                                 )}
-                                {epic.storyPoints && (
+                                {epic?.storyPoints && (
                                   <div className="flex items-center space-x-1">
                                     <BarChart3 className="h-4 w-4" />
-                                    <span>{epic.storyPoints} points</span>
+                                    <span>{epic?.storyPoints} points</span>
                                   </div>
                                 )}
-                                {epic.estimatedHours && (
+                                {epic?.estimatedHours && (
                                   <div className="flex items-center space-x-1">
                                     <Clock className="h-4 w-4" />
-                                    <span>{epic.estimatedHours}h estimated</span>
+                                    <span>{epic?.estimatedHours}h estimated</span>
                                   </div>
                                 )}
-                                {epic.labels.length > 0 && (
+                                {epic?.labels?.length > 0 && (
                                   <div className="flex items-center space-x-1">
                                     <Star className="h-4 w-4" />
-                                    <span>{epic.labels.slice(0, 2).join(', ')}</span>
-                                    {epic.labels.length > 2 && <span>+{epic.labels.length - 2} more</span>}
+                                    <span>{epic?.labels?.slice(0, 2).join(', ')}</span>
+                                    {epic?.labels?.length > 2 && <span>+{epic?.labels?.length - 2} more</span>}
                                   </div>
                                 )}
                               </div>
@@ -438,20 +494,57 @@ export default function EpicsPage() {
                           </div>
                           <div className="flex items-center space-x-2">
                             <div className="text-right">
-                              <div className="text-sm font-medium text-foreground">{epic.progress?.completionPercentage || 0}%</div>
+                              <div className="text-sm font-medium text-foreground">{epic?.progress?.completionPercentage || 0}%</div>
                               <div className="w-20 bg-gray-200 rounded-full h-2">
                                 <div 
                                   className="bg-purple-600 h-2 rounded-full"
-                                  style={{ width: `${epic.progress?.completionPercentage || 0}%` }}
+                                  style={{ width: `${epic?.progress?.completionPercentage || 0}%` }}
                                 />
                               </div>
                             </div>
-                            <Button variant="ghost" size="sm" onClick={(e) => {
-                              e.stopPropagation()
-                              // Handle menu actions
-                            }}>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/epics/${epic._id}`)
+                                }}>
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  View Epic
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/epics/${epic._id}?tab=settings`)
+                                }}>
+                                  <Settings className="h-4 w-4 mr-2" />
+                                  Settings
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={(e) => {
+                                  e.stopPropagation()
+                                  router.push(`/epics/${epic._id}/edit`)
+                                }}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Epic
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    if (confirm('Are you sure you want to delete this epic? This action cannot be undone.')) {
+                                      handleDeleteEpic(epic._id)
+                                    }
+                                  }}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Epic
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </div>
                       </CardContent>

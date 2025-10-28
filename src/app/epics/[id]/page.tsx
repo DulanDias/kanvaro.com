@@ -71,6 +71,7 @@ export default function EpicDetailPage() {
   const [epic, setEpic] = useState<Epic | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [deleting, setDeleting] = useState(false)
   const [authError, setAuthError] = useState('')
 
   const checkAuth = useCallback(async () => {
@@ -125,6 +126,24 @@ export default function EpicDetailPage() {
       setError('Failed to fetch epic')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDelete = async () => {
+    try {
+      if (!confirm('Are you sure you want to delete this epic? This action cannot be undone.')) return
+      setDeleting(true)
+      const res = await fetch(`/api/epics/${epicId}`, { method: 'DELETE' })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        router.push('/epics')
+      } else {
+        setError(data?.error || 'Failed to delete epic')
+      }
+    } catch (e) {
+      setError('Failed to delete epic')
+    } finally {
+      setDeleting(false)
     }
   }
 
@@ -216,19 +235,19 @@ export default function EpicDetailPage() {
             <div>
               <h1 className="text-3xl font-bold text-foreground flex items-center space-x-2">
                 <Layers className="h-8 w-8 text-purple-600" />
-                <span>{epic.name}</span>
+                <span>{epic?.name}</span>
               </h1>
               <p className="text-muted-foreground">Epic Details</p>
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="outline">
-              <Edit className="h-4 w-4 mr-2" />
-              Edit
-            </Button>
-            <Button variant="destructive">
+           <Button variant="outline" onClick={() => router.push(`/epics/${epicId}/edit`)}>
+  <Edit className="h-4 w-4 mr-2" />
+  Edit
+</Button>
+            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
               <Trash2 className="h-4 w-4 mr-2" />
-              Delete
+              {deleting ? 'Deleting...' : 'Delete'}
             </Button>
           </div>
         </div>
@@ -241,7 +260,7 @@ export default function EpicDetailPage() {
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground">
-                  {epic.description || 'No description provided'}
+                  {epic?.description || 'No description provided'}
                 </p>
               </CardContent>
             </Card>
@@ -255,9 +274,9 @@ export default function EpicDetailPage() {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Overall Progress</span>
-                    <span className="font-medium">{epic.progress?.completionPercentage || 0}%</span>
+                    <span className="font-medium">{epic?.progress?.completionPercentage || 0}%</span>
                   </div>
-                  <Progress value={epic.progress?.completionPercentage || 0} className="h-2" />
+                  <Progress value={epic?.progress?.completionPercentage || 0} className="h-2" />
                 </div>
                 
                 <div className="grid grid-cols-2 gap-4">
@@ -265,15 +284,15 @@ export default function EpicDetailPage() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Stories</span>
                       <span className="font-medium">
-                        {epic.progress?.storiesCompleted || 0} / {epic.progress?.totalStories || 0}
+                        {epic?.progress?.storiesCompleted || 0} / {epic?.progress?.totalStories || 0}
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-blue-600 h-2 rounded-full"
                         style={{ 
-                          width: `${epic.progress?.totalStories ? 
-                            ((epic.progress.storiesCompleted / epic.progress.totalStories) * 100) : 0}%` 
+                          width: `${epic?.progress?.totalStories ? 
+                            ((epic?.progress?.storiesCompleted / epic?.progress?.totalStories) * 100) : 0}%` 
                         }}
                       />
                     </div>
@@ -283,15 +302,15 @@ export default function EpicDetailPage() {
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-muted-foreground">Story Points</span>
                       <span className="font-medium">
-                        {epic.progress?.storyPointsCompleted || 0} / {epic.progress?.totalStoryPoints || 0}
+                        {epic?.progress?.storyPointsCompleted || 0} / {epic?.progress?.totalStoryPoints || 0}
                       </span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-2">
                       <div 
                         className="bg-green-600 h-2 rounded-full"
                         style={{ 
-                          width: `${epic.progress?.totalStoryPoints ? 
-                            ((epic.progress.storyPointsCompleted / epic.progress.totalStoryPoints) * 100) : 0}%` 
+                          width: `${epic?.progress?.totalStoryPoints ? 
+                            ((epic?.progress?.storyPointsCompleted / epic?.progress?.totalStoryPoints) * 100) : 0}%` 
                         }}
                       />
                     </div>
@@ -309,66 +328,66 @@ export default function EpicDetailPage() {
               <CardContent className="space-y-4">
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Status</span>
-                  <Badge className={getStatusColor(epic.status)}>
-                    {getStatusIcon(epic.status)}
-                    <span className="ml-1">{epic.status.replace('_', ' ')}</span>
+                  <Badge className={getStatusColor(epic?.status)}>
+                    {getStatusIcon(epic?.status)}
+                    <span className="ml-1">{epic?.status.replace('_', ' ')}</span>
                   </Badge>
                 </div>
                 
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Priority</span>
-                  <Badge className={getPriorityColor(epic.priority)}>
-                    {epic.priority}
+                  <Badge className={getPriorityColor(epic?.priority)}>
+                    {epic?.priority}
                   </Badge>
                 </div>
                 
                 <div className="flex items-center justify-between">
                   <span className="text-muted-foreground">Project</span>
-                  <span className="font-medium">{epic.project.name}</span>
+                  <span className="font-medium">{epic?.project?.name}</span>
                 </div>
                 
-                {epic.assignedTo && (
+                {epic?.assignedTo && (
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Assigned To</span>
                     <span className="font-medium">
-                      {epic.assignedTo.firstName} {epic.assignedTo.lastName}
+                      {epic?.assignedTo?.firstName} {epic?.assignedTo?.lastName}
                     </span>
                   </div>
                 )}
                 
-                {epic.dueDate && (
+                {epic?.dueDate && (
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Due Date</span>
                     <span className="font-medium">
-                      {new Date(epic.dueDate).toLocaleDateString()}
+                      {new Date(epic?.dueDate).toLocaleDateString()}
                     </span>
                   </div>
                 )}
                 
-                {epic.storyPoints && (
+                {epic?.storyPoints && (
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Story Points</span>
-                    <span className="font-medium">{epic.storyPoints}</span>
+                    <span className="font-medium">{epic?.storyPoints}</span>
                   </div>
                 )}
                 
-                {epic.estimatedHours && (
+                {epic?.estimatedHours && (
                   <div className="flex items-center justify-between">
                     <span className="text-muted-foreground">Estimated Hours</span>
-                    <span className="font-medium">{epic.estimatedHours}h</span>
+                    <span className="font-medium">{epic?.estimatedHours}h</span>
                   </div>
                 )}
               </CardContent>
             </Card>
 
-            {epic.labels.length > 0 && (
+            {epic?.labels?.length > 0 && (
               <Card>
                 <CardHeader>
                   <CardTitle>Labels</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-2">
-                    {epic.labels.map((label, index) => (
+                    {epic?.labels?.map((label, index) => (
                       <Badge key={index} variant="outline">
                         <Star className="h-3 w-3 mr-1" />
                         {label}
@@ -387,11 +406,11 @@ export default function EpicDetailPage() {
                 <div className="flex items-center space-x-2">
                   <User className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm">
-                    {epic.createdBy.firstName} {epic.createdBy.lastName}
+                    {epic?.createdBy?.firstName} {epic?.createdBy?.lastName}
                   </span>
                 </div>
                 <p className="text-xs text-muted-foreground mt-1">
-                  {new Date(epic.createdAt).toLocaleDateString()}
+                  {new Date(epic?.createdAt).toLocaleDateString()}
                 </p>
               </CardContent>
             </Card>
