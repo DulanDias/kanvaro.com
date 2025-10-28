@@ -27,6 +27,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import EditTaskModal from './EditTaskModal'
 import ViewTaskModal from './ViewTaskModal'
+import CreateTaskModal from './CreateTaskModal'
 
 interface Task {
   _id: string
@@ -71,6 +72,7 @@ export default function TaskList({ projectId, onCreateTask }: TaskListProps) {
   const [showEditModal, setShowEditModal] = useState(false)
   const [showViewModal, setShowViewModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
   const [deleteLoading, setDeleteLoading] = useState(false)
 
   useEffect(() => {
@@ -220,6 +222,15 @@ export default function TaskList({ projectId, onCreateTask }: TaskListProps) {
     setSelectedTask(null)
   }
 
+  const handleTaskCreated = () => {
+    fetchTasks() // Refresh the task list
+    setShowCreateModal(false)
+  }
+
+  const handleCreateTaskClick = () => {
+    setShowCreateModal(true)
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-64">
@@ -240,7 +251,7 @@ export default function TaskList({ projectId, onCreateTask }: TaskListProps) {
             {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''} found
           </p>
         </div>
-        <Button onClick={onCreateTask}>
+        <Button onClick={handleCreateTaskClick}>
           <Plus className="h-4 w-4 mr-2" />
           Add Task
         </Button>
@@ -414,7 +425,7 @@ export default function TaskList({ projectId, onCreateTask }: TaskListProps) {
         <div className="text-center py-8">
           <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
           <p className="text-muted-foreground">No tasks found</p>
-          <Button onClick={onCreateTask} className="mt-4">
+          <Button onClick={handleCreateTaskClick} className="mt-4">
             <Plus className="h-4 w-4 mr-2" />
             Create First Task
           </Button>
@@ -422,6 +433,13 @@ export default function TaskList({ projectId, onCreateTask }: TaskListProps) {
       )}
 
       {/* Modals */}
+      <CreateTaskModal
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        projectId={projectId}
+        onTaskCreated={handleTaskCreated}
+      />
+
       {selectedTask && (
         <>
           <EditTaskModal

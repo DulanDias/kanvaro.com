@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Timer } from '@/components/time-tracking/Timer'
+import { TimeLogs } from '@/components/time-tracking/TimeLogs'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
@@ -47,7 +48,7 @@ interface Task {
 }
 
 interface User {
-  _id: string
+  id: string
   firstName: string
   lastName: string
   email: string
@@ -66,7 +67,7 @@ export default function TimerPage() {
   const [selectedTask, setSelectedTask] = useState<string>('')
   const [description, setDescription] = useState('')
   const [error, setError] = useState('')
-
+console.log('user',user);
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -74,6 +75,10 @@ export default function TimerPage() {
         
         if (response.ok) {
           const userData = await response.json()
+          console.log('userData from /api/auth/me:', userData)
+          console.log('userData.id:', userData.id)
+          console.log('userData.organization:', userData.organization)
+          
           setUser(userData)
           setAuthError('')
           await fetchProjects()
@@ -84,6 +89,10 @@ export default function TimerPage() {
           
           if (refreshResponse.ok) {
             const refreshData = await refreshResponse.json()
+            console.log('refreshData from /api/auth/refresh:', refreshData)
+            console.log('refreshData.user:', refreshData.user)
+            console.log('refreshData.user.id:', refreshData.user?.id)
+            
             setUser(refreshData.user)
             setAuthError('')
             await fetchProjects()
@@ -133,7 +142,7 @@ export default function TimerPage() {
     }
 
     try {
-      const response = await fetch(`/api/tasks?project=${projectId}&assignedTo=${user._id}`)
+      const response = await fetch(`/api/tasks?project=${projectId}&assignedTo=${user.id}`)
       const data = await response.json()
 
       if (data.success && Array.isArray(data.data)) {
@@ -148,6 +157,7 @@ export default function TimerPage() {
   }
 
   const handleProjectChange = (projectId: string) => {
+    console.log('Project changed to:', projectId)
     setSelectedProject(projectId)
     setSelectedTask('')
     setTasks([])
@@ -163,6 +173,21 @@ export default function TimerPage() {
       setDescription(task.title)
     }
   }
+
+  // Debug Timer component rendering
+  useEffect(() => {
+    console.log('Timer render check:', { 
+      selectedProject, 
+      user: !!user, 
+      userId: user?.id, 
+      organizationId: user?.organization,
+      shouldRenderTimer: !!(selectedProject && user)
+    })
+    
+    if (selectedProject && user) {
+      console.log('Timer component should render now!')
+    }
+  }, [selectedProject, user])
 
   if (isLoading) {
     return (
@@ -220,7 +245,6 @@ export default function TimerPage() {
           </Alert>
         )}
 
-        {/* Single Timer Interface */}
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
@@ -232,7 +256,6 @@ export default function TimerPage() {
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            {/* Project and Task Selection */}
             <div className="grid gap-4 md:grid-cols-2">
               <div>
                 <Label htmlFor="project">Project *</Label>
@@ -281,7 +304,6 @@ export default function TimerPage() {
               )}
             </div>
 
-            {/* Description */}
             {selectedProject && (
               <div>
                 <Label htmlFor="description">Description *</Label>
@@ -296,17 +318,23 @@ export default function TimerPage() {
               </div>
             )}
 
-            {/* Timer Component */}
-            {selectedProject && (
+            {selectedProject && user && (
               <Timer
-                userId={user._id}
+                userId={user.id}
                 organizationId={user.organization}
                 projectId={selectedProject}
                 taskId={selectedTask || undefined}
                 description={description}
-                onTimerUpdate={(timer) => {
-                  // Handle timer updates
-                }}
+                onTimerUpdate={() => {}}
+              />
+            )}
+
+            {user && (
+              <TimeLogs
+                userId={user.id}
+                organizationId={user.organization}
+                projectId={selectedProject || undefined}
+                taskId={selectedTask || undefined}
               />
             )}
 

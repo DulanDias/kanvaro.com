@@ -20,6 +20,7 @@ import {
   useSensor,
   useSensors,
   closestCorners,
+  useDroppable,
 } from '@dnd-kit/core'
 import {
   SortableContext,
@@ -97,6 +98,86 @@ const columns = [
   { id: 'testing', title: 'Testing', color: 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' },
   { id: 'done', title: 'Done', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' }
 ]
+
+// Column Drop Zone Component
+function ColumnDropZone({ column, tasks }: { column: any, tasks: Task[] }) {
+  const router = useRouter()
+  const { setNodeRef, isOver } = useDroppable({
+    id: column.id,
+  })
+
+  const getPriorityColor = (priority: string) => {
+    switch (priority) {
+      case 'low': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+      case 'medium': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+      case 'high': return 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200'
+      case 'critical': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+    }
+  }
+
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'bug': return 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
+      case 'feature': return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+      case 'improvement': return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200'
+      case 'task': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+      case 'subtask': return 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200'
+      default: return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <Badge className={column.color}>
+            {column.title}
+          </Badge>
+          <span className="text-sm text-muted-foreground">
+            {tasks.length}
+          </span>
+        </div>
+        <Button variant="ghost" size="sm">
+          <Plus className="h-4 w-4" />
+        </Button>
+      </div>
+      
+      <SortableContext 
+        items={tasks.map(task => task._id)}
+        strategy={verticalListSortingStrategy}
+      >
+        <div 
+          ref={setNodeRef}
+          className={`space-y-3 min-h-[400px] border-2 border-dashed rounded-lg transition-colors p-2 ${
+            isOver 
+              ? 'border-primary bg-primary/5' 
+              : 'border-transparent hover:border-gray-200 dark:hover:border-gray-700'
+          }`}
+        >
+          {tasks.length === 0 ? (
+            <div className="h-full flex items-center justify-center text-muted-foreground">
+              <div className="text-center">
+                <p className="text-sm opacity-50"> <Plus className="h-4 w-4 mr-2" />
+                Add Task</p>
+              </div>
+            </div>
+          ) : (
+            tasks.map((task) => (
+              <SortableTask 
+                key={task._id} 
+                task={task}
+                onClick={() => router.push(`/tasks/${task._id}`)}
+                getPriorityColor={getPriorityColor}
+                getTypeColor={getTypeColor}
+              />
+            ))
+          )}
+        </div>
+      </SortableContext>
+    </div>
+  )
+}
 
 export default function KanbanPage() {
   const router = useRouter()
@@ -412,38 +493,7 @@ export default function KanbanPage() {
                   const columnTasks = getTasksByStatus(column.id)
                   
                   return (
-                    <div key={column.id} className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <Badge className={column.color}>
-                            {column.title}
-                          </Badge>
-                          <span className="text-sm text-muted-foreground">
-                            {columnTasks.length}
-                          </span>
-                        </div>
-                        <Button variant="ghost" size="sm">
-                          <Plus className="h-4 w-4" />
-                        </Button>
-                      </div>
-                      
-                      <SortableContext 
-                        items={columnTasks.map(task => task._id)}
-                        strategy={verticalListSortingStrategy}
-                      >
-                        <div className="space-y-3 min-h-[400px]">
-                          {columnTasks.map((task) => (
-                            <SortableTask 
-                              key={task._id} 
-                              task={task}
-                              onClick={() => router.push(`/tasks/${task._id}`)}
-                              getPriorityColor={getPriorityColor}
-                              getTypeColor={getTypeColor}
-                            />
-                          ))}
-                        </div>
-                      </SortableContext>
-                    </div>
+                    <ColumnDropZone key={column.id} column={column} tasks={columnTasks} />
                   )
                 })}
               </div>

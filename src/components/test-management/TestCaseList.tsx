@@ -53,6 +53,7 @@ interface TestCase {
     lastName: string
   }
   isActive: boolean
+  preconditions:string
   createdAt: string
   updatedAt: string
 }
@@ -131,6 +132,7 @@ export default function TestCaseList({
   }
 
   const handleEditTestCase = (testCase: TestCase) => {
+    
     onTestCaseEdit?.(testCase)
   }
 
