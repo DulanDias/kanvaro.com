@@ -46,6 +46,14 @@ import VirtualizedColumn from './VirtualizedColumn'
 import SortableTask from './SortableTask'
 import { ITask } from '@/models/Task'
 
+interface PopulatedTask extends Omit<ITask, 'assignedTo'> {
+  assignedTo?: {
+    firstName: string
+    lastName: string
+    email: string
+  }
+}
+
 // Dynamically import heavy modals
 const CreateTaskModal = dynamic(() => import('./CreateTaskModal'), { ssr: false })
 const ColumnSettingsModal = dynamic(() => import('./ColumnSettingsModal'), { ssr: false })
@@ -83,10 +91,10 @@ export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProp
   const [project, setProject] = useState<Project | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
   const [selectedProjectId, setSelectedProjectId] = useState(projectId)
-  const [tasks, setTasks] = useState<ITask[]>([])
+  const [tasks, setTasks] = useState<PopulatedTask[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [activeTask, setActiveTask] = useState<ITask | null>(null)
+  const [activeTask, setActiveTask] = useState<PopulatedTask | null>(null)
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
   const [showColumnSettings, setShowColumnSettings] = useState(false)
   const [createTaskStatus, setCreateTaskStatus] = useState<string | undefined>(undefined)
@@ -284,7 +292,7 @@ export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProp
               reorderedTasks.forEach((task, index) => {
                 const taskIndex = updatedTasks.findIndex(t => t._id === task._id)
                 if (taskIndex !== -1) {
-                  updatedTasks[taskIndex] = { ...updatedTasks[taskIndex], position: index } as ITask
+                  updatedTasks[taskIndex] = { ...updatedTasks[taskIndex], position: index } as PopulatedTask
                 }
               })
               return updatedTasks
@@ -309,7 +317,7 @@ export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProp
         
         if (data.success) {
           setTasks(tasks.map(task => 
-            task._id === activeId ? { ...task, status: newStatus } as ITask : task
+            task._id === activeId ? { ...task, status: newStatus } as PopulatedTask : task
           ))
         }
       } catch (error) {
