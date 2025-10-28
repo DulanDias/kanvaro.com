@@ -465,7 +465,6 @@ function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpa
                 isActive && 'bg-secondary text-secondary-foreground'
               )}
               title={item.label}
-              title={item.label}
             >
               <Icon className="h-4 w-4" />
             </Button>

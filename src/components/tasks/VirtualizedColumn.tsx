@@ -10,6 +10,14 @@ import { Target, Plus } from 'lucide-react'
 import SortableTask from './SortableTask'
 import { ITask } from '@/models/Task'
 
+interface PopulatedTask extends Omit<ITask, 'assignedTo'> {
+  assignedTo?: {
+    firstName: string
+    lastName: string
+    email: string
+  }
+}
+
 interface Column {
   key: string
   title: string
@@ -18,11 +26,11 @@ interface Column {
 
 interface VirtualizedColumnProps {
   column: Column
-  tasks: ITask[]
+  tasks: PopulatedTask[]
   onCreateTask: (status?: string) => void
   getPriorityColor: (priority: string) => string
   getTypeColor: (type: string) => string
-  onTaskClick?: (task: ITask) => void
+  onTaskClick?: (task: PopulatedTask) => void
 }
 
 export default function VirtualizedColumn({

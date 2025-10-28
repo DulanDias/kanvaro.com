@@ -14,10 +14,18 @@ import {
   BarChart3, 
   Clock 
 } from 'lucide-react'
-import { Task } from '@/models/Task'
+import { ITask } from '@/models/Task'
+
+interface PopulatedTask extends Omit<ITask, 'assignedTo'> {
+  assignedTo?: {
+    firstName: string
+    lastName: string
+    email: string
+  }
+}
 
 interface SortableTaskProps {
-  task: Task
+  task: PopulatedTask
   onClick: () => void
   getPriorityColor: (priority: string) => string
   getTypeColor: (type: string) => string
@@ -38,7 +46,7 @@ export default function SortableTask({
     transform,
     transition,
     isDragging,
-  } = useSortable({ id: task._id })
+  } = useSortable({ id: task._id as string })
 
   const style = {
     transform: CSS.Transform.toString(transform),
