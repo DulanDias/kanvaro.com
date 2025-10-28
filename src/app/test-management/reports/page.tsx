@@ -1,6 +1,7 @@
 'use client'
 
 import { MainLayout } from '@/components/layout/MainLayout'
+import { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Progress } from '@/components/ui/Progress'
@@ -19,16 +20,53 @@ import {
 } from 'lucide-react'
 
 export default function TestReportsPage() {
-  // Mock data - in real implementation, this would come from API
-  const testSummary = {
-    totalTestCases: 150,
-    executed: 120,
-    passed: 95,
-    failed: 20,
-    blocked: 5,
-    passRate: 79.2,
-    executionRate: 80.0
-  }
+  const [cases, setCases] = useState<any[]>([])
+  const [executions, setExecutions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        setLoading(true)
+        const [casesRes, execsRes] = await Promise.all([
+          fetch('/api/test-cases'),
+          fetch('/api/test-executions?limit=500')
+        ])
+        const [casesData, execsData] = await Promise.all([
+          casesRes.json().catch(() => ({})),
+          execsRes.json().catch(() => ({}))
+        ])
+        if (casesRes.ok && casesData?.success && Array.isArray(casesData.data)) setCases(casesData.data)
+        else setCases([])
+        if (execsRes.ok && execsData?.success && Array.isArray(execsData.data)) setExecutions(execsData.data)
+        else setExecutions([])
+      } catch (e) {
+        setCases([])
+        setExecutions([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchData()
+  }, [])
+
+  const summary = useMemo(() => {
+    const totalTestCases = cases.length
+    const passed = executions.filter(e => e.status === 'passed').length
+    const failed = executions.filter(e => e.status === 'failed').length
+    const blocked = executions.filter(e => e.status === 'blocked').length
+    const actionable = passed + failed
+    const passRate = actionable === 0 ? 0 : Math.round((passed / actionable) * 100)
+    // Execution rate: unique executed test cases vs total test cases
+    const uniqueExecutedCases = new Set(
+      executions
+        .map(e => (e?.testCase?._id || e?.testCase))
+        .filter(Boolean)
+        .map(String)
+    ).size
+    const executionRate = totalTestCases === 0 ? 0 : Math.round((uniqueExecutedCases / totalTestCases) * 100)
+    return { totalTestCases, passed, failed, blocked, passRate, executionRate }
+  }, [cases, executions])
 
   const projectStats = [
     {
@@ -123,13 +161,13 @@ export default function TestReportsPage() {
     parts.push(buildCsv(
       ['metric', 'value'],
       [
-        ['totalTestCases', testSummary.totalTestCases],
-        ['executed', testSummary.executed],
-        ['passed', testSummary.passed],
-        ['failed', testSummary.failed],
-        ['blocked', testSummary.blocked],
-        ['passRate', `${testSummary.passRate}%`],
-        ['executionRate', `${testSummary.executionRate}%`],
+        ['totalTestCases', summary.totalTestCases],
+        ['executed_unique_cases', Math.round((summary.executionRate / 100) * summary.totalTestCases)],
+        ['passed', summary.passed],
+        ['failed', summary.failed],
+        ['blocked', summary.blocked],
+        ['passRate', `${summary.passRate}%`],
+        ['executionRate', `${summary.executionRate}%`],
       ]
     ))
     parts.push('')
@@ -183,7 +221,7 @@ export default function TestReportsPage() {
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{testSummary.totalTestCases}</div>
+              <div className="text-2xl font-bold">{loading ? '—' : summary.totalTestCases}</div>
               <p className="text-xs text-muted-foreground">
                 Across all projects
               </p>
@@ -196,8 +234,8 @@ export default function TestReportsPage() {
               <TrendingUp className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{testSummary.executionRate}%</div>
-              <Progress value={testSummary.executionRate} className="mt-2" />
+              <div className="text-2xl font-bold">{loading ? '—' : `${summary.executionRate}%`}</div>
+              <Progress value={summary.executionRate} className="mt-2" />
             </CardContent>
           </Card>
 
@@ -207,8 +245,8 @@ export default function TestReportsPage() {
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{testSummary.passRate}%</div>
-              <Progress value={testSummary.passRate} className="mt-2" />
+              <div className="text-2xl font-bold">{loading ? '—' : `${summary.passRate}%`}</div>
+              <Progress value={summary.passRate} className="mt-2" />
             </CardContent>
           </Card>
 
@@ -218,9 +256,9 @@ export default function TestReportsPage() {
               <XCircle className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{testSummary.failed}</div>
+              <div className="text-2xl font-bold">{loading ? '—' : summary.failed}</div>
               <p className="text-xs text-muted-foreground">
-                {testSummary.blocked} blocked
+                {loading ? '—' : `${summary.blocked} blocked`}
               </p>
             </CardContent>
           </Card>

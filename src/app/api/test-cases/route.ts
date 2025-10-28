@@ -113,6 +113,10 @@ export async function POST(req: NextRequest) {
     } = await req.json()
 
     const suiteId = testSuiteId || testSuite
+console.log("title",title);
+console.log("description",description);
+console.log("projectId",projectId);
+console.log("suiteId",suiteId);
 
     if (!title || !description || !projectId || !suiteId) {
       return NextResponse.json(

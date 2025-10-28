@@ -58,6 +58,7 @@ export default function TestCasesPage() {
   const [deleteItem, setDeleteItem] = useState<{ id: string; name: string } | null>(null)
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
+  const [refreshCounter, setRefreshCounter] = useState(0)
 
   useEffect(() => {
     // In a real app, you'd fetch the user's projects and set the first one
@@ -71,24 +72,21 @@ export default function TestCasesPage() {
   }
 
   const handleEditTestCase = (testCase: TestCase) => {
-    console.log('inside handleEditTestCase');
-    
-    // Convert TestCase to FormTestCase
     const formTestCase: FormTestCase = {
       _id: testCase._id,
       title: testCase.title,
-      description: testCase.description,
-      preconditions: '', // Default value, would need to be fetched from API
-      steps: [{ step: '', expectedResult: '' }], // Default value, would need to be fetched from API
-      expectedResult: '', // Default value, would need to be fetched from API
-      testData: '', // Default value, would need to be fetched from API
+      description: (testCase as any)?.description || '',
+      preconditions: (testCase as any)?.preconditions || '',
+      steps: (testCase as any)?.steps || [{ step: '', expectedResult: '' }],
+      expectedResult: (testCase as any)?.expectedResult || '',
+      testData: (testCase as any)?.testData || '',
       priority: testCase.priority,
       category: testCase.category,
       automationStatus: testCase.automationStatus,
       estimatedExecutionTime: testCase.estimatedExecutionTime,
       testSuite: testCase.testSuite._id,
-      tags: testCase.tags,
-      requirements: '' // Default value, would need to be fetched from API
+      tags: testCase.tags || [],
+      requirements: (testCase as any)?.requirements || ''
     }
     setSelectedTestCase(formTestCase)
     setTestCaseDialogOpen(true)
@@ -116,6 +114,8 @@ export default function TestCasesPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...testCaseData,
+          // API expects testSuiteId, include it always to be explicit
+          testSuiteId: testCaseData.testSuite,
           projectId: selectedProject
         })
       })
@@ -123,7 +123,7 @@ export default function TestCasesPage() {
       if (response.ok) {
         setTestCaseDialogOpen(false)
         setSelectedTestCase(null)
-        // Refresh the list or show success message
+        setRefreshCounter(c => c + 1)
       } else {
         console.error('Failed to save test case')
       }
@@ -146,7 +146,7 @@ export default function TestCasesPage() {
       if (response.ok) {
         setDeleteDialogOpen(false)
         setDeleteItem(null)
-        // Refresh the list or show success message
+        setRefreshCounter(c => c + 1)
       } else {
         console.error('Failed to delete test case')
       }
@@ -176,6 +176,7 @@ export default function TestCasesPage() {
         <div className="rounded-lg border bg-card p-4 sm:p-6">
           <TestCaseList 
             projectId={selectedProject}
+            key={`${selectedProject}-${refreshCounter}`}
             onTestCaseCreate={handleCreateTestCase}
             onTestCaseEdit={handleEditTestCase}
             onTestCaseDelete={handleDeleteTestCase}

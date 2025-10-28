@@ -53,6 +53,7 @@ interface TestCase {
     lastName: string
   }
   isActive: boolean
+  preconditions:string
   createdAt: string
   updatedAt: string
 }
