@@ -7,7 +7,8 @@ import { TestCaseForm } from '@/components/test-management/TestCaseForm'
 import { DeleteConfirmDialog } from '@/components/test-management/DeleteConfirmDialog'
 import { ResponsiveDialog } from '@/components/ui/ResponsiveDialog'
 import { Button } from '@/components/ui/Button'
-import { Plus } from 'lucide-react'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
+import { Plus, AlertCircle } from 'lucide-react'
 
 interface TestCase {
   _id: string
@@ -49,7 +50,15 @@ interface FormTestCase {
   requirements?: string
 }
 
+interface Project {
+  _id: string
+  name: string
+  description?: string
+  status: string
+}
+
 export default function TestCasesPage() {
+  const [projects, setProjects] = useState<Project[]>([])
   const [selectedProject, setSelectedProject] = useState<string>('')
   const [testCases, setTestCases] = useState<TestCase[]>([])
   const [testCaseDialogOpen, setTestCaseDialogOpen] = useState(false)
@@ -59,14 +68,36 @@ export default function TestCasesPage() {
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
   const [refreshCounter, setRefreshCounter] = useState(0)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // In a real app, you'd fetch the user's projects and set the first one
-    // For now, we'll use an empty string to show all test cases
-    setSelectedProject('')
+    fetchProjects()
   }, [])
 
+  const fetchProjects = async () => {
+    try {
+      setLoading(true)
+      const response = await fetch('/api/projects')
+      const data = await response.json()
+
+      if (data.success) {
+        setProjects(data.data)
+        if (data.data.length > 0) {
+          setSelectedProject(data.data[0]._id)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching projects:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const handleCreateTestCase = () => {
+    if (!selectedProject) {
+      alert('Please select a project first')
+      return
+    }
     setSelectedTestCase(null)
     setTestCaseDialogOpen(true)
   }
@@ -167,10 +198,37 @@ export default function TestCasesPage() {
               Manage and organize your test cases across all projects
             </p>
           </div>
-          <Button onClick={handleCreateTestCase} className="w-full sm:w-auto">
+          <Button onClick={handleCreateTestCase} className="w-full sm:w-auto" disabled={!selectedProject}>
             <Plus className="mr-2 h-4 w-4" />
             Create Test Case
           </Button>
+        </div>
+
+        {/* Project Selection */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <label htmlFor="project-select" className="text-sm font-medium">
+              Project:
+            </label>
+            <Select value={selectedProject} onValueChange={setSelectedProject}>
+              <SelectTrigger id="project-select" className="w-64">
+                <SelectValue placeholder="Select a project" />
+              </SelectTrigger>
+              <SelectContent>
+                {projects.map((project) => (
+                  <SelectItem key={project._id} value={project._id}>
+                    {project.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {!selectedProject && (
+            <div className="flex items-center gap-2 text-sm text-amber-600">
+              <AlertCircle className="h-4 w-4" />
+              <span>Please select a project to create test cases</span>
+            </div>
+          )}
         </div>
 
         <div className="rounded-lg border bg-card p-4 sm:p-6">

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { MainLayout } from '@/components/layout/MainLayout'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -85,6 +85,7 @@ export default function CreateProjectPage() {
   const { currencies, loading: currenciesLoading, formatCurrencyDisplay, error: currenciesError } = useCurrencies(true)
   const [currentStep, setCurrentStep] = useState(1)
   const [loading, setLoading] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [availableMembers, setAvailableMembers] = useState<any[]>([])
@@ -93,6 +94,11 @@ export default function CreateProjectPage() {
   const [showMemberSearch, setShowMemberSearch] = useState(false)
   const [showClientSearch, setShowClientSearch] = useState(false)
   const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
+  
+  // Edit mode state
+  const searchParams = useSearchParams()
+  const editProjectId = searchParams.get('edit')
+  const isEditMode = !!editProjectId
 
   const [formData, setFormData] = useState<ProjectFormData>({
     name: '',
@@ -150,12 +156,23 @@ export default function CreateProjectPage() {
   }
 
   const handleSubmit = async (isDraft = false) => {
+    // Prevent duplicate submissions
+    if (isSubmitting) {
+      console.log('Request already in progress, ignoring duplicate submission')
+      return
+    }
+
     try {
+      setIsSubmitting(true)
       setLoading(true)
       setError('')
+      setSuccess('')
 
-      const response = await fetch('/api/projects', {
-        method: 'POST',
+      const url = isEditMode ? `/api/projects/${editProjectId}` : '/api/projects'
+      const method = isEditMode ? 'PUT' : 'POST'
+
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json'
         },
@@ -168,23 +185,30 @@ export default function CreateProjectPage() {
       const data = await response.json()
 
       if (data.success) {
-        if (isDraft) {
-          setSuccess('Project saved as draft!')
-          setTimeout(() => {
-            router.push('/projects')
-          }, 2000)
+        if (isEditMode) {
+          if (isDraft) {
+            setSuccess('Project updated and saved as draft!')
+          } else {
+            setSuccess('Project updated successfully!')
+          }
         } else {
-          setSuccess('Project created successfully!')
-          setTimeout(() => {
-            router.push(`/projects/${data.data._id}`)
-          }, 2000)
+          if (isDraft) {
+            setSuccess('Project saved as draft!')
+          } else {
+            setSuccess('Project created successfully!')
+          }
         }
+        
+        setTimeout(() => {
+          router.push('/projects')
+        }, 2000)
       } else {
-        setError(data.error || 'Failed to create project')
+        setError(data.error || (isEditMode ? 'Failed to update project' : 'Failed to create project'))
       }
     } catch (err) {
-      setError('Failed to create project')
+      setError(isEditMode ? 'Failed to update project' : 'Failed to create project')
     } finally {
+      setIsSubmitting(false)
       setLoading(false)
     }
   }
@@ -297,6 +321,64 @@ export default function CreateProjectPage() {
     fetchAvailableMembers()
   }, [])
 
+  // Load project data when in edit mode
+  useEffect(() => {
+    if (isEditMode && editProjectId) {
+      fetchProjectData(editProjectId)
+    }
+  }, [isEditMode, editProjectId])
+
+  const fetchProjectData = async (projectId: string) => {
+    try {
+      setLoading(true)
+      const response = await fetch(`/api/projects/${projectId}`)
+      const data = await response.json()
+      
+      if (data.success && data.data) {
+        const project = data.data
+        setFormData({
+          name: project.name || '',
+          description: project.description || '',
+          status: project.status || 'planning',
+          priority: project.priority || 'medium',
+          projectNumber: project.projectNumber,
+          startDate: project.startDate ? new Date(project.startDate).toISOString().split('T')[0] : '',
+          endDate: project.endDate ? new Date(project.endDate).toISOString().split('T')[0] : '',
+          budget: project.budget || {
+            total: 0,
+            currency: 'USD',
+            categories: {
+              labor: 0,
+              materials: 0,
+              overhead: 0
+            }
+          },
+          teamMembers: project.teamMembers || [],
+          clients: project.client ? [project.client] : [],
+          settings: project.settings || {
+            allowTimeTracking: true,
+            allowManualTimeSubmission: true,
+            allowExpenseTracking: true,
+            requireApproval: false,
+            notifications: {
+              taskUpdates: true,
+              budgetAlerts: true,
+              deadlineReminders: true
+            }
+          },
+          tags: project.tags || [],
+          customFields: project.customFields || {}
+        })
+      } else {
+        setError('Failed to load project data')
+      }
+    } catch (err) {
+      setError('Failed to load project data')
+    } finally {
+      setLoading(false)
+    }
+  }
+
   return (
     <MainLayout>
       <div className="space-y-6">
@@ -307,8 +389,12 @@ export default function CreateProjectPage() {
               Back
             </Button>
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Create New Project</h1>
-              <p className="text-muted-foreground">Set up a new project with detailed configuration</p>
+              <h1 className="text-3xl font-bold text-foreground">
+                {isEditMode ? 'Edit Project' : 'Create New Project'}
+              </h1>
+              <p className="text-muted-foreground">
+                {isEditMode ? 'Update project details and configuration' : 'Set up a new project with detailed configuration'}
+              </p>
             </div>
           </div>
         </div>
@@ -1191,18 +1277,18 @@ export default function CreateProjectPage() {
                   <div className="space-y-3">
                     <Button 
                       onClick={() => handleSubmit(false)} 
-                      disabled={loading || !isFormValid()}
+                      disabled={isSubmitting || !isFormValid()}
                       className="w-full"
                     >
-                      {loading ? (
+                      {isSubmitting ? (
                         <>
                           <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Creating...
+                          {isEditMode ? 'Updating...' : 'Creating...'}
                         </>
                       ) : (
                         <>
                           <CheckCircle className="mr-2 h-4 w-4" />
-                          Create Project
+                          {isEditMode ? 'Update Project' : 'Create Project'}
                         </>
                       )}
                     </Button>
@@ -1210,11 +1296,20 @@ export default function CreateProjectPage() {
                     <Button 
                       variant="outline" 
                       onClick={() => handleSubmit(true)} 
-                      disabled={loading}
+                      disabled={isSubmitting}
                       className="w-full"
                     >
-                      <Save className="mr-2 h-4 w-4" />
-                      Save as Draft
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          {isEditMode ? 'Updating...' : 'Saving...'}
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          {isEditMode ? 'Update Draft' : 'Save as Draft'}
+                        </>
+                      )}
                     </Button>
                   </div>
 

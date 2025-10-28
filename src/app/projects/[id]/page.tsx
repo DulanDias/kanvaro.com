@@ -33,7 +33,12 @@ import {
   User,
   Calendar as CalendarIcon,
   Target,
-  Zap
+  Zap,
+  Download,
+  Edit,
+  UserPlus,
+  Save,
+  Trash2
 } from 'lucide-react'
 import CreateTaskModal from '@/components/tasks/CreateTaskModal'
 import TaskList from '@/components/tasks/TaskList'
@@ -96,6 +101,22 @@ interface Project {
       taskUpdates: boolean
       budgetAlerts: boolean
       deadlineReminders: boolean
+    }
+  }
+  stats?: {
+    tasks?: {
+      completionRate: number
+      completed: number
+      total: number
+    }
+    budget?: {
+      utilizationRate: number
+      spent: number
+      total: number
+    }
+    timeTracking?: {
+      totalHours: number
+      entries: number
     }
   }
   tags: string[]
@@ -567,6 +588,284 @@ export default function ProjectDetailPage() {
               </div>
             </div>
           </TabsContent>
+
+          <TabsContent value="reports" className="space-y-6">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Project Reports</h3>
+                  <p className="text-sm text-muted-foreground">
+                    View detailed reports and analytics for this project
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Schedule Report
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Project Progress</CardTitle>
+                    <Target className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{project?.stats?.tasks?.completionRate || 0}%</div>
+                    <p className="text-xs text-muted-foreground">
+                      {project?.stats?.tasks?.completed || 0} of {project?.stats?.tasks?.total || 0} tasks completed
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Budget Utilization</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{project?.stats?.budget?.utilizationRate || 0}%</div>
+                    <p className="text-xs text-muted-foreground">
+                      ${project?.stats?.budget?.spent || 0} of ${project?.stats?.budget?.total || 0} spent
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Time Tracking</CardTitle>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{project?.stats?.timeTracking?.totalHours || 0}h</div>
+                    <p className="text-xs text-muted-foreground">
+                      {project?.stats?.timeTracking?.entries || 0} time entries
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Activity</CardTitle>
+                    <CardDescription>Latest project activities and updates</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium">Project created</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(project?.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium">First task completed</p>
+                          <p className="text-xs text-muted-foreground">2 days ago</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Team Performance</CardTitle>
+                    <CardDescription>Team member productivity and workload</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {project?.teamMembers?.slice(0, 3).map((member: any, index: number) => (
+                        <div key={index} className="flex items-center space-x-4">
+                          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-medium">
+                            {member.firstName?.[0]}{member.lastName?.[0]}
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            <p className="text-sm font-medium">
+                              {member.firstName} {member.lastName}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{member.role}</p>
+                          </div>
+                          <Badge variant="secondary">Active</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
+
+          <TabsContent value="settings" className="space-y-6">
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Project Settings</h3>
+                <p className="text-sm text-muted-foreground">
+                  Manage project configuration and preferences
+                </p>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>General Settings</CardTitle>
+                    <CardDescription>Basic project information and settings</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="project-name">Project Name</Label>
+                      <Input
+                        id="project-name"
+                        value={project?.name || ''}
+                        readOnly
+                        className="bg-muted"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="project-description">Description</Label>
+                      <Textarea
+                        id="project-description"
+                        value={project?.description || ''}
+                        readOnly
+                        className="bg-muted"
+                        rows={3}
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="start-date">Start Date</Label>
+                        <Input
+                          id="start-date"
+                          type="date"
+                          value={project?.startDate ? new Date(project.startDate).toISOString().split('T')[0] : ''}
+                          readOnly
+                          className="bg-muted"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="end-date">End Date</Label>
+                        <Input
+                          id="end-date"
+                          type="date"
+                          value={project?.endDate ? new Date(project.endDate).toISOString().split('T')[0] : ''}
+                          readOnly
+                          className="bg-muted"
+                        />
+                      </div>
+                    </div>
+                    <Button variant="outline" className="w-full">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Project Details
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Team Management</CardTitle>
+                    <CardDescription>Manage project team members and roles</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      {project?.teamMembers?.map((member: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-medium">
+                              {member.firstName?.[0]}{member.lastName?.[0]}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">
+                                {member.firstName} {member.lastName}
+                              </p>
+                              <p className="text-xs text-muted-foreground">{member.email}</p>
+                            </div>
+                          </div>
+                          <Badge variant="secondary">{member.role}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                    <Button variant="outline" className="w-full">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Add Team Member
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Project Status</CardTitle>
+                    <CardDescription>Current project status and workflow settings</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select value={project?.status || 'active'}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="on-hold">On Hold</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                          <SelectItem value="cancelled">Cancelled</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="priority">Priority</Label>
+                      <Select value={project?.priority || 'medium'}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="low">Low</SelectItem>
+                          <SelectItem value="medium">Medium</SelectItem>
+                          <SelectItem value="high">High</SelectItem>
+                          <SelectItem value="critical">Critical</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <Button variant="outline" className="w-full">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Settings
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Danger Zone</CardTitle>
+                    <CardDescription>Irreversible actions for this project</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="p-4 border border-destructive rounded-lg">
+                      <div className="space-y-2">
+                        <h4 className="text-sm font-medium text-destructive">Delete Project</h4>
+                        <p className="text-xs text-muted-foreground">
+                          Permanently delete this project and all its data. This action cannot be undone.
+                        </p>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Project
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
 
         <ResponsiveDialog
@@ -660,6 +959,18 @@ export default function ProjectDetailPage() {
             loading={testCaseSaving}
           />
         </ResponsiveDialog>
+
+        {/* Create Task Modal */}
+        <CreateTaskModal
+          isOpen={showCreateTaskModal}
+          onClose={() => setShowCreateTaskModal(false)}
+          projectId={projectId}
+          onTaskCreated={() => {
+            setShowCreateTaskModal(false)
+            // Refresh project data to update task counts
+            fetchProject()
+          }}
+        />
 
       </div>
     </MainLayout>

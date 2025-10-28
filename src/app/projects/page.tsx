@@ -385,7 +385,7 @@ export default function ProjectsPage() {
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={(e) => {
                                 e.stopPropagation()
-                                router.push(`/projects/${project._id}?tab=edit`)
+                                router.push(`/projects/create?edit=${project._id}`)
                               }}>
                                 <Edit className="h-4 w-4 mr-2" />
                                 Edit Project
@@ -550,7 +550,7 @@ export default function ProjectsPage() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={(e) => {
                                   e.stopPropagation()
-                                  router.push(`/projects/${project._id}?tab=edit`)
+                                  router.push(`/projects/create?edit=${project._id}`)
                                 }}>
                                   <Edit className="h-4 w-4 mr-2" />
                                   Edit Project
