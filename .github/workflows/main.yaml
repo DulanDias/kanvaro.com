@@ -45,7 +45,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GH_ACESS_TOKEN }}
         run: |
-          git remote set-url origin https://x-access-token:${{ secrets.GH_ACESS_TOKEN }}@github.com/repository_path/repository.git
+          git remote set-url origin https://x-access-token:${{ secrets.GH_ACESS_TOKEN }}@github.com/EchonLabs/kanvaro.com.git
           RELEASE_OUTPUT=$(npx semantic-release || true)
           echo "$RELEASE_OUTPUT"
           VERSION=$(echo "$RELEASE_OUTPUT" | grep -oP 'Published release \K[0-9]+\.[0-9]+\.[0-9]+' || true)
