@@ -81,12 +81,12 @@ export async function POST(request: NextRequest) {
       expiresAt: { $gt: new Date() }
     })
 
-    // if (existingInvitation) {
-    //   return NextResponse.json(
-    //     { error: 'Invitation already sent to this email' },
-    //     { status: 400 }
-    //   )
-    // }
+    if (existingInvitation) {
+      return NextResponse.json(
+        { error: 'Invitation already sent to this email' },
+        { status: 400 }
+      )
+    }
 
     // Generate invitation token
     const token = crypto.randomBytes(32).toString('hex')
