@@ -41,6 +41,9 @@ import {
   Trash2
 } from 'lucide-react'
 import CreateTaskModal from '@/components/tasks/CreateTaskModal'
+import EditTaskModal from '@/components/tasks/EditTaskModal'
+import ViewTaskModal from '@/components/tasks/ViewTaskModal'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import TaskList from '@/components/tasks/TaskList'
 import KanbanBoard from '@/components/tasks/KanbanBoard'
 import CalendarView from '@/components/tasks/CalendarView'
@@ -135,6 +138,10 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
+  const [showEditTaskModal, setShowEditTaskModal] = useState(false)
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<any | null>(null)
+  const [tasks, setTasks] = useState<any[]>([])
   const [suiteDialogOpen, setSuiteDialogOpen] = useState(false)
   const [suiteSaving, setSuiteSaving] = useState(false)
   const [editingSuite, setEditingSuite] = useState<any | null>(null)
@@ -149,6 +156,7 @@ export default function ProjectDetailPage() {
   useEffect(() => {
     if (projectId) {
       fetchProject()
+      fetchTasks()
     }
   }, [projectId])
 
@@ -167,6 +175,19 @@ export default function ProjectDetailPage() {
       setError('Failed to fetch project')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchTasks = async () => {
+    try {
+      const response = await fetch(`/api/tasks?project=${projectId}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setTasks(data.data)
+      }
+    } catch (error) {
+      console.error('Error fetching tasks:', error)
     }
   }
 
@@ -534,6 +555,17 @@ export default function ProjectDetailPage() {
             <KanbanBoard 
               projectId={projectId} 
               onCreateTask={() => setShowCreateTaskModal(true)}
+              onEditTask={(task) => {
+                setSelectedTask(task)
+                setShowEditTaskModal(true)
+              }}
+              onDeleteTask={(taskId) => {
+                const task = tasks.find(t => t._id === taskId)
+                if (task) {
+                  setSelectedTask(task)
+                  setShowDeleteConfirmModal(true)
+                }
+              }}
             />
           </TabsContent>
 
@@ -969,7 +1001,81 @@ export default function ProjectDetailPage() {
             setShowCreateTaskModal(false)
             // Refresh project data to update task counts
             fetchProject()
+            // Refresh tasks list
+            fetchTasks()
           }}
+        />
+
+        {/* Edit Task Modal */}
+        {selectedTask && (
+          <EditTaskModal
+            isOpen={showEditTaskModal}
+            onClose={() => {
+              setShowEditTaskModal(false)
+              setSelectedTask(null)
+            }}
+            task={selectedTask}
+            onTaskUpdated={() => {
+              setShowEditTaskModal(false)
+              setSelectedTask(null)
+              // Refresh project data to update task counts
+              fetchProject()
+              // Refresh tasks list
+              fetchTasks()
+            }}
+          />
+        )}
+
+        {/* View Task Modal */}
+        {selectedTask && (
+          <ViewTaskModal
+            isOpen={false} // We'll handle this separately if needed
+            onClose={() => {
+              setSelectedTask(null)
+            }}
+            task={selectedTask}
+            onEdit={() => {
+              setShowEditTaskModal(true)
+            }}
+            onDelete={() => {
+              setShowDeleteConfirmModal(true)
+            }}
+          />
+        )}
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showDeleteConfirmModal}
+          onClose={() => {
+            setShowDeleteConfirmModal(false)
+            setSelectedTask(null)
+          }}
+          onConfirm={async () => {
+            if (selectedTask) {
+              try {
+                const response = await fetch(`/api/tasks/${selectedTask._id}`, {
+                  method: 'DELETE'
+                })
+                
+                if (response.ok) {
+                  setShowDeleteConfirmModal(false)
+                  setSelectedTask(null)
+                  // Refresh project data to update task counts
+                  fetchProject()
+                  // Refresh tasks list
+                  fetchTasks()
+                } else {
+                  console.error('Failed to delete task')
+                }
+              } catch (error) {
+                console.error('Error deleting task:', error)
+              }
+            }
+          }}
+          title="Delete Task"
+          description={`Are you sure you want to delete "${selectedTask?.title}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
         />
 
       </div>

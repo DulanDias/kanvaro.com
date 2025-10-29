@@ -143,7 +143,71 @@ export default function CreateProjectPage() {
     { id: 6, title: 'Review', description: 'Review and create project' }
   ]
 
+  // Validate current step before proceeding
+  const validateCurrentStep = () => {
+    const errors: Record<string, string> = {}
+    
+    switch (currentStep) {
+      case 1: // Basic Information
+        if (!formData.name.trim()) {
+          errors.name = 'Project name is required'
+        }
+        break
+      case 2: // Timeline
+        if (!formData.startDate) {
+          errors.startDate = 'Start date is required'
+        }
+        if (formData.startDate && formData.endDate && new Date(formData.startDate) > new Date(formData.endDate)) {
+          errors.endDate = 'Start date cannot be after end date'
+        }
+        break
+      // Steps 3, 4, 5 are optional - no validation needed
+      default:
+        break
+    }
+    
+    // Update validation errors
+    if (Object.keys(errors).length > 0) {
+      setValidationErrors(prev => ({ ...prev, ...errors }))
+      // Show error message
+      setError('Please fill in all required fields before proceeding')
+      // Scroll to first error field
+      setTimeout(() => {
+        const firstErrorField = Object.keys(errors)[0]
+        const element = document.getElementById(firstErrorField)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          element.focus()
+        }
+      }, 100)
+      return false
+    }
+    
+    // Clear step-specific errors if validation passes
+    setValidationErrors(prev => {
+      const newErrors = { ...prev }
+      Object.keys(errors).forEach(key => {
+        if (newErrors[key as keyof typeof newErrors]) {
+          delete newErrors[key as keyof typeof newErrors]
+        }
+      })
+      return newErrors
+    })
+    
+    // Clear error message if validation passes
+    if (error && error.includes('required fields')) {
+      setError('')
+    }
+    
+    return true
+  }
+
   const handleNext = () => {
+    // Validate current step before proceeding
+    if (!validateCurrentStep()) {
+      return
+    }
+    
     if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1)
     }
@@ -160,6 +224,36 @@ export default function CreateProjectPage() {
     if (isSubmitting) {
       console.log('Request already in progress, ignoring duplicate submission')
       return
+    }
+
+    // Validate all required steps before submission (unless saving as draft)
+    if (!isDraft) {
+      const errors: Record<string, string> = {}
+      
+      // Validate Step 1: Basic Information
+      if (!formData.name.trim()) {
+        errors.name = 'Project name is required'
+      }
+      
+      // Validate Step 2: Timeline
+      if (!formData.startDate) {
+        errors.startDate = 'Start date is required'
+      }
+      if (formData.startDate && formData.endDate && new Date(formData.startDate) > new Date(formData.endDate)) {
+        errors.endDate = 'Start date cannot be after end date'
+      }
+      
+      if (Object.keys(errors).length > 0) {
+        setValidationErrors(prev => ({ ...prev, ...errors }))
+        setError('Please fix the validation errors before submitting')
+        // Scroll to first error
+        const firstErrorField = Object.keys(errors)[0]
+        const element = document.getElementById(firstErrorField)
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+        }
+        return
+      }
     }
 
     try {
@@ -215,9 +309,11 @@ export default function CreateProjectPage() {
 
   const progress = (currentStep / steps.length) * 100
 
-  // Validation function to check if all required fields are filled
+  // Validation function to check if all required fields are filled and timeline is valid
   const isFormValid = () => {
-    return formData.name.trim() !== '' && formData.startDate !== ''
+    const hasRequiredFields = formData.name.trim() !== '' && formData.startDate !== ''
+    const hasTimelineError = validationErrors.endDate !== undefined
+    return hasRequiredFields && !hasTimelineError
   }
 
   // Validate individual fields and update error state
@@ -230,10 +326,12 @@ export default function CreateProjectPage() {
       delete errors.name
     }
     
-    if (fieldName === 'startDate' && !value) {
-      errors.startDate = 'Start date is required'
-    } else if (fieldName === 'startDate' && value) {
-      delete errors.startDate
+    if (fieldName === 'startDate') {
+      if (!value) {
+        errors.startDate = 'Start date is required'
+      } else {
+        delete errors.startDate
+      }
     }
     
     setValidationErrors(errors)
@@ -244,6 +342,36 @@ export default function CreateProjectPage() {
     setFormData(prev => ({ ...prev, [fieldName]: value }))
     validateField(fieldName, value)
   }
+
+  // Validate timeline dates whenever start or end date changes
+  useEffect(() => {
+    setValidationErrors(prevErrors => {
+      const errors = { ...prevErrors }
+      
+      if (formData.startDate && formData.endDate) {
+        if (new Date(formData.startDate) > new Date(formData.endDate)) {
+          errors.endDate = 'Start date cannot be after end date'
+        } else if (errors.endDate && new Date(formData.startDate) <= new Date(formData.endDate)) {
+          delete errors.endDate
+        }
+      } else if (errors.endDate && (!formData.startDate || !formData.endDate)) {
+        // Clear error if one of the dates is cleared
+        delete errors.endDate
+      }
+      
+      return errors
+    })
+  }, [formData.startDate, formData.endDate])
+
+  // Clear general error message when all validation errors are resolved
+  useEffect(() => {
+    if (error && error.includes('required fields')) {
+      const hasErrors = validationErrors.name || validationErrors.startDate || validationErrors.endDate
+      if (!hasErrors) {
+        setError('')
+      }
+    }
+  }, [validationErrors, error])
 
   // Fetch available team members
   const fetchAvailableMembers = async () => {
@@ -447,7 +575,18 @@ export default function CreateProjectPage() {
         </Alert>
       )}
 
-      <Tabs value={currentStep.toString()} className="space-y-4">
+      <Tabs value={currentStep.toString()} className="space-y-4" onValueChange={(value) => {
+        const targetStep = parseInt(value)
+        // Only allow forward navigation if validation passes
+        if (targetStep > currentStep) {
+          if (validateCurrentStep()) {
+            setCurrentStep(targetStep)
+          }
+        } else {
+          // Allow backward navigation without validation
+          setCurrentStep(targetStep)
+        }
+      }}>
         <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="1">Basic</TabsTrigger>
           <TabsTrigger value="2">Timeline</TabsTrigger>
@@ -574,14 +713,18 @@ export default function CreateProjectPage() {
                     type="date"
                     value={formData.endDate}
                     min={formData.startDate || undefined}
-                    onChange={(e) => setFormData(prev => ({ ...prev, endDate: e.target.value }))}
+                    onChange={(e) => handleFieldChange('endDate', e.target.value)}
+                    className={validationErrors.endDate ? 'border-red-500' : ''}
                   />
+                  {validationErrors.endDate && (
+                    <p className="text-sm text-red-600">{validationErrors.endDate}</p>
+                  )}
                 </div>
               </div>
 
               <Alert>
                 <Info className="h-4 w-4" />
-                <AlertDescription>
+                <AlertDescription className="text-sm leading-relaxed">
                   The project timeline helps with resource planning and deadline tracking.
                 </AlertDescription>
               </Alert>
