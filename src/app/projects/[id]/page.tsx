@@ -33,9 +33,17 @@ import {
   User,
   Calendar as CalendarIcon,
   Target,
-  Zap
+  Zap,
+  Download,
+  Edit,
+  UserPlus,
+  Save,
+  Trash2
 } from 'lucide-react'
 import CreateTaskModal from '@/components/tasks/CreateTaskModal'
+import EditTaskModal from '@/components/tasks/EditTaskModal'
+import ViewTaskModal from '@/components/tasks/ViewTaskModal'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import TaskList from '@/components/tasks/TaskList'
 import KanbanBoard from '@/components/tasks/KanbanBoard'
 import CalendarView from '@/components/tasks/CalendarView'
@@ -43,6 +51,9 @@ import BacklogView from '@/components/tasks/BacklogView'
 import ReportsView from '@/components/tasks/ReportsView'
 import TestSuiteTree from '@/components/test-management/TestSuiteTree'
 import TestCaseList from '@/components/test-management/TestCaseList'
+import { ResponsiveDialog } from '@/components/ui/ResponsiveDialog'
+import { TestSuiteForm } from '@/components/test-management/TestSuiteForm'
+import { TestCaseForm } from '@/components/test-management/TestCaseForm'
 
 interface Project {
   _id: string
@@ -95,6 +106,22 @@ interface Project {
       deadlineReminders: boolean
     }
   }
+  stats?: {
+    tasks?: {
+      completionRate: number
+      completed: number
+      total: number
+    }
+    budget?: {
+      utilizationRate: number
+      spent: number
+      total: number
+    }
+    timeTracking?: {
+      totalHours: number
+      entries: number
+    }
+  }
   tags: string[]
   createdAt: string
   updatedAt: string
@@ -111,10 +138,25 @@ export default function ProjectDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
+  const [showEditTaskModal, setShowEditTaskModal] = useState(false)
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<any | null>(null)
+  const [tasks, setTasks] = useState<any[]>([])
+  const [suiteDialogOpen, setSuiteDialogOpen] = useState(false)
+  const [suiteSaving, setSuiteSaving] = useState(false)
+  const [editingSuite, setEditingSuite] = useState<any | null>(null)
+  const [parentSuiteIdForCreate, setParentSuiteIdForCreate] = useState<string | undefined>(undefined)
+  const [suitesRefreshCounter, setSuitesRefreshCounter] = useState(0)
+  const [testCaseDialogOpen, setTestCaseDialogOpen] = useState(false)
+  const [testCaseSaving, setTestCaseSaving] = useState(false)
+  const [editingTestCase, setEditingTestCase] = useState<any | null>(null)
+  const [createCaseSuiteId, setCreateCaseSuiteId] = useState<string | undefined>(undefined)
+  const [testCasesRefreshCounter, setTestCasesRefreshCounter] = useState(0)
 
   useEffect(() => {
     if (projectId) {
       fetchProject()
+      fetchTasks()
     }
   }, [projectId])
 
@@ -133,6 +175,19 @@ export default function ProjectDetailPage() {
       setError('Failed to fetch project')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchTasks = async () => {
+    try {
+      const response = await fetch(`/api/tasks?project=${projectId}`)
+      const data = await response.json()
+      
+      if (data.success) {
+        setTasks(data.data)
+      }
+    } catch (error) {
+      console.error('Error fetching tasks:', error)
     }
   }
 
@@ -500,6 +555,17 @@ export default function ProjectDetailPage() {
             <KanbanBoard 
               projectId={projectId} 
               onCreateTask={() => setShowCreateTaskModal(true)}
+              onEditTask={(task) => {
+                setSelectedTask(task)
+                setShowEditTaskModal(true)
+              }}
+              onDeleteTask={(taskId) => {
+                const task = tasks.find(t => t._id === taskId)
+                if (task) {
+                  setSelectedTask(task)
+                  setShowDeleteConfirmModal(true)
+                }
+              }}
             />
           </TabsContent>
 
@@ -521,18 +587,32 @@ export default function ProjectDetailPage() {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-1">
                 <TestSuiteTree
+                  key={`${projectId}-${suitesRefreshCounter}`}
                   projectId={projectId}
                   onSuiteSelect={(suite) => console.log('Selected suite:', suite)}
-                  onSuiteCreate={(parentSuiteId) => console.log('Create suite:', parentSuiteId)}
-                  onSuiteEdit={(suite) => console.log('Edit suite:', suite)}
+                  onSuiteCreate={(parentSuiteId) => {
+                    setEditingSuite(null)
+                    setParentSuiteIdForCreate(parentSuiteId)
+                    setSuiteDialogOpen(true)
+                  }}
+                  onSuiteEdit={(suite) => {
+                    setEditingSuite(suite)
+                    setParentSuiteIdForCreate(undefined)
+                    setSuiteDialogOpen(true)
+                  }}
                   onSuiteDelete={(suiteId) => console.log('Delete suite:', suiteId)}
                 />
               </div>
               <div className="lg:col-span-2">
                 <TestCaseList
                   projectId={projectId}
+                  key={`${projectId}-${testCasesRefreshCounter}`}
                   onTestCaseSelect={(testCase) => console.log('Selected test case:', testCase)}
-                  onTestCaseCreate={(testSuiteId) => console.log('Create test case:', testSuiteId)}
+                  onTestCaseCreate={(testSuiteId) => {
+                    setEditingTestCase(null)
+                    setCreateCaseSuiteId(testSuiteId)
+                    setTestCaseDialogOpen(true)
+                  }}
                   onTestCaseEdit={(testCase) => console.log('Edit test case:', testCase)}
                   onTestCaseDelete={(testCaseId) => console.log('Delete test case:', testCaseId)}
                   onTestCaseExecute={(testCase) => console.log('Execute test case:', testCase)}
@@ -541,98 +621,243 @@ export default function ProjectDetailPage() {
             </div>
           </TabsContent>
 
-          <TabsContent value="reports" className="space-y-4">
-            <ReportsView projectId={projectId} />
+          <TabsContent value="reports" className="space-y-6">
+            <div className="space-y-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-semibold text-foreground">Project Reports</h3>
+                  <p className="text-sm text-muted-foreground">
+                    View detailed reports and analytics for this project
+                  </p>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button variant="outline" size="sm">
+                    <Download className="h-4 w-4 mr-2" />
+                    Export
+                  </Button>
+                  <Button variant="outline" size="sm">
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Schedule Report
+                  </Button>
+                </div>
+              </div>
+
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Project Progress</CardTitle>
+                    <Target className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{project?.stats?.tasks?.completionRate || 0}%</div>
+                    <p className="text-xs text-muted-foreground">
+                      {project?.stats?.tasks?.completed || 0} of {project?.stats?.tasks?.total || 0} tasks completed
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Budget Utilization</CardTitle>
+                    <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{project?.stats?.budget?.utilizationRate || 0}%</div>
+                    <p className="text-xs text-muted-foreground">
+                      ${project?.stats?.budget?.spent || 0} of ${project?.stats?.budget?.total || 0} spent
+                    </p>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                    <CardTitle className="text-sm font-medium">Time Tracking</CardTitle>
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  </CardHeader>
+                  <CardContent>
+                    <div className="text-2xl font-bold">{project?.stats?.timeTracking?.totalHours || 0}h</div>
+                    <p className="text-xs text-muted-foreground">
+                      {project?.stats?.timeTracking?.entries || 0} time entries
+                    </p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recent Activity</CardTitle>
+                    <CardDescription>Latest project activities and updates</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium">Project created</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(project?.createdAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center space-x-4">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div className="flex-1 space-y-1">
+                          <p className="text-sm font-medium">First task completed</p>
+                          <p className="text-xs text-muted-foreground">2 days ago</p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Team Performance</CardTitle>
+                    <CardDescription>Team member productivity and workload</CardDescription>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-4">
+                      {project?.teamMembers?.slice(0, 3).map((member: any, index: number) => (
+                        <div key={index} className="flex items-center space-x-4">
+                          <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-medium">
+                            {member.firstName?.[0]}{member.lastName?.[0]}
+                          </div>
+                          <div className="flex-1 space-y-1">
+                            <p className="text-sm font-medium">
+                              {member.firstName} {member.lastName}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{member.role}</p>
+                          </div>
+                          <Badge variant="secondary">Active</Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
 
           <TabsContent value="settings" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Project Settings</CardTitle>
-                <CardDescription>Configure project settings and preferences</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="grid gap-6 md:grid-cols-2">
-                  <div className="space-y-4">
-                    <div>
-                      <Label htmlFor="project-name" className="text-sm font-medium text-foreground">Project Name</Label>
-                      <Input 
+            <div className="space-y-6">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Project Settings</h3>
+                <p className="text-sm text-muted-foreground">
+                  Manage project configuration and preferences
+                </p>
+              </div>
+
+              <div className="grid gap-6 lg:grid-cols-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle>General Settings</CardTitle>
+                    <CardDescription>Basic project information and settings</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="project-name">Project Name</Label>
+                      <Input
                         id="project-name"
-                        value={project?.name || ''} 
+                        value={project?.name || ''}
                         readOnly
-                        className="mt-1 bg-muted"
+                        className="bg-muted"
                       />
                     </div>
-                    <div>
-                      <Label htmlFor="description" className="text-sm font-medium text-foreground">Description</Label>
-                      <Textarea 
-                        id="description"
-                        value={project?.description || ''} 
+                    <div className="space-y-2">
+                      <Label htmlFor="project-description">Description</Label>
+                      <Textarea
+                        id="project-description"
+                        value={project?.description || ''}
                         readOnly
-                        className="mt-1 resize-none bg-muted"
+                        className="bg-muted"
                         rows={3}
-                        placeholder="Enter project description..."
                       />
                     </div>
-                    <div className="grid gap-4 md:grid-cols-2">
-                      <div>
-                        <Label htmlFor="start-date" className="text-sm font-medium text-foreground">Start Date</Label>
-                        <Input 
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="start-date">Start Date</Label>
+                        <Input
                           id="start-date"
                           type="date"
-                          value={project?.startDate ? new Date(project.startDate).toISOString().split('T')[0] : ''} 
+                          value={project?.startDate ? new Date(project.startDate).toISOString().split('T')[0] : ''}
                           readOnly
-                          className="mt-1 bg-muted"
+                          className="bg-muted"
                         />
                       </div>
-                      <div>
-                        <Label htmlFor="end-date" className="text-sm font-medium text-foreground">End Date</Label>
-                        <Input 
+                      <div className="space-y-2">
+                        <Label htmlFor="end-date">End Date</Label>
+                        <Input
                           id="end-date"
                           type="date"
-                          value={project?.endDate ? new Date(project.endDate).toISOString().split('T')[0] : ''} 
+                          value={project?.endDate ? new Date(project.endDate).toISOString().split('T')[0] : ''}
                           readOnly
-                          className="mt-1 bg-muted"
+                          className="bg-muted"
                         />
                       </div>
                     </div>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="text-sm font-medium text-foreground">Status</label>
-                      <Select 
-                        value={project?.status || 'planning'} 
-                        onValueChange={(value) => {
-                          if (project) {
-                            setProject({...project, status: value as any})
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="mt-1">
+                    <Button variant="outline" className="w-full">
+                      <Edit className="h-4 w-4 mr-2" />
+                      Edit Project Details
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Team Management</CardTitle>
+                    <CardDescription>Manage project team members and roles</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-3">
+                      {project?.teamMembers?.map((member: any, index: number) => (
+                        <div key={index} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div className="flex items-center space-x-3">
+                            <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-primary-foreground text-xs font-medium">
+                              {member.firstName?.[0]}{member.lastName?.[0]}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium">
+                                {member.firstName} {member.lastName}
+                              </p>
+                              <p className="text-xs text-muted-foreground">{member.email}</p>
+                            </div>
+                          </div>
+                          <Badge variant="secondary">{member.role}</Badge>
+                        </div>
+                      ))}
+                    </div>
+                    <Button variant="outline" className="w-full">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Add Team Member
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Project Status</CardTitle>
+                    <CardDescription>Current project status and workflow settings</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="status">Status</Label>
+                      <Select value={project?.status || 'active'}>
+                        <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="planning">Planning</SelectItem>
                           <SelectItem value="active">Active</SelectItem>
-                          <SelectItem value="on_hold">On Hold</SelectItem>
+                          <SelectItem value="on-hold">On Hold</SelectItem>
                           <SelectItem value="completed">Completed</SelectItem>
                           <SelectItem value="cancelled">Cancelled</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                    
-                    <div>
-                      <label className="text-sm font-medium text-foreground">Priority</label>
-                      <Select 
-                        value={project?.priority || 'medium'} 
-                        onValueChange={(value) => {
-                          if (project) {
-                            setProject({...project, priority: value as any})
-                          }
-                        }}
-                      >
-                        <SelectTrigger className="mt-1">
+                    <div className="space-y-2">
+                      <Label htmlFor="priority">Priority</Label>
+                      <Select value={project?.priority || 'medium'}>
+                        <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
@@ -643,140 +868,217 @@ export default function ProjectDetailPage() {
                         </SelectContent>
                       </Select>
                     </div>
+                    <Button variant="outline" className="w-full">
+                      <Save className="h-4 w-4 mr-2" />
+                      Save Settings
+                    </Button>
+                  </CardContent>
+                </Card>
 
-                    <div className="space-y-3">
-                      <h4 className="text-sm font-medium text-foreground">Time Tracking Settings</h4>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Danger Zone</CardTitle>
+                    <CardDescription>Irreversible actions for this project</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="p-4 border border-destructive rounded-lg">
                       <div className="space-y-2">
-                        <div className="flex items-center space-x-2">
-                          <input 
-                            type="checkbox" 
-                            checked={project?.settings?.allowTimeTracking ?? true}
-                            onChange={(e) => {
-                              if (project) {
-                                setProject({
-                                  ...project, 
-                                  settings: {
-                                    ...project.settings,
-                                    allowTimeTracking: e.target.checked
-                                  }
-                                })
-                              }
-                            }}
-                            className="rounded"
-                          />
-                          <label className="text-sm text-foreground">Allow time tracking</label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input 
-                            type="checkbox" 
-                            checked={project?.settings?.allowManualTimeSubmission ?? true}
-                            onChange={(e) => {
-                              if (project) {
-                                setProject({
-                                  ...project, 
-                                  settings: {
-                                    ...project.settings,
-                                    allowManualTimeSubmission: e.target.checked
-                                  }
-                                })
-                              }
-                            }}
-                            className="rounded"
-                          />
-                          <label className="text-sm text-foreground">Allow manual time submission</label>
-                        </div>
-                        <div className="flex items-center space-x-2">
-                          <input 
-                            type="checkbox" 
-                            checked={project?.settings?.allowExpenseTracking ?? true}
-                            onChange={(e) => {
-                              if (project) {
-                                setProject({
-                                  ...project, 
-                                  settings: {
-                                    ...project.settings,
-                                    allowExpenseTracking: e.target.checked
-                                  }
-                                })
-                              }
-                            }}
-                            className="rounded"
-                          />
-                          <label className="text-sm text-foreground">Allow expense tracking</label>
-                        </div>
+                        <h4 className="text-sm font-medium text-destructive">Delete Project</h4>
+                        <p className="text-xs text-muted-foreground">
+                          Permanently delete this project and all its data. This action cannot be undone.
+                        </p>
+                        <Button variant="destructive" size="sm">
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Delete Project
+                        </Button>
                       </div>
                     </div>
-                  </div>
-                </div>
-
-                {/* Team Member Hourly Rates */}
-                <div className="space-y-4">
-                  <div>
-                    <h4 className="text-lg font-medium text-foreground">Team Member Hourly Rates</h4>
-                    <p className="text-sm text-muted-foreground">Configure hourly rates for team members on this project</p>
-                  </div>
-                  
-                  <div className="space-y-3">
-                    <div className="text-sm text-muted-foreground">
-                      Hourly rates will be automatically applied when team members track time on this project.
-                    </div>
-                    
-                    <div className="p-4 border border-dashed border-muted-foreground/25 rounded-lg">
-                      <div className="text-center text-muted-foreground">
-                        <User className="h-8 w-8 mx-auto mb-2" />
-                        <p className="text-sm">Team member hourly rates will be configured here</p>
-                        <p className="text-xs mt-1">This feature will be available when team management is implemented</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-                
-                <div className="flex justify-end space-x-2">
-                  <Button variant="outline" onClick={() => {
-                    // Reset to original project data
-                    fetchProject()
-                  }}>
-                    Cancel
-                  </Button>
-                  <Button onClick={async () => {
-                    try {
-                      const response = await fetch(`/api/projects/${projectId}`, {
-                        method: 'PUT',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify(project)
-                      })
-                      const data = await response.json()
-                      
-                      if (data.success) {
-                        // Show success message
-                        alert('Project settings updated successfully!')
-                      } else {
-                        alert('Failed to update project settings')
-                      }
-                    } catch (error) {
-                      alert('Failed to update project settings')
-                    }
-                  }}>
-                    Save Changes
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </TabsContent>
         </Tabs>
-      </div>
 
-      <CreateTaskModal
-        isOpen={showCreateTaskModal}
-        onClose={() => setShowCreateTaskModal(false)}
-        projectId={projectId}
-        onTaskCreated={() => {
-          // Refresh project data to update task counts
-          fetchProject()
-        }}
-      />
+        <ResponsiveDialog
+          open={suiteDialogOpen}
+          onOpenChange={setSuiteDialogOpen}
+          title={editingSuite ? 'Edit Test Suite' : 'Create Test Suite'}
+        >
+          <TestSuiteForm
+            testSuite={editingSuite || (parentSuiteIdForCreate ? { name: '', description: '', parentSuite: parentSuiteIdForCreate, project: projectId } as any : undefined)}
+            projectId={projectId}
+            onSave={async (suiteData) => {
+              setSuiteSaving(true)
+              try {
+                const isEdit = !!editingSuite?._id
+                const res = await fetch('/api/test-suites', {
+                  method: isEdit ? 'PUT' : 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    ...(isEdit ? { suiteId: editingSuite._id } : {}),
+                    name: suiteData.name,
+                    description: suiteData.description,
+                    projectId: projectId,
+                    parentSuiteId: suiteData.parentSuite || parentSuiteIdForCreate,
+                  })
+                })
+                if (res.ok) {
+                  setSuiteDialogOpen(false)
+                  setEditingSuite(null)
+                  setParentSuiteIdForCreate(undefined)
+                  setSuitesRefreshCounter(c => c + 1)
+                } else {
+                  const data = await res.json().catch(() => ({}))
+                  console.error('Failed to save test suite', data)
+                }
+              } catch (e) {
+                console.error('Error saving test suite:', e)
+              } finally {
+                setSuiteSaving(false)
+              }
+            }}
+            onCancel={() => {
+              setSuiteDialogOpen(false)
+              setEditingSuite(null)
+              setParentSuiteIdForCreate(undefined)
+            }}
+            loading={suiteSaving}
+          />
+        </ResponsiveDialog>
+
+        <ResponsiveDialog
+          open={testCaseDialogOpen}
+          onOpenChange={setTestCaseDialogOpen}
+          title={editingTestCase ? 'Edit Test Case' : 'Create Test Case'}
+        >
+          <TestCaseForm
+            testCase={editingTestCase || (createCaseSuiteId ? { testSuite: createCaseSuiteId } as any : undefined)}
+            projectId={projectId}
+            onSave={async (testCaseData: any) => {
+              setTestCaseSaving(true)
+              try {
+                const isEdit = !!editingTestCase?._id
+                const res = await fetch('/api/test-cases', {
+                  method: isEdit ? 'PUT' : 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    ...(isEdit ? { testCaseId: editingTestCase._id } : {}),
+                    ...testCaseData,
+                    projectId,
+                  })
+                })
+                if (res.ok) {
+                  setTestCaseDialogOpen(false)
+                  setEditingTestCase(null)
+                  setCreateCaseSuiteId(undefined)
+                  setTestCasesRefreshCounter(c => c + 1)
+                } else {
+                  const data = await res.json().catch(() => ({}))
+                  console.error('Failed to save test case', data)
+                }
+              } catch (e) {
+                console.error('Error saving test case:', e)
+              } finally {
+                setTestCaseSaving(false)
+              }
+            }}
+            onCancel={() => {
+              setTestCaseDialogOpen(false)
+              setEditingTestCase(null)
+              setCreateCaseSuiteId(undefined)
+            }}
+            loading={testCaseSaving}
+          />
+        </ResponsiveDialog>
+
+        {/* Create Task Modal */}
+        <CreateTaskModal
+          isOpen={showCreateTaskModal}
+          onClose={() => setShowCreateTaskModal(false)}
+          projectId={projectId}
+          onTaskCreated={() => {
+            setShowCreateTaskModal(false)
+            // Refresh project data to update task counts
+            fetchProject()
+            // Refresh tasks list
+            fetchTasks()
+          }}
+        />
+
+        {/* Edit Task Modal */}
+        {selectedTask && (
+          <EditTaskModal
+            isOpen={showEditTaskModal}
+            onClose={() => {
+              setShowEditTaskModal(false)
+              setSelectedTask(null)
+            }}
+            task={selectedTask}
+            onTaskUpdated={() => {
+              setShowEditTaskModal(false)
+              setSelectedTask(null)
+              // Refresh project data to update task counts
+              fetchProject()
+              // Refresh tasks list
+              fetchTasks()
+            }}
+          />
+        )}
+
+        {/* View Task Modal */}
+        {selectedTask && (
+          <ViewTaskModal
+            isOpen={false} // We'll handle this separately if needed
+            onClose={() => {
+              setSelectedTask(null)
+            }}
+            task={selectedTask}
+            onEdit={() => {
+              setShowEditTaskModal(true)
+            }}
+            onDelete={() => {
+              setShowDeleteConfirmModal(true)
+            }}
+          />
+        )}
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showDeleteConfirmModal}
+          onClose={() => {
+            setShowDeleteConfirmModal(false)
+            setSelectedTask(null)
+          }}
+          onConfirm={async () => {
+            if (selectedTask) {
+              try {
+                const response = await fetch(`/api/tasks/${selectedTask._id}`, {
+                  method: 'DELETE'
+                })
+                
+                if (response.ok) {
+                  setShowDeleteConfirmModal(false)
+                  setSelectedTask(null)
+                  // Refresh project data to update task counts
+                  fetchProject()
+                  // Refresh tasks list
+                  fetchTasks()
+                } else {
+                  console.error('Failed to delete task')
+                }
+              } catch (error) {
+                console.error('Error deleting task:', error)
+              }
+            }
+          }}
+          title="Delete Task"
+          description={`Are you sure you want to delete "${selectedTask?.title}"? This action cannot be undone.`}
+          confirmText="Delete"
+          cancelText="Cancel"
+        />
+
+      </div>
     </MainLayout>
   )
 }

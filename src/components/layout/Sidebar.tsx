@@ -499,59 +499,40 @@ function NavigationItem({ item, collapsed, pathname, expandedItems, onToggleExpa
   return (
     <PermissionGate permission={item.permission}>
       <div className="space-y-1">
-        {hasChildren && !collapsed ? (
-          <Button
-            variant={isActive ? 'secondary' : 'ghost'}
-            className={cn(
-              'w-full justify-start rounded-lg',
-              collapsed ? 'px-2' : 'px-3',
-              isActive && 'bg-secondary text-secondary-foreground'
-            )}
-            onClick={() => onToggleExpanded(item.id)}
-          >
-            <Icon className={cn('h-4 w-4', collapsed ? 'mx-auto' : 'mr-2')} />
-            {!collapsed && (
-              <>
-                <span className="flex-1 text-left">{item.label}</span>
-                {hasChildren && (
-                  <ChevronRight
-                    className={cn(
-                      'h-4 w-4 transition-transform',
-                      isExpanded && 'rotate-90'
-                    )}
-                  />
-                )}
-              </>
-            )}
-          </Button>
-        ) : (
-          <Button
-            variant={isActive ? 'secondary' : 'ghost'}
-            className={cn(
-              'w-full justify-start rounded-lg',
-              collapsed ? 'px-2' : 'px-3',
-              isActive && 'bg-secondary text-secondary-foreground'
-            )}
-            asChild
-          >
-            <Link href={item.path} prefetch onMouseEnter={() => router.prefetch(item.path)} title={item.label}>
-              <Icon className={cn('h-4 w-4', collapsed ? 'mx-auto' : 'mr-2')} />
-              {!collapsed && (
-                <>
-                  <span className="flex-1 text-left">{item.label}</span>
-                  {hasChildren && (
-                    <ChevronRight
-                      className={cn(
-                        'h-4 w-4 transition-transform',
-                        isExpanded && 'rotate-90'
-                      )}
-                    />
+        <Button
+          variant={isActive ? 'secondary' : 'ghost'}
+          className={cn(
+            'w-full justify-start',
+            collapsed ? 'px-2' : 'px-3',
+            isActive && 'bg-secondary text-secondary-foreground'
+          )}
+          title={collapsed ? item.label : undefined}
+          onClick={() => {
+            if (hasChildren && !collapsed) {
+              onToggleExpanded(item.id)
+            } else {
+              // Use startTransition for non-blocking navigation
+              startTransition(() => {
+                router.push(item.path)
+              })
+            }
+          }}
+        >
+          <Icon className={cn('h-4 w-4', collapsed ? 'mx-auto' : 'mr-2')} />
+          {!collapsed && (
+            <>
+              <span className="flex-1 text-left">{item.label}</span>
+              {hasChildren && (
+                <ChevronRight
+                  className={cn(
+                    'h-4 w-4 transition-transform',
+                    isExpanded && 'rotate-90'
                   )}
-                </>
+                />
               )}
-            </Link>
-          </Button>
-        )}
+            </>
+          )}
+        </Button>
 
         {/* Sub-navigation */}
         {hasChildren && isExpanded && !collapsed && (

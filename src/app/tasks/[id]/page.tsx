@@ -28,6 +28,7 @@ import {
   Wrench,
   Layers
 } from 'lucide-react'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 
 interface Task {
   _id: string
@@ -77,6 +78,7 @@ export default function TaskDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [authError, setAuthError] = useState('')
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
 
   const checkAuth = useCallback(async () => {
     try {
@@ -130,6 +132,24 @@ export default function TaskDetailPage() {
       setError('Failed to fetch task')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleDeleteTask = async () => {
+    try {
+      const response = await fetch(`/api/tasks/${taskId}`, {
+        method: 'DELETE'
+      })
+      const data = await response.json()
+      
+      if (data.success) {
+        setShowDeleteConfirmModal(false)
+        router.push('/tasks')
+      } else {
+        setError(data.error || 'Failed to delete task')
+      }
+    } catch (error) {
+      setError('Failed to delete task')
     }
   }
 
@@ -253,24 +273,10 @@ export default function TaskDetailPage() {
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
-            <Button variant="destructive" onClick={async () => {
-              if (confirm('Are you sure you want to delete this task?')) {
-                try {
-                  const response = await fetch(`/api/tasks/${taskId}`, {
-                    method: 'DELETE'
-                  })
-                  const data = await response.json()
-                  
-                  if (data.success) {
-                    router.push('/tasks')
-                  } else {
-                    alert('Failed to delete task')
-                  }
-                } catch (error) {
-                  alert('Failed to delete task')
-                }
-              }
-            }}>
+            <Button 
+              variant="destructive" 
+              onClick={() => setShowDeleteConfirmModal(true)}
+            >
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </Button>
@@ -431,6 +437,17 @@ export default function TaskDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirmModal}
+        onClose={() => setShowDeleteConfirmModal(false)}
+        onConfirm={handleDeleteTask}
+        title="Delete Task"
+        description={`Are you sure you want to delete "${task?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </MainLayout>
   )
 }

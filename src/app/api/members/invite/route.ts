@@ -117,7 +117,10 @@ export async function POST(request: NextRequest) {
     const origin = request.headers.get('origin') || request.headers.get('host')
     const protocol = request.headers.get('x-forwarded-proto') || (origin?.includes('localhost') ? 'http' : 'https')
     const host = origin || process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, '') || 'localhost:3000'
-    const baseUrl = `${protocol}://${host}`
+    
+    // Clean up the host to avoid double protocol
+    const cleanHost = host.replace(/^https?:\/\//, '')
+    const baseUrl = `${protocol}://${cleanHost}`
     const invitationLink = `${baseUrl}/accept-invitation?token=${token}`
     
     const emailHtml = `
@@ -229,15 +232,24 @@ export async function POST(request: NextRequest) {
     </html>
     `
 
-    const emailSent = await emailService.sendEmail({
-      to: email,
-      subject: `You're invited to join ${organizationName}`,
-      html: emailHtml
-    })
+    try {
+      const emailSent = await emailService.sendEmail({
+        to: email,
+        subject: `You're invited to join ${organizationName}`,
+        html: emailHtml
+      })
 
-    if (!emailSent) {
+      if (!emailSent) {
+        console.error('Email service returned false for invitation email')
+        return NextResponse.json(
+          { error: 'Failed to send invitation email. Please check email configuration.' },
+          { status: 500 }
+        )
+      }
+    } catch (emailError) {
+      console.error('Email sending error:', emailError)
       return NextResponse.json(
-        { error: 'Failed to send invitation email' },
+        { error: 'Failed to send invitation email. Please check email configuration.' },
         { status: 500 }
       )
     }

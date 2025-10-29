@@ -37,6 +37,7 @@ import { useDebounce } from '@/hooks/useDebounce'
 import dynamic from 'next/dynamic'
 import { Permission, PermissionGate } from '@/lib/permissions'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/DropdownMenu'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 
 // Dynamically import heavy modals
 const CreateTaskModal = dynamic(() => import('./CreateTaskModal'), { ssr: false })
@@ -103,6 +104,8 @@ export default function TasksClient({
   const [typeFilter, setTypeFilter] = useState(initialFilters.type || 'all')
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
   useEffect(() => {
     const q = searchParams.get('search') || ''
     const s = searchParams.get('status') || 'all'
@@ -247,21 +250,30 @@ export default function TasksClient({
   }
 
 
-  const handleDeleteTask = async (taskId: string) => {
+  const handleDeleteTask = async () => {
+    if (!selectedTask) return
+    
     try {
-      const response = await fetch(`/api/tasks/${taskId}`, {
+      const response = await fetch(`/api/tasks/${selectedTask._id}`, {
         method: 'DELETE'
       })
       const data = await response.json()
 
       if (data.success) {
-        setTasks(tasks.filter(p => p._id !== taskId))
+        setTasks(tasks.filter(p => p._id !== selectedTask._id))
+        setShowDeleteConfirmModal(false)
+        setSelectedTask(null)
       } else {
-        setError(data.error || 'Failed to delete project')
+        setError(data.error || 'Failed to delete task')
       }
     } catch (err) {
-      setError('Failed to delete project')
+      setError('Failed to delete task')
     }
+  }
+
+  const handleDeleteClick = (task: Task) => {
+    setSelectedTask(task)
+    setShowDeleteConfirmModal(true)
   }
   return (
     <div className="space-y-6">
@@ -481,10 +493,7 @@ export default function TasksClient({
                               <DropdownMenuItem 
                                 onClick={(e) => {
                                   e.stopPropagation()
-                                  // Handle delete with confirmation
-                                  if (confirm('Are you sure you want to delete this task? This action cannot be undone.')) {
-                                    handleDeleteTask(task._id)
-                                  }
+                                  handleDeleteClick(task)
                                 }}
                                 className="text-destructive focus:text-destructive"
                               >
@@ -541,6 +550,20 @@ export default function TasksClient({
           onTaskCreated={handleTaskCreated}
         />
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showDeleteConfirmModal}
+        onClose={() => {
+          setShowDeleteConfirmModal(false)
+          setSelectedTask(null)
+        }}
+        onConfirm={handleDeleteTask}
+        title="Delete Task"
+        description={`Are you sure you want to delete "${selectedTask?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </div>
   )
 }

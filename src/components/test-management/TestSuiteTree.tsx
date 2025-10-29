@@ -110,6 +110,7 @@ export default function TestSuiteTree({
   }
 
   const handleSuiteClick = (suite: TestSuite) => {
+    
     onSuiteSelect?.(suite)
   }
 
