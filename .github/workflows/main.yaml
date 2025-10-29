@@ -24,7 +24,7 @@ jobs:
 
   semantic-release:
     runs-on: ubuntu-latest
-    needs: sonar-analyze
+    needs: release
     outputs:
       version: ${{ steps.set-version.outputs.version }}
     steps:
