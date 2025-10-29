@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
@@ -49,6 +50,7 @@ interface CalendarViewProps {
 }
 
 export default function CalendarView({ projectId, onCreateTask }: CalendarViewProps) {
+  const router = useRouter()
   const [tasks, setTasks] = useState<Task[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -336,6 +338,7 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
                           <div
                             key={task._id}
                             className="text-xs p-1 rounded bg-card border shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                            onClick={() => router.push(`/tasks/${task._id}`)}
                           >
                             <div className="font-medium truncate">{task.title}</div>
                             <div className="flex items-center space-x-1">
@@ -402,6 +405,7 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
                       <div
                         key={task._id}
                         className="text-xs p-2 rounded bg-card border shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => router.push(`/tasks/${task._id}`)}
                       >
                         <div className="font-medium truncate">{task.title}</div>
                         <div className="flex items-center space-x-1 mt-1">
@@ -457,6 +461,7 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
                       <div
                         key={task._id}
                         className="p-3 rounded bg-card border shadow-sm cursor-pointer hover:shadow-md transition-shadow"
+                        onClick={() => router.push(`/tasks/${task._id}`)}
                       >
                         <div className="font-medium">{task.title}</div>
                         <div className="text-sm text-muted-foreground mt-1">{task.description}</div>

@@ -14,6 +14,7 @@ import {
   BarChart3, 
   Clock 
 } from 'lucide-react'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/DropdownMenu'
 import { ITask } from '@/models/Task'
 
 interface PopulatedTask extends Omit<ITask, 'assignedTo'> {
@@ -30,6 +31,8 @@ interface SortableTaskProps {
   getPriorityColor: (priority: string) => string
   getTypeColor: (type: string) => string
   isDragOverlay?: boolean
+  onEdit?: (task: PopulatedTask) => void
+  onDelete?: (taskId: string) => void
 }
 
 export default function SortableTask({ 
@@ -37,7 +40,9 @@ export default function SortableTask({
   onClick, 
   getPriorityColor, 
   getTypeColor, 
-  isDragOverlay = false 
+  isDragOverlay = false,
+  onEdit,
+  onDelete
 }: SortableTaskProps) {
   const {
     attributes,
@@ -79,13 +84,48 @@ export default function SortableTask({
               >
                 <GripVertical className="h-3 w-3" />
               </Button>
-              <Button 
-                variant="ghost" 
-                size="sm"
-                className="h-6 w-6 p-0"
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={(e) => {
+                    e.stopPropagation()
+                    onClick()
+                  }}>
+                    View Details
+                  </DropdownMenuItem>
+                  {onEdit && (
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation()
+                      onEdit(task)
+                    }}>
+                      Edit Task
+                    </DropdownMenuItem>
+                  )}
+                  {onDelete && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDelete(task._id as string)
+                        }}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        Delete Task
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           

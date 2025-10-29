@@ -35,6 +35,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const search = searchParams.get('search') || ''
     const status = searchParams.get('status') || ''
+    const priority = searchParams.get('priority') || ''
 
     // Build filters
     const filters: any = { 
@@ -51,6 +52,10 @@ export async function GET(request: NextRequest) {
     
     if (status) {
       filters.status = status
+    }
+    
+    if (priority) {
+      filters.priority = priority
     }
 
     let projectQuery: any = { ...filters }

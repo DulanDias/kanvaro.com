@@ -60,6 +60,11 @@ import {
   Edit,
   Trash2
 } from 'lucide-react'
+import CreateTaskModal from '@/components/tasks/CreateTaskModal'
+import EditTaskModal from '@/components/tasks/EditTaskModal'
+import ViewTaskModal from '@/components/tasks/ViewTaskModal'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/DropdownMenu'
 
 interface Task {
   _id: string
@@ -91,6 +96,11 @@ interface Task {
   updatedAt: string
 }
 
+interface Project {
+  _id: string
+  name: string
+}
+
 const columns = [
   { id: 'todo', title: 'To Do', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200' },
   { id: 'in_progress', title: 'In Progress', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' },
@@ -100,7 +110,17 @@ const columns = [
 ]
 
 // Column Drop Zone Component
-function ColumnDropZone({ column, tasks }: { column: any, tasks: Task[] }) {
+function ColumnDropZone({ 
+  column, 
+  tasks, 
+  onEditTask, 
+  onDeleteTask 
+}: { 
+  column: any, 
+  tasks: Task[], 
+  onEditTask?: (task: Task) => void,
+  onDeleteTask?: (taskId: string) => void
+}) {
   const router = useRouter()
   const { setNodeRef, isOver } = useDroppable({
     id: column.id,
@@ -170,6 +190,8 @@ function ColumnDropZone({ column, tasks }: { column: any, tasks: Task[] }) {
                 onClick={() => router.push(`/tasks/${task._id}`)}
                 getPriorityColor={getPriorityColor}
                 getTypeColor={getTypeColor}
+                onEdit={onEditTask}
+                onDelete={onDeleteTask}
               />
             ))
           )}
@@ -189,6 +211,13 @@ export default function KanbanPage() {
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [typeFilter, setTypeFilter] = useState('all')
   const [activeTask, setActiveTask] = useState<Task | null>(null)
+  const [projects, setProjects] = useState<Project[]>([])
+  const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
+  const [showEditTaskModal, setShowEditTaskModal] = useState(false)
+  const [showViewTaskModal, setShowViewTaskModal] = useState(false)
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+  const [selectedTask, setSelectedTask] = useState<Task | null>(null)
+  const [createTaskStatus, setCreateTaskStatus] = useState<string | undefined>(undefined)
 
   // Use the task state management hook
   const {
@@ -228,7 +257,7 @@ export default function KanbanPage() {
       
       if (response.ok) {
         setAuthError('')
-        await fetchTasks()
+        await Promise.all([fetchTasks(), fetchProjects()])
         // Start real-time synchronization after successful auth
         startPolling()
       } else if (response.status === 401) {
@@ -238,7 +267,7 @@ export default function KanbanPage() {
         
         if (refreshResponse.ok) {
           setAuthError('')
-          await fetchTasks()
+          await Promise.all([fetchTasks(), fetchProjects()])
           // Start real-time synchronization after successful refresh
           startPolling()
         } else {
@@ -281,6 +310,22 @@ export default function KanbanPage() {
       setError('Failed to fetch tasks')
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchProjects = async () => {
+    try {
+      const response = await fetch('/api/projects')
+      const data = await response.json()
+
+      if (data.success && Array.isArray(data.data)) {
+        setProjects(data.data)
+      } else {
+        setProjects([])
+      }
+    } catch (err) {
+      console.error('Failed to fetch projects:', err)
+      setProjects([])
     }
   }
 
@@ -368,6 +413,43 @@ export default function KanbanPage() {
     }
   }
 
+  // Modal handlers
+  const handleCreateTask = (status?: string) => {
+    setCreateTaskStatus(status)
+    setShowCreateTaskModal(true)
+  }
+
+  const handleEditTask = (task: Task) => {
+    setSelectedTask(task)
+    setShowEditTaskModal(true)
+  }
+
+  const handleViewTask = (task: Task) => {
+    setSelectedTask(task)
+    setShowViewTaskModal(true)
+  }
+
+  const handleDeleteTask = (taskId: string) => {
+    const task = tasks.find(t => t._id === taskId)
+    if (task) {
+      setSelectedTask(task)
+      setShowDeleteConfirmModal(true)
+    }
+  }
+
+  const confirmDeleteTask = async () => {
+    if (selectedTask) {
+      try {
+        await handleTaskDelete(selectedTask._id)
+        setShowDeleteConfirmModal(false)
+        setSelectedTask(null)
+      } catch (error) {
+        console.error('Failed to delete task:', error)
+        setError('Failed to delete task. Please try again.')
+      }
+    }
+  }
+
   if (loading || taskLoading) {
     return (
       <MainLayout>
@@ -450,7 +532,11 @@ export default function KanbanPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Projects</SelectItem>
-                    {/* This would be populated with actual projects */}
+                    {projects.map((project) => (
+                      <SelectItem key={project._id} value={project._id}>
+                        {project.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
                 <Select value={priorityFilter} onValueChange={setPriorityFilter}>
@@ -493,7 +579,13 @@ export default function KanbanPage() {
                   const columnTasks = getTasksByStatus(column.id)
                   
                   return (
-                    <ColumnDropZone key={column.id} column={column} tasks={columnTasks} />
+                    <ColumnDropZone 
+                      key={column.id} 
+                      column={column} 
+                      tasks={columnTasks}
+                      onEditTask={handleEditTask}
+                      onDeleteTask={handleDeleteTask}
+                    />
                   )
                 })}
               </div>
@@ -506,6 +598,8 @@ export default function KanbanPage() {
                     isDragOverlay
                     getPriorityColor={getPriorityColor}
                     getTypeColor={getTypeColor}
+                    onEdit={handleEditTask}
+                    onDelete={handleDeleteTask}
                   />
                 ) : null}
               </DragOverlay>
@@ -513,6 +607,72 @@ export default function KanbanPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Modals */}
+      <CreateTaskModal
+        isOpen={showCreateTaskModal}
+        onClose={() => {
+          setShowCreateTaskModal(false)
+          setCreateTaskStatus(undefined)
+        }}
+        projectId={projectFilter === 'all' ? '' : projectFilter}
+        defaultStatus={createTaskStatus}
+        onTaskCreated={() => {
+          setShowCreateTaskModal(false)
+          setCreateTaskStatus(undefined)
+          // Refresh tasks after creation
+          fetchTasks()
+        }}
+      />
+
+      {selectedTask && (
+        <EditTaskModal
+          isOpen={showEditTaskModal}
+          onClose={() => {
+            setShowEditTaskModal(false)
+            setSelectedTask(null)
+          }}
+          task={selectedTask}
+          onTaskUpdated={() => {
+            setShowEditTaskModal(false)
+            setSelectedTask(null)
+            // Refresh tasks after update
+            fetchTasks()
+          }}
+        />
+      )}
+
+      {selectedTask && (
+        <ViewTaskModal
+          isOpen={showViewTaskModal}
+          onClose={() => {
+            setShowViewTaskModal(false)
+            setSelectedTask(null)
+          }}
+          task={selectedTask}
+          onEdit={() => {
+            setShowViewTaskModal(false)
+            setShowEditTaskModal(true)
+          }}
+          onDelete={() => {
+            setShowViewTaskModal(false)
+            handleDeleteTask(selectedTask._id)
+          }}
+        />
+      )}
+
+      <ConfirmationModal
+        isOpen={showDeleteConfirmModal}
+        onClose={() => {
+          setShowDeleteConfirmModal(false)
+          setSelectedTask(null)
+        }}
+        onConfirm={confirmDeleteTask}
+        title="Delete Task"
+        description={`Are you sure you want to delete "${selectedTask?.title}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+      />
     </MainLayout>
   )
 }
@@ -523,9 +683,11 @@ interface SortableTaskProps {
   getPriorityColor: (priority: string) => string
   getTypeColor: (type: string) => string
   isDragOverlay?: boolean
+  onEdit?: (task: Task) => void
+  onDelete?: (taskId: string) => void
 }
 
-function SortableTask({ task, onClick, getPriorityColor, getTypeColor, isDragOverlay = false }: SortableTaskProps) {
+function SortableTask({ task, onClick, getPriorityColor, getTypeColor, isDragOverlay = false, onEdit, onDelete }: SortableTaskProps) {
   const {
     attributes,
     listeners,
@@ -566,16 +728,48 @@ function SortableTask({ task, onClick, getPriorityColor, getTypeColor, isDragOve
               >
                 <GripVertical className="h-3 w-3" />
               </Button>
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={(e) => {
-                  e.stopPropagation()
-                  // Handle menu actions
-                }}
-              >
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    className="h-6 w-6 p-0"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={(e) => {
+                    e.stopPropagation()
+                    onClick()
+                  }}>
+                    View Details
+                  </DropdownMenuItem>
+                  {onEdit && (
+                    <DropdownMenuItem onClick={(e) => {
+                      e.stopPropagation()
+                      onEdit(task)
+                    }}>
+                      Edit Task
+                    </DropdownMenuItem>
+                  )}
+                  {onDelete && (
+                    <>
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem 
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDelete(task._id)
+                        }}
+                        className="text-destructive focus:text-destructive"
+                      >
+                        Delete Task
+                      </DropdownMenuItem>
+                    </>
+                  )}
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
           
