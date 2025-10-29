@@ -60,7 +60,7 @@ jobs:
   build_main:
     runs-on: ubuntu-latest
     environment: main
-    needs: release
+    needs: semantic-release
     outputs:
       version: ${{ steps.image-version.outputs.version }}
     steps:
