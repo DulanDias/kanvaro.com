@@ -254,6 +254,26 @@ export default function CalendarPage() {
     setCurrentDate(new Date())
   }
 
+  const handleEventClick = (event: CalendarEvent) => {
+    // Route based on event type
+    // Note: Events come from the task API, so they're all tasks with different type classifications
+    // However, we route sprints to their dedicated page if it exists
+    switch (event.type) {
+      case 'sprint':
+        // Sprints may have their own detail page
+        router.push(`/sprints/${event._id}`)
+        break
+      case 'task':
+      case 'deadline':
+      case 'milestone':
+      case 'meeting':
+      default:
+        // All other event types route to task detail page
+        router.push(`/tasks/${event._id}`)
+        break
+    }
+  }
+
   if (loading || taskLoading) {
     return (
       <MainLayout>
@@ -448,7 +468,7 @@ export default function CalendarPage() {
                           <div 
                             key={event._id}
                             className="text-xs p-1 rounded cursor-pointer hover:bg-muted"
-                            onClick={() => router.push(`/events/${event._id}`)}
+                            onClick={() => handleEventClick(event)}
                           >
                             <div className="flex items-center space-x-1">
                               <div className={`w-2 h-2 rounded-full ${

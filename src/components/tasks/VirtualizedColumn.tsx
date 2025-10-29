@@ -31,6 +31,8 @@ interface VirtualizedColumnProps {
   getPriorityColor: (priority: string) => string
   getTypeColor: (type: string) => string
   onTaskClick?: (task: PopulatedTask) => void
+  onEditTask?: (task: PopulatedTask) => void
+  onDeleteTask?: (taskId: string) => void
 }
 
 export default function VirtualizedColumn({
@@ -39,8 +41,11 @@ export default function VirtualizedColumn({
   onCreateTask,
   getPriorityColor,
   getTypeColor,
-  onTaskClick
+  onTaskClick,
+  onEditTask,
+  onDeleteTask
 }: VirtualizedColumnProps) {
+  console.log('Creating task with status:', column.key)
   const parentRef = useRef<HTMLDivElement>(null)
   
   // Add droppable functionality for empty columns
@@ -125,6 +130,8 @@ export default function VirtualizedColumn({
                         onClick={() => onTaskClick?.(task)}
                         getPriorityColor={getPriorityColor}
                         getTypeColor={getTypeColor}
+                        onEdit={onEditTask}
+                        onDelete={onDeleteTask}
                       />
                     </div>
                   )

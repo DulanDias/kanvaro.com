@@ -136,6 +136,13 @@ export default function ProjectsPage() {
     checkAuth()
   }, [checkAuth])
 
+  // Refetch projects when filters change
+  useEffect(() => {
+    if (!loading && !authError) {
+      fetchProjects()
+    }
+  }, [searchQuery, statusFilter, priorityFilter])
+
   const fetchProjects = async () => {
     try {
       setLoading(true)
@@ -208,16 +215,7 @@ export default function ProjectsPage() {
     }
   }
 
-  const filteredProjects = projects.filter(project => {
-    const matchesSearch = !searchQuery || 
-      project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.description.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const matchesStatus = statusFilter === 'all' || project.status === statusFilter
-    const matchesPriority = priorityFilter === 'all' || project.priority === priorityFilter
-
-    return matchesSearch && matchesStatus && matchesPriority
-  })
+  const filteredProjects = projects
 
   if (loading) {
     return (
@@ -260,14 +258,15 @@ export default function ProjectsPage() {
             <p className="text-muted-foreground">Manage and track your projects</p>
           </div>
         </div>
-        <PermissionButton 
-          permission={Permission.PROJECT_CREATE}
-          onClick={() => router.push('/projects/create')}
-          className="w-full sm:w-auto hover:bg-primary/90 hover:shadow-md transition-all duration-200"
-        >
-          <Plus className="h-4 w-4 mr-2" />
-          Create New Project
-        </PermissionButton>
+        <PermissionGate permission={Permission.PROJECT_CREATE}>
+          <Button 
+            onClick={() => router.push('/projects/create')}
+            className="flex items-center justify-center gap-2 w-full sm:w-auto hover:bg-primary/90 hover:shadow-lg hover:scale-105 transition-all duration-200"
+          >
+            <Plus className="h-4 w-4" />
+            Create New Project
+          </Button>
+        </PermissionGate>
       </div>
 
       {error && (

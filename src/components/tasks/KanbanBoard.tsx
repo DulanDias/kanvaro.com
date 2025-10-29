@@ -77,6 +77,8 @@ interface Project {
 interface KanbanBoardProps {
   projectId: string
   onCreateTask: () => void
+  onEditTask?: (task: PopulatedTask) => void
+  onDeleteTask?: (taskId: string) => void
 }
 
 const defaultColumns = [
@@ -87,7 +89,7 @@ const defaultColumns = [
   { key: 'done', title: 'Done', color: 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200' }
 ]
 
-export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProps) {
+export default function KanbanBoard({ projectId, onCreateTask, onEditTask, onDeleteTask }: KanbanBoardProps) {
   const [project, setProject] = useState<Project | null>(null)
   const [projects, setProjects] = useState<Project[]>([])
   const [selectedProjectId, setSelectedProjectId] = useState(projectId)
@@ -422,6 +424,8 @@ export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProp
                   // Navigate to task detail page
                   window.open(`/tasks/${task._id}`, '_blank')
                 }}
+                onEditTask={onEditTask}
+                onDeleteTask={onDeleteTask}
               />
             )
           })}
@@ -435,6 +439,8 @@ export default function KanbanBoard({ projectId, onCreateTask }: KanbanBoardProp
               getPriorityColor={getPriorityColor}
               getTypeColor={getTypeColor}
               isDragOverlay
+              onEdit={onEditTask}
+              onDelete={onDeleteTask}
             />
           ) : null}
         </DragOverlay>
