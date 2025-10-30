@@ -45,7 +45,6 @@ export default function VirtualizedColumn({
   onEditTask,
   onDeleteTask
 }: VirtualizedColumnProps) {
-  console.log('Creating task with status:', column.key)
   const parentRef = useRef<HTMLDivElement>(null)
   
   // Add droppable functionality for empty columns

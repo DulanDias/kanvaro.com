@@ -33,7 +33,7 @@ interface User {
 
 interface Epic {
   _id: string
-  name: string
+  title: string
 }
 
 interface Sprint {
@@ -50,6 +50,7 @@ export default function CreateStoryPage() {
   const [users, setUsers] = useState<User[]>([])
   const [epics, setEpics] = useState<Epic[]>([])
   const [sprints, setSprints] = useState<Sprint[]>([])
+  const [projectQuery, setProjectQuery] = useState("");
 
   const [formData, setFormData] = useState({
     title: '',
@@ -149,6 +150,7 @@ export default function CreateStoryPage() {
 
       if (data.success && Array.isArray(data.data)) {
         setEpics(data.data)
+        
       } else {
         setEpics([])
       }
@@ -167,7 +169,6 @@ export default function CreateStoryPage() {
     try {
       const response = await fetch(`/api/sprints?project=${projectId}`)
       const data = await response.json()
-
       if (data.success && Array.isArray(data.data)) {
         setSprints(data.data)
       } else {
@@ -245,6 +246,15 @@ export default function CreateStoryPage() {
     }))
   }
 
+  // Add required field validation
+  const isFormValid = () => {
+    return (
+      !!formData.title.trim() &&
+      !!formData.project &&
+      !!formData.dueDate
+    );
+  };
+
   if (authError) {
     return (
       <MainLayout>
@@ -303,16 +313,33 @@ export default function CreateStoryPage() {
 
                   <div>
                     <label className="text-sm font-medium text-foreground">Project *</label>
-                    <Select value={formData.project} onValueChange={(value) => handleChange('project', value)}>
+                    <Select
+                      value={formData.project}
+                      onValueChange={(value) => handleChange('project', value)}
+                      onOpenChange={open => { if (open) setProjectQuery(""); }}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a project" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {Array.isArray(projects) && projects.map((project) => (
-                          <SelectItem key={project._id} value={project._id}>
-                            {project.name}
-                          </SelectItem>
-                        ))}
+                      <SelectContent className="z-[10050] p-0">
+                        <div className="p-2">
+                          <Input
+                            value={projectQuery}
+                            onChange={e => setProjectQuery(e.target.value)}
+                            placeholder="Type to search projects"
+                            className="mb-2"
+                          />
+                          <div className="max-h-56 overflow-y-auto">
+                            {projects.filter(p => !projectQuery.trim() || p.name.toLowerCase().includes(projectQuery.toLowerCase())).map((project) => (
+                              <SelectItem key={project._id} value={project._id}>
+                                {project.name}
+                              </SelectItem>
+                            ))}
+                            {projects.filter(p => !projectQuery.trim() || p.name.toLowerCase().includes(projectQuery.toLowerCase())).length === 0 && (
+                              <div className="px-2 py-1 text-sm text-muted-foreground">No matching projects</div>
+                            )}
+                          </div>
+                        </div>
                       </SelectContent>
                     </Select>
                   </div>
@@ -327,7 +354,7 @@ export default function CreateStoryPage() {
                         <SelectItem value="none">No Epic</SelectItem>
                         {Array.isArray(epics) && epics.map((epic) => (
                           <SelectItem key={epic._id} value={epic._id}>
-                            {epic.name}
+                            {epic.title}
                           </SelectItem>
                         ))}
                       </SelectContent>
@@ -386,7 +413,7 @@ export default function CreateStoryPage() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-foreground">Due Date</label>
+                    <label className="text-sm font-medium text-foreground">Due Date *</label>
                     <Input
                       type="date"
                       value={formData.dueDate}
@@ -471,7 +498,7 @@ export default function CreateStoryPage() {
                 <Button type="button" variant="outline" onClick={() => router.push('/stories')}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading || !isFormValid()}>
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />

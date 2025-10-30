@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { 
   ArrowLeft,
   Calendar,
@@ -74,6 +75,9 @@ export default function StoryDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
   const [authError, setAuthError] = useState('')
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
 
   const checkAuth = useCallback(async () => {
     try {
@@ -129,6 +133,28 @@ export default function StoryDetailPage() {
       setLoading(false)
     }
   }
+
+  const handleDeleteStory = async () => {
+    setDeleting(true);
+    setDeleteError('');
+    try {
+      const response = await fetch(`/api/stories/${storyId}`, {
+        method: 'DELETE',
+      });
+      if (response.ok) {
+        router.push('/stories');
+      } else {
+        const data = await response.json();
+        setDeleteError(data.error || 'Failed to delete story');
+        setShowDeleteConfirmModal(false);
+      }
+    } catch (e) {
+      setDeleteError('Failed to delete story');
+      setShowDeleteConfirmModal(false);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -224,11 +250,11 @@ export default function StoryDetailPage() {
             </div>
           </div>
           <div className="flex items-center space-x-2">
-            <Button variant="outline">
+            <Button variant="outline" onClick={() => router.push(`/stories/${storyId}/edit`)}>
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
-            <Button variant="destructive">
+            <Button variant="destructive" onClick={() => setShowDeleteConfirmModal(true)}>
               <Trash2 className="h-4 w-4 mr-2" />
               Delete
             </Button>
@@ -393,6 +419,20 @@ export default function StoryDetailPage() {
           </div>
         </div>
       </div>
+      {deleteError && (
+        <Alert variant="destructive" className="my-4">
+          <AlertDescription>{deleteError}</AlertDescription>
+        </Alert>
+      )}
+      <ConfirmationModal
+        isOpen={showDeleteConfirmModal}
+        onClose={() => setShowDeleteConfirmModal(false)}
+        onConfirm={handleDeleteStory}
+        title="Delete Story"
+        description={`Are you sure you want to delete "${story?.title}"? This action cannot be undone.`}
+        confirmText={deleting ? 'Deleting...' : 'Delete'}
+        cancelText="Cancel"
+      />
     </MainLayout>
   )
 }
