@@ -1,6 +1,6 @@
 {
   "branches": ["main"],
-  "repositoryUrl": "https://github.com/echonlabs/Kanvaro.git",
+  "repositoryUrl": "https://github.com/EchonLabs/kanvaro.com.git",
   "plugins": [
     "@semantic-release/commit-analyzer",
     "@semantic-release/release-notes-generator",
