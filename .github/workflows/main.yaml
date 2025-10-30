@@ -41,7 +41,7 @@ jobs:
           cache: "npm"
 
       - name: Install dependencies
-        run: npm i --legacy-peer-deps
+        run: npm ci --legacy-peer-deps
 
       - name: Run Semantic Release
         id: set-version

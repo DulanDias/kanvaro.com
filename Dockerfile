@@ -24,7 +24,7 @@ COPY . .
 # Uncomment the following line in case you want to disable telemetry during the build.
 # ENV NEXT_TELEMETRY_DISABLED=1
 
-RUN if [ -f package-lock.json ]; then npm run build; else echo "Lockfile not found." && exit 1; fi
+RUN if [ -f package-lock.json ]; then npm ci --legacy-peer-deps; else npm install --legacy-peer-deps; fi
 
 # Production image, copy all the files and run next
 FROM base AS runner
