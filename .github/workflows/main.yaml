@@ -25,11 +25,14 @@ jobs:
   semantic-release:
     runs-on: ubuntu-latest
     needs: release
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     outputs:
       version: ${{ steps.set-version.outputs.version }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v3
