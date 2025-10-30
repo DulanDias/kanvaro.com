@@ -1,3 +1,10 @@
+## [1.0.12](https://github.com/EchonLabs/kanvaro.com/compare/v1.0.11...v1.0.12) (2025-10-30)
+
+
+### Bug Fixes
+
+* bugfixes for task module ([935ba0d](https://github.com/EchonLabs/kanvaro.com/commit/935ba0d67856cad040c42fec8e8d93ae3f4ee206))
+
 ## [1.0.11](https://github.com/EchonLabs/kanvaro.com/compare/v1.0.10...v1.0.11) (2025-10-30)
 
 
