@@ -1,3 +1,12 @@
+## [1.0.11](https://github.com/EchonLabs/kanvaro.com/compare/v1.0.10...v1.0.11) (2025-10-30)
+
+
+### Bug Fixes
+
+* Fixing unable to version update in package.json ([8858774](https://github.com/EchonLabs/kanvaro.com/commit/885877434b9989bd09e1f5dcd2d8d97efd3d31e8))
+* Fixing unable to version update in package.json ([5e1de79](https://github.com/EchonLabs/kanvaro.com/commit/5e1de79929f446f0618a87fc058a9fe309ce2277))
+* Fixing unable to version update in package.json ([9b3055e](https://github.com/EchonLabs/kanvaro.com/commit/9b3055ed9504c2d821153155d54e087bf136ebb9))
+
 ## [1.0.10](https://github.com/EchonLabs/kanvaro.com/compare/v1.0.9...v1.0.10) (2025-10-30)
 
 
