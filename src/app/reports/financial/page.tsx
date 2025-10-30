@@ -74,6 +74,8 @@ export default function FinancialReportsPage() {
   const [reportData, setReportData] = useState<FinancialReportData | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState('overview')
+  const [projects, setProjects] = useState<Array<{ _id: string; name: string }>>([])
+  const [projectsLoading, setProjectsLoading] = useState(false)
   const [filters, setFilters] = useState<FilterState>({
     search: '',
     category: 'all',
@@ -90,6 +92,26 @@ export default function FinancialReportsPage() {
   useEffect(() => {
     fetchFinancialReports()
   }, [filters])
+
+  // Load projects for the Project filter dropdown
+  useEffect(() => {
+    const loadProjects = async () => {
+      try {
+        setProjectsLoading(true)
+        const res = await fetch('/api/projects?limit=1000&page=1')
+        if (res.ok) {
+          const data = await res.json()
+          const items = (data?.data || []).map((p: any) => ({ _id: p._id, name: p.name }))
+          setProjects(items)
+        }
+      } catch (e) {
+        console.error('Failed to load projects for financial filter:', e)
+      } finally {
+        setProjectsLoading(false)
+      }
+    }
+    loadProjects()
+  }, [])
 
   const fetchFinancialReports = async () => {
     try {
@@ -272,7 +294,15 @@ export default function FinancialReportsPage() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Projects</SelectItem>
-                    {/* Project options would be populated from API */}
+                    {projectsLoading ? (
+                      <SelectItem value="loading" disabled>Loading projects...</SelectItem>
+                    ) : projects.length === 0 ? (
+                      <SelectItem value="none" disabled>No projects found</SelectItem>
+                    ) : (
+                      projects.map((p) => (
+                        <SelectItem key={p._id} value={p._id}>{p.name}</SelectItem>
+                      ))
+                    )}
                   </SelectContent>
                 </Select>
               </div>

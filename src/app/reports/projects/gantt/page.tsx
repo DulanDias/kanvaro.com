@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { GanttChart } from '@/components/reports/GanttChart'
 import { GanttData, GanttTask } from '@/lib/gantt'
 import { Calendar, Filter, Download } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
 export default function GanttReportPage() {
   const [ganttData, setGanttData] = useState<GanttData | null>(null)
@@ -28,6 +29,7 @@ export default function GanttReportPage() {
   const [projects, setProjects] = useState<any[]>([])
   const [sprints, setSprints] = useState<any[]>([])
   const [assignees, setAssignees] = useState<any[]>([])
+  const router = useRouter()
 
   useEffect(() => {
     loadGanttData()
@@ -100,7 +102,7 @@ export default function GanttReportPage() {
 
   const handleTaskClick = (task: GanttTask) => {
     // Navigate to task detail page
-    window.open(`/tasks/${task.id}`, '_blank')
+    router.push(`/tasks/${task.id}`)
   }
 
   const handleExport = () => {
