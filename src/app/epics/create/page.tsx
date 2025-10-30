@@ -28,6 +28,7 @@ export default function CreateEpicPage() {
   const [error, setError] = useState('')
   const [authError, setAuthError] = useState('')
   const [projects, setProjects] = useState<Project[]>([])
+  const [projectQuery, setProjectQuery] = useState("");
 
   const [formData, setFormData] = useState({
     name: '',
@@ -134,6 +135,15 @@ export default function CreateEpicPage() {
     }))
   }
 
+  // Required field validation for Epic
+  const isFormValid = () => {
+    return (
+      !!formData.name.trim() &&
+      !!formData.project &&
+      !!formData.dueDate
+    );
+  };
+
   if (authError) {
     return (
       <MainLayout>
@@ -192,16 +202,33 @@ export default function CreateEpicPage() {
 
                   <div>
                     <label className="text-sm font-medium text-foreground">Project *</label>
-                    <Select value={formData.project} onValueChange={(value) => handleChange('project', value)}>
+                    <Select
+                      value={formData.project}
+                      onValueChange={(value) => handleChange('project', value)}
+                      onOpenChange={open => { if (open) setProjectQuery(""); }}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a project" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {Array.isArray(projects) && projects.map((project) => (
-                          <SelectItem key={project._id} value={project._id}>
-                            {project.name}
-                          </SelectItem>
-                        ))}
+                      <SelectContent className="z-[10050] p-0">
+                        <div className="p-2">
+                          <Input
+                            value={projectQuery}
+                            onChange={e => setProjectQuery(e.target.value)}
+                            placeholder="Type to search projects"
+                            className="mb-2"
+                          />
+                          <div className="max-h-56 overflow-y-auto">
+                            {projects.filter(p => !projectQuery.trim() || p.name.toLowerCase().includes(projectQuery.toLowerCase())).map((project) => (
+                              <SelectItem key={project._id} value={project._id}>
+                                {project.name}
+                              </SelectItem>
+                            ))}
+                            {projects.filter(p => !projectQuery.trim() || p.name.toLowerCase().includes(projectQuery.toLowerCase())).length === 0 && (
+                              <div className="px-2 py-1 text-sm text-muted-foreground">No matching projects</div>
+                            )}
+                          </div>
+                        </div>
                       </SelectContent>
                     </Select>
                   </div>
@@ -222,11 +249,12 @@ export default function CreateEpicPage() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-foreground">Due Date</label>
+                    <label className="text-sm font-medium text-foreground">Due Date *</label>
                     <Input
                       type="date"
                       value={formData.dueDate}
                       onChange={(e) => handleChange('dueDate', e.target.value)}
+                      required
                     />
                   </div>
                 </div>
@@ -277,7 +305,7 @@ export default function CreateEpicPage() {
                 <Button type="button" variant="outline" onClick={() => router.push('/epics')}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading || !isFormValid()}>
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -13,7 +13,6 @@ export async function GET(
   { params }: { params: { id: string } }
 ) {
   try {
-    console.log('GET task')
     await connectDB()
 
     const authResult = await authenticateUser()

@@ -32,6 +32,38 @@ interface User {
 interface Story {
   _id: string
   title: string
+  description: string
+  status: 'todo' | 'in_progress' | 'review' | 'testing' | 'done' | 'cancelled'
+  priority: 'low' | 'medium' | 'high' | 'critical'
+  project: {
+    _id: string
+    name: string
+  }
+  epic?: {
+    _id: string
+    name: string
+  }
+  sprint?: {
+    _id: string
+    name: string
+  }
+  assignedTo?: {
+    firstName: string
+    lastName: string
+    email: string
+  }
+  createdBy: {
+    firstName: string
+    lastName: string
+    email: string
+  }
+  storyPoints?: number
+  dueDate?: string
+  estimatedHours?: number
+  acceptanceCriteria: string[]
+  tags: string[]
+  createdAt: string
+  updatedAt: string
 }
 
 export default function CreateTaskPage() {
@@ -43,6 +75,9 @@ export default function CreateTaskPage() {
   const [users, setUsers] = useState<User[]>([])
   const [stories, setStories] = useState<Story[]>([])
   const today = new Date().toISOString().split('T')[0]
+  const [projectQuery, setProjectQuery] = useState("");
+  const [assignedToIds, setAssignedToIds] = useState<string[]>([]);
+  const [assigneeQuery, setAssigneeQuery] = useState('');
 
   const [formData, setFormData] = useState({
     title: '',
@@ -169,12 +204,13 @@ export default function CreateTaskPage() {
         },
         body: JSON.stringify({
           ...formData,
+          assignedTo: assignedToIds.length === 1 ? assignedToIds[0] : undefined,
+          assignees: assignedToIds.length > 1 ? assignedToIds : undefined,
           estimatedHours: formData.estimatedHours ? parseInt(formData.estimatedHours) : undefined,
           storyPoints: formData.storyPoints ? parseInt(formData.storyPoints) : undefined,
           labels: formData.labels ? formData.labels.split(',').map(label => label.trim()) : [],
           story: formData.story === 'none' ? undefined : formData.story || undefined,
-          parentTask: formData.parentTask || undefined,
-          assignedTo: formData.assignedTo === 'unassigned' ? undefined : formData.assignedTo || undefined
+          parentTask: formData.parentTask || undefined
         })
       })
 
@@ -203,6 +239,18 @@ export default function CreateTaskPage() {
       fetchStories(value)
     }
   }
+
+  // Required field validation
+  const isFormValid = () => {
+    return (
+      !!formData.title.trim() &&
+      !!formData.project &&
+      !!formData.status &&
+      !!formData.type &&
+      !!formData.priority &&
+      !!formData.dueDate
+    );
+  };
 
   if (authError) {
     return (
@@ -260,27 +308,44 @@ export default function CreateTaskPage() {
                     />
                   </div>
 
-                  <div>
+                  {/* <div>
                     <label className="text-sm font-medium text-foreground">Task ID</label>
                     <Input
                       value={formData.displayId}
                       onChange={(e) => handleChange('displayId', e.target.value)}
                       placeholder="e.g. 3.2"
                     />
-                  </div>
+                  </div> */}
 
                   <div>
                     <label className="text-sm font-medium text-foreground">Project *</label>
-                    <Select value={formData.project} onValueChange={(value) => handleChange('project', value)}>
+                    <Select
+                      value={formData.project}
+                      onValueChange={(value) => handleChange('project', value)}
+                      onOpenChange={open => { if(open) setProjectQuery(""); }}
+                    >
                       <SelectTrigger>
                         <SelectValue placeholder="Select a project" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {Array.isArray(projects) && projects.map((project) => (
-                          <SelectItem key={project._id} value={project._id}>
-                            {project.name}
-                          </SelectItem>
-                        ))}
+                      <SelectContent className="z-[10050] p-0">
+                        <div className="p-2">
+                          <Input
+                            value={projectQuery}
+                            onChange={e => setProjectQuery(e.target.value)}
+                            placeholder="Type to search projects"
+                            className="mb-2"
+                          />
+                          <div className="max-h-56 overflow-y-auto">
+                            {projects.filter(p => !projectQuery.trim() || p.name.toLowerCase().includes(projectQuery.toLowerCase())).map((project) => (
+                              <SelectItem key={project._id} value={project._id}>
+                                {project.name}
+                              </SelectItem>
+                            ))}
+                            {projects.filter(p => !projectQuery.trim() || p.name.toLowerCase().includes(projectQuery.toLowerCase())).length === 0 && (
+                              <div className="px-2 py-1 text-sm text-muted-foreground">No matching projects</div>
+                            )}
+                          </div>
+                        </div>
                       </SelectContent>
                     </Select>
                   </div>
@@ -337,19 +402,73 @@ export default function CreateTaskPage() {
                 <div className="space-y-4">
                   <div>
                     <label className="text-sm font-medium text-foreground">Assigned To</label>
-                    <Select value={formData.assignedTo} onValueChange={(value) => handleChange('assignedTo', value)}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select assignee" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="unassigned">Unassigned</SelectItem>
-                        {Array.isArray(users) && users.map((user) => (
-                          <SelectItem key={user._id} value={user._id}>
-                            {user.firstName} {user.lastName}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    <div className="mt-1 border rounded-md p-2">
+                      <Input
+                        value={assigneeQuery}
+                        onChange={e => setAssigneeQuery(e.target.value)}
+                        placeholder={loading ? 'Loading members...' : 'Type to search team members'}
+                        className="mb-2"
+                      />
+                      <div className="max-h-40 overflow-y-auto space-y-1">
+                        {loading ? (
+                          <div className="flex items-center space-x-2 text-sm text-muted-foreground p-2">
+                            <Loader2 className="h-4 w-4 animate-spin" />
+                            <span>Loading members...</span>
+                          </div>
+                        ) : assigneeQuery.trim() === '' ? null : (
+                          (() => {
+                            const q = assigneeQuery.toLowerCase();
+                            const filtered = users.filter(u =>
+                              `${u.firstName} ${u.lastName}`.toLowerCase().includes(q) ||
+                              u.email.toLowerCase().includes(q)
+                            );
+                            if (filtered.length === 0) {
+                              return (
+                                <div className="text-sm text-muted-foreground p-2">No matching members</div>
+                              )
+                            }
+                            return filtered.map(user => (
+                              <button
+                                type="button"
+                                key={user._id}
+                                className="w-full text-left p-1 rounded hover:bg-accent"
+                                onClick={() => setAssignedToIds(prev => prev.includes(user._id) ? prev : [...prev, user._id])}
+                              >
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm">{user.firstName} {user.lastName} <span className="text-muted-foreground">({user.email})</span></span>
+                                  {assignedToIds.includes(user._id) && (
+                                    <span className="text-xs text-muted-foreground">Added</span>
+                                  )}
+                                </div>
+                              </button>
+                            ));
+                          })()
+                        )}
+                      </div>
+                      {assignedToIds.length > 0 && (
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {assignedToIds.map(id => {
+                            const u = users.find(x => x._id === id);
+                            if (!u) return null;
+                            return (
+                              <span key={id} className="inline-flex items-center text-xs bg-muted px-2 py-1 rounded">
+                                <span className="mr-2">{u.firstName} {u.lastName} <span className="text-muted-foreground">({u.email})</span></span>
+                                <button
+                                  type="button"
+                                  aria-label="Remove assignee"
+                                  className="text-muted-foreground hover:text-foreground"
+                                  onClick={() => setAssignedToIds(prev => prev.filter(x => x !== id))}
+                                >
+                                  <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                    <path d="M5 5L11 11M11 5L5 11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
+                                  </svg>
+                                </button>
+                              </span>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div>
@@ -370,7 +489,7 @@ export default function CreateTaskPage() {
                   </div>
 
                   <div>
-                    <label className="text-sm font-medium text-foreground">Due Date</label>
+                    <label className="text-sm font-medium text-foreground">Due Date *</label>
                     <Input
                       type="date"
                       value={formData.dueDate}
@@ -424,7 +543,7 @@ export default function CreateTaskPage() {
                 <Button type="button" variant="outline" onClick={() => router.back()}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={loading}>
+                <Button type="submit" disabled={loading || !isFormValid()}>
                   {loading ? (
                     <>
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />

@@ -114,6 +114,13 @@ const navigationItems = [
         permission: Permission.BACKLOG_READ
       },
       {
+        id: 'tasks-user-stories',
+        label: 'User Stories',
+        icon: BookOpen,
+        path: '/stories',
+        permission: Permission.TASK_READ
+      },
+      {
         id: 'tasks-sprints',
         label: 'Sprints',
         icon: Zap,

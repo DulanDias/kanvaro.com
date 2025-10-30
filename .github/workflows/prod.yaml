@@ -1,4 +1,4 @@
-name: Kanvaro CI CD pipeline
+name: Kanvaro CI CD pipeline Prod Environment
 
 on:
   push:
