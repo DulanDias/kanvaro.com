@@ -43,7 +43,7 @@ jobs:
       - name: Install dependencies
         run: |
           npm ci --legacy-peer-deps
-          npm install --save-dev @semantic-release/changelog
+          npm install --save-dev @semantic-release/changelog --legacy-peer-deps
 
       - name: Run Semantic Release
         id: set-version
