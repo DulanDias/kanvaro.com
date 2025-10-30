@@ -45,6 +45,7 @@ import dynamic from 'next/dynamic'
 import VirtualizedColumn from './VirtualizedColumn'
 import SortableTask from './SortableTask'
 import { ITask } from '@/models/Task'
+import { useRouter } from 'next/navigation'
 
 interface PopulatedTask extends Omit<ITask, 'assignedTo'> {
   assignedTo?: {
@@ -100,6 +101,8 @@ export default function KanbanBoard({ projectId, onCreateTask, onEditTask, onDel
   const [showCreateTaskModal, setShowCreateTaskModal] = useState(false)
   const [showColumnSettings, setShowColumnSettings] = useState(false)
   const [createTaskStatus, setCreateTaskStatus] = useState<string | undefined>(undefined)
+
+  const router = useRouter()
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -422,7 +425,7 @@ export default function KanbanBoard({ projectId, onCreateTask, onEditTask, onDel
                 getTypeColor={getTypeColor}
                 onTaskClick={(task) => {
                   // Navigate to task detail page
-                  window.open(`/tasks/${task._id}`, '_blank')
+                  router.push(`/tasks/${task._id}`)
                 }}
                 onEditTask={onEditTask}
                 onDeleteTask={onDeleteTask}

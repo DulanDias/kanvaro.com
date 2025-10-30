@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { Bell, User, Sun, Moon, Monitor, LogOut, UserCircle, X, Check, Menu } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { Badge } from '@/components/ui/Badge'
 import { OrganizationLogo } from '@/components/ui/OrganizationLogo'
 import { GlobalSearch } from '@/components/search/GlobalSearch'
@@ -29,6 +30,7 @@ interface HeaderProps {
 
 export function Header({ onMobileMenuToggle }: HeaderProps) {
   const [user, setUser] = useState<any>(null)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [mounted, setMounted] = useState(false)
   const router = useRouter()
   const { theme, setTheme } = useTheme()
@@ -59,11 +61,6 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
   }, [])
 
   const handleLogout = async () => {
-    // Show confirmation dialog
-    if (!confirm('Are you sure you want to logout?')) {
-      return
-    }
-
     try {
       const response = await fetch('/api/auth/logout', { method: 'POST' })
       if (response.ok) {
@@ -82,6 +79,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
   }
 
   return (
+    <>
     <header className="flex h-14 lg:h-16 items-center border-b bg-background px-3 sm:px-4">
       {/* Mobile Menu Button */}
       <Button
@@ -241,7 +239,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
               Profile
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>
+          <DropdownMenuItem onClick={() => setShowLogoutConfirm(true)}>
               <LogOut className="mr-2 h-4 w-4" />
               Logout
             </DropdownMenuItem>
@@ -249,5 +247,15 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
         </DropdownMenu>
       </div>
     </header>
+    <ConfirmationModal
+      isOpen={showLogoutConfirm}
+      onClose={() => setShowLogoutConfirm(false)}
+      onConfirm={handleLogout}
+      title="Logout"
+      description="Are you sure you want to log out?"
+      confirmText="Logout"
+      cancelText="Cancel"
+    />
+    </>
   )
 }
