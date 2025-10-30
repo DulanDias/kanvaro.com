@@ -30,7 +30,8 @@ import {
   Eye,
   Settings,
   Edit,
-  Trash2
+  Trash2,
+  X
 } from 'lucide-react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { useDebounce } from '@/hooks/useDebounce'
@@ -98,6 +99,7 @@ export default function TasksClient({
   const [pagination, setPagination] = useState(initialPagination)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
   const [searchQuery, setSearchQuery] = useState(initialFilters.search || '')
   const [statusFilter, setStatusFilter] = useState(initialFilters.status || 'all')
   const [priorityFilter, setPriorityFilter] = useState(initialFilters.priority || 'all')
@@ -263,6 +265,8 @@ export default function TasksClient({
         setTasks(tasks.filter(p => p._id !== selectedTask._id))
         setShowDeleteConfirmModal(false)
         setSelectedTask(null)
+        setSuccess('Task deleted successfully.')
+        setTimeout(() => setSuccess(''), 4000)
       } else {
         setError(data.error || 'Failed to delete task')
       }
@@ -274,6 +278,18 @@ export default function TasksClient({
   const handleDeleteClick = (task: Task) => {
     setSelectedTask(task)
     setShowDeleteConfirmModal(true)
+  }
+
+  // Kanban actions
+  const handleKanbanEditTask = (task: any) => {
+    router.push(`/tasks/${task._id}/edit`)
+  }
+
+  const handleKanbanDeleteTask = (taskId: string) => {
+    const task = tasks.find(t => t._id === taskId)
+    if (task) {
+      handleDeleteClick(task)
+    }
   }
   return (
     <div className="space-y-6">
@@ -315,6 +331,19 @@ export default function TasksClient({
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 w-full"
                 />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSearchQuery('')
+                      fetchTasks(true)
+                    }}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-foreground"
+                    aria-label="Clear search"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
               <div className="flex gap-2">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
@@ -361,18 +390,36 @@ export default function TasksClient({
           </div>
         </CardHeader>
         <CardContent>
-          {tasks.length === 0 && !loading && (
-            <div className="flex items-center justify-center h-40">
-              <div className="text-center text-muted-foreground">
-                No tasks found.
-              </div>
-            </div>
-          )}
-          <Tabs value={viewMode} onValueChange={(value) => setViewMode(value as 'list' | 'kanban')}>
+          
+          <Tabs
+            value={viewMode}
+            onValueChange={(value) => {
+              const v = value as 'list' | 'kanban'
+              setViewMode(v)
+              // When returning to list view, force a fresh fetch to avoid stale/empty data
+              if (v === 'list') {
+                setError('')
+                setTasks([])
+                setPagination({})
+                fetchTasks(true)
+              }
+            }}
+          >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="list">List View</TabsTrigger>
               <TabsTrigger value="kanban">Kanban View</TabsTrigger>
             </TabsList>
+
+            {success && (
+              <div className="mt-3">
+                <Alert>
+                  <div className="flex items-center">
+                    <CheckCircle className="h-4 w-4 mr-2 text-green-600" />
+                    <AlertDescription>{success}</AlertDescription>
+                  </div>
+                </Alert>
+              </div>
+            )}
 
             <TabsContent value="list" className="space-y-4">
               <div 
@@ -386,132 +433,136 @@ export default function TasksClient({
                     position: 'relative',
                   }}
                 >
-                  {rowVirtualizer.getVirtualItems().map((virtualRow) => {
-                    const task = tasks[virtualRow.index]
-                    return (
-                      <div
-                        key={virtualRow.key}
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          width: '100%',
-                          height: `${virtualRow.size}px`,
-                          transform: `translateY(${virtualRow.start}px)`,
-                        }}
-                      >
-                        <Card className="hover:shadow-md transition-shadow m-2">
-                          <CardContent className="p-4">
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-4">
-                                <div className="flex-1">
-                                  <div className="flex items-center space-x-2 mb-2">
-                                    <h3 className="font-medium text-foreground">{task.title}</h3>
-                                    {task.displayId && (
-                                      <Badge variant="outline">{task.displayId}</Badge>
-                                    )}
-                                    <Badge className={getStatusColor(task.status)}>
-                                      {getStatusIcon(task.status)}
-                                      <span className="ml-1">{task.status.replace('_', ' ')}</span>
-                                    </Badge>
-                                    <Badge className={getPriorityColor(task.priority)}>
-                                      {task.priority}
-                                    </Badge>
-                                    <Badge className={getTypeColor(task.type)}>
-                                      {task.type}
-                                    </Badge>
-                                  </div>
-                                  <p className="text-sm text-muted-foreground mb-2">
-                                    {task.description || 'No description'}
-                                  </p>
-                                  <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                                    <div className="flex items-center space-x-1">
-                                      <Target className="h-4 w-4" />
-                                      <span>{task.project.name}</span>
+                  {tasks.length > 0 ? (
+                    rowVirtualizer.getVirtualItems().map((virtualRow) => {
+                      const task = tasks[virtualRow.index]
+                      return (
+                        <div
+                          key={virtualRow.key}
+                          style={{
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            width: '100%',
+                            height: `${virtualRow.size}px`,
+                            transform: `translateY(${virtualRow.start}px)`,
+                          }}
+                        >
+                          <Card className="hover:shadow-md transition-shadow m-2">
+                            <CardContent className="p-4">
+                              <div className="flex items-center justify-between">
+                                <div className="flex items-center space-x-4">
+                                  <div className="flex-1">
+                                    <div className="flex items-center space-x-2 mb-2">
+                                      <h3 className="font-medium text-foreground">{task.title}</h3>
+                                      {task.displayId && (
+                                        <Badge variant="outline">{task.displayId}</Badge>
+                                      )}
+                                      <Badge className={getStatusColor(task.status)}>
+                                        {getStatusIcon(task.status)}
+                                        <span className="ml-1">{task.status.replace('_', ' ')}</span>
+                                      </Badge>
+                                      <Badge className={getPriorityColor(task.priority)}>
+                                        {task.priority}
+                                      </Badge>
+                                      <Badge className={getTypeColor(task.type)}>
+                                        {task.type}
+                                      </Badge>
                                     </div>
-                                    {task.dueDate && (
+                                    <p className="text-sm text-muted-foreground mb-2">
+                                      {task.description || 'No description'}
+                                    </p>
+                                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
                                       <div className="flex items-center space-x-1">
-                                        <Calendar className="h-4 w-4" />
-                                        <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
+                                        <Target className="h-4 w-4" />
+                                        <span>{task.project.name}</span>
                                       </div>
-                                    )}
-                                    {task.storyPoints && (
-                                      <div className="flex items-center space-x-1">
-                                        <BarChart3 className="h-4 w-4" />
-                                        <span>{task.storyPoints} points</span>
-                                      </div>
-                                    )}
-                                    {task.estimatedHours && (
-                                      <div className="flex items-center space-x-1">
-                                        <Clock className="h-4 w-4" />
-                                        <span>{task.estimatedHours}h estimated</span>
-                                      </div>
-                                    )}
+                                      {task.dueDate && (
+                                        <div className="flex items-center space-x-1">
+                                          <Calendar className="h-4 w-4" />
+                                          <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
+                                        </div>
+                                      )}
+                                      {task.storyPoints && (
+                                        <div className="flex items-center space-x-1">
+                                          <BarChart3 className="h-4 w-4" />
+                                          <span>{task.storyPoints} points</span>
+                                        </div>
+                                      )}
+                                      {task.estimatedHours && (
+                                        <div className="flex items-center space-x-1">
+                                          <Clock className="h-4 w-4" />
+                                          <span>{task.estimatedHours}h estimated</span>
+                                        </div>
+                                      )}
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                              <div className="flex items-center space-x-2">
-                                <div className="text-right">
-                                  {task.assignedTo && (
-                                    <div className="text-sm text-muted-foreground">
-                                      {task.assignedTo.firstName} {task.assignedTo.lastName}
-                                    </div>
-                                  )}
-                                </div>
-                                 <DropdownMenu>
-                          <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
-                          </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={(e) => {
-                              e.stopPropagation()
-                              router.push(`/tasks/${task._id}`)
-                            }}>
-                              <Eye className="h-4 w-4 mr-2" />
-                              View Task
-                            </DropdownMenuItem>
-                            <PermissionGate permission={Permission.TASK_UPDATE} projectId={task.project._id}>
+                                <div className="flex items-center space-x-2">
+                                  <div className="text-right">
+                                    {task.assignedTo && (
+                                      <div className="text-sm text-muted-foreground">
+                                        {task.assignedTo.firstName} {task.assignedTo.lastName}
+                                      </div>
+                                    )}
+                                  </div>
+                                   <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" onClick={(e) => e.stopPropagation()}>
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
                               <DropdownMenuItem onClick={(e) => {
                                 e.stopPropagation()
-                                router.push(`/tasks/${task._id}?tab=settings`)
+                                router.push(`/tasks/${task._id}`)
                               }}>
-                                <Settings className="h-4 w-4 mr-2" />
-                                Settings
+                                <Eye className="h-4 w-4 mr-2" />
+                                View Task
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={(e) => {
-                                e.stopPropagation()
-                                router.push(`/tasks/${task._id}/edit`)
-                              }}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Edit Task
-                              </DropdownMenuItem>
-                            </PermissionGate>
-                            <PermissionGate permission={Permission.TASK_DELETE} projectId={task.project._id}>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                onClick={(e) => {
+                              <PermissionGate permission={Permission.TASK_UPDATE} projectId={task.project._id}>
+                                
+                                <DropdownMenuItem onClick={(e) => {
                                   e.stopPropagation()
-                                  handleDeleteClick(task)
-                                }}
-                                className="text-destructive focus:text-destructive"
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Delete Task
-                              </DropdownMenuItem>
-                            </PermissionGate>
-                          </DropdownMenuContent>
-                        </DropdownMenu>
+                                  router.push(`/tasks/${task._id}/edit`)
+                                }}>
+                                  <Edit className="h-4 w-4 mr-2" />
+                                  Edit Task
+                                </DropdownMenuItem>
+                              </PermissionGate>
+                              <PermissionGate permission={Permission.TASK_DELETE} projectId={task.project._id}>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleDeleteClick(task)
+                                  }}
+                                  className="text-destructive focus:text-destructive"
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Delete Task
+                                </DropdownMenuItem>
+                              </PermissionGate>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                                </div>
                               </div>
-                            </div>
-                          </CardContent>
-                        </Card>
+                            </CardContent>
+                          </Card>
+                        </div>
+                      )
+                    })
+                  ) : (
+                    !loading && (
+                      <div className="flex items-center justify-center h-40">
+                        <div className="text-center text-muted-foreground">
+                          No tasks found.
+                        </div>
                       </div>
                     )
-                  })}
+                  )}
                 </div>
-                {pagination.nextCursor && (
+                {pagination.nextCursor && tasks.length > 0 && (
                   <div className="flex justify-center mt-4">
                     <Button 
                       onClick={loadMore} 
@@ -536,7 +587,16 @@ export default function TasksClient({
               <KanbanBoard 
                 projectId="all" 
                 onCreateTask={() => setShowCreateTaskModal(true)} 
+                onEditTask={handleKanbanEditTask}
+                onDeleteTask={handleKanbanDeleteTask}
               />
+              {tasks.length === 0 && !loading && (
+                <div className="flex items-center justify-center h-40">
+                  <div className="text-center text-muted-foreground">
+                    No tasks found.
+                  </div>
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </CardContent>

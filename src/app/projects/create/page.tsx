@@ -621,7 +621,7 @@ export default function CreateProjectPage() {
                 )}
               </div>
 
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <Label htmlFor="projectNumber">Project Number</Label>
                 <Input
                   id="projectNumber"
@@ -631,7 +631,7 @@ export default function CreateProjectPage() {
                   placeholder="e.g. 3"
                   min={0}
                 />
-              </div>
+              </div> */}
 
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>

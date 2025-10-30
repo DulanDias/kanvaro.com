@@ -29,8 +29,15 @@ import {
   BarChart3,
   List,
   Kanban,
-  BookOpen
+  BookOpen,
+  Trash2,
+  Eye,
+  Edit
 } from 'lucide-react'
+import { Permission, PermissionGate } from '@/lib/permissions'
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator } from '@radix-ui/react-dropdown-menu'
+import { DropdownMenuTrigger } from '@/components/ui/DropdownMenu'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 
 interface Story {
   _id: string
@@ -74,11 +81,16 @@ export default function StoriesPage() {
   const [stories, setStories] = useState<Story[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+
   const [authError, setAuthError] = useState('')
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState('all')
   const [priorityFilter, setPriorityFilter] = useState('all')
   const [viewMode, setViewMode] = useState<'list' | 'kanban'>('list')
+  const [selectedStory, setSelectedStory] = useState<Story | null>(null)
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
+  const [deleting, setDeleting] = useState(false);
 
   const checkAuth = useCallback(async () => {
     try {
@@ -135,6 +147,33 @@ export default function StoriesPage() {
     }
   }
 
+  const handleDeleteClick = (story: Story) => {
+    setSelectedStory(story)
+    setShowDeleteConfirmModal(true)
+  }
+  const handleDeleteStory = async () => {
+    if (!selectedStory) return
+    setDeleting(true)
+    try {
+      const response = await fetch(`/api/stories/${selectedStory._id}`, {
+        method: 'DELETE'
+      })
+      const data = await response.json()
+      if (data.success) {
+        setStories(stories.filter(p => p._id !== selectedStory._id))
+        setShowDeleteConfirmModal(false)
+        setSelectedStory(null)
+        setSuccess('Story deleted successfully.')
+        setTimeout(() => setSuccess(''), 4000)
+      } else {
+        setError(data.error || 'Failed to delete story')
+      }
+    } catch (err) {
+      setError('Failed to delete story')
+    } finally {
+      setDeleting(false)
+    }
+  }
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'todo': return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-200'
@@ -288,7 +327,7 @@ export default function StoriesPage() {
                   {filteredStories.map((story) => (
                     <Card 
                       key={story._id} 
-                      className="hover:shadow-md transition-shadow cursor-pointer"
+                      className="hover:shadow-md transition-shadow cursor-default"
                       onClick={() => router.push(`/stories/${story._id}`)}
                     >
                       <CardContent className="p-4">
@@ -298,11 +337,11 @@ export default function StoriesPage() {
                               <div className="flex items-center space-x-2 mb-2">
                                 <BookOpen className="h-5 w-5 text-blue-600" />
                                 <h3 className="font-medium text-foreground">{story.title}</h3>
-                                <Badge className={getStatusColor(story.status)}>
+                                <Badge className={getStatusColor(story.status) + ' cursor-default'}>
                                   {getStatusIcon(story.status)}
                                   <span className="ml-1">{story.status.replace('_', ' ')}</span>
                                 </Badge>
-                                <Badge className={getPriorityColor(story.priority)}>
+                                <Badge className={getPriorityColor(story.priority) + ' cursor-default'}>
                                   {story.priority}
                                 </Badge>
                               </div>
@@ -355,12 +394,34 @@ export default function StoriesPage() {
                                 </div>
                               )}
                             </div>
-                            <Button variant="ghost" size="sm" onClick={(e) => {
-                              e.stopPropagation()
-                              // Handle menu actions
-                            }}>
-                              <MoreHorizontal className="h-4 w-4" />
-                            </Button>
+                            <div className="flex items-center space-x-2">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="sm" onClick={e => e.stopPropagation()}>
+                                  <MoreHorizontal className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="min-w-[172px] py-2 rounded-md shadow-lg border border-border bg-background z-[10000]">
+                                <DropdownMenuItem onClick={e => { e.stopPropagation(); router.push(`/stories/${story._id}`); }} className="flex items-center space-x-2 px-4 py-2 focus:bg-accent cursor-pointer">
+                                  <Eye className="h-4 w-4 mr-2" />
+                                  <span>View Story</span>
+                                </DropdownMenuItem>
+                                <PermissionGate permission={Permission.STORY_UPDATE} projectId={story.project._id}>
+                                  <DropdownMenuItem onClick={e => { e.stopPropagation(); router.push(`/stories/${story._id}/edit`); }} className="flex items-center space-x-2 px-4 py-2 focus:bg-accent cursor-pointer">
+                                    <Edit className="h-4 w-4 mr-2" />
+                                    <span>Edit Story</span>
+                                  </DropdownMenuItem>
+                                </PermissionGate>
+                                <PermissionGate permission={Permission.STORY_DELETE} projectId={story.project._id}>
+                                  <DropdownMenuSeparator className="my-1" />
+                                  <DropdownMenuItem onClick={e => { e.stopPropagation(); handleDeleteClick(story); }} className="flex items-center space-x-2 px-4 py-2 text-destructive focus:bg-destructive/10 focus:text-destructive cursor-pointer">
+                                    <Trash2 className="h-4 w-4 mr-2" />
+                                    <span>Delete Story</span>
+                                  </DropdownMenuItem>
+                                </PermissionGate>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                            </div>
                           </div>
                         </div>
                       </CardContent>
@@ -379,6 +440,15 @@ export default function StoriesPage() {
           </CardContent>
         </Card>
       </div>
+      <ConfirmationModal
+        isOpen={showDeleteConfirmModal}
+        onClose={() => { setShowDeleteConfirmModal(false); setSelectedStory(null); }}
+        onConfirm={handleDeleteStory}
+        title="Delete Story"
+        description={`Are you sure you want to delete "${selectedStory?.title}"? This action cannot be undone.`}
+        confirmText={deleting ? 'Deleting...' : 'Delete'}
+        cancelText="Cancel"
+      />
     </MainLayout>
   )
 }
