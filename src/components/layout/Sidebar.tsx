@@ -47,6 +47,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/Popover'
 import { getAppVersion } from '@/lib/version'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { usePermissions } from '@/lib/permissions/permission-context'
 
 interface SidebarProps {
@@ -302,6 +303,7 @@ const navigationItems = [
 
 export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   const [expandedItems, setExpandedItems] = useState<string[]>([])
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const pathname = usePathname()
   const router = useRouter()
   const { organization, loading } = useOrganization()
@@ -356,6 +358,7 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
   }
 
   return (
+    <>
     <div
       className={cn(
         'flex h-full flex-col border-r bg-background transition-all duration-300 rounded-r-2xl overflow-hidden',
@@ -400,22 +403,17 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
       {/* Navigation Items */}
       <div className="flex-1 overflow-y-auto px-2 py-4">
         <nav className="space-y-1">
-          {navigationItems
-            .filter((item) => hasPermission(item.permission))
-            .map((item) => ({
-              ...item,
-              children: item.children?.filter((child: any) => hasPermission(child.permission)) || []
-            }))
-            .map((item) => (
-            <NavigationItem
-              key={item.id}
-              item={item}
-              collapsed={collapsed}
-              pathname={pathname}
-              expandedItems={expandedItems}
-              onToggleExpanded={toggleExpanded}
-              router={router}
-            />
+          {navigationItems.map((item) => (
+            <PermissionGate key={item.id} permission={item.permission}>
+              <NavigationItem
+                item={item}
+                collapsed={collapsed}
+                pathname={pathname}
+                expandedItems={expandedItems}
+                onToggleExpanded={toggleExpanded}
+                router={router}
+              />
+            </PermissionGate>
           ))}
         </nav>
       </div>
@@ -434,13 +432,24 @@ export function Sidebar({ collapsed, onToggle }: SidebarProps) {
             'w-full justify-start text-muted-foreground hover:text-foreground rounded-lg',
             collapsed ? 'px-2' : 'px-3'
           )}
-          onClick={handleLogout}
+          onClick={() => setShowLogoutConfirm(true)}
         >
           <LogOut className={cn('h-4 w-4', collapsed ? 'mx-auto' : 'mr-2')} />
           {!collapsed && 'Sign Out'}
         </Button>
       </div>
     </div>
+    {/* Logout Confirmation Modal */}
+    <ConfirmationModal
+      isOpen={showLogoutConfirm}
+      onClose={() => setShowLogoutConfirm(false)}
+      onConfirm={handleLogout}
+      title="Sign Out"
+      description="Are you sure you want to sign out?"
+      confirmText="Sign Out"
+      cancelText="Cancel"
+    />
+    </>
   )
 }
 
