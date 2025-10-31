@@ -1,3 +1,12 @@
+## [1.0.14](https://github.com/EchonLabs/kanvaro.com/compare/v1.0.13...v1.0.14) (2025-10-31)
+
+
+### Bug Fixes
+
+* :bug: fix responsive issue ([5e06dcd](https://github.com/EchonLabs/kanvaro.com/commit/5e06dcd6c01ccec4afae8c1884d240ce73f91091))
+* add changes ([9cb4c8d](https://github.com/EchonLabs/kanvaro.com/commit/9cb4c8deeffbd39858a31c34299c135bb9d77511))
+* add changes ([0b99af3](https://github.com/EchonLabs/kanvaro.com/commit/0b99af3bcfc52ff1e130c82cd47b9c7ab8bc3f11))
+
 ## [1.0.13](https://github.com/EchonLabs/kanvaro.com/compare/v1.0.12...v1.0.13) (2025-10-30)
 
 
