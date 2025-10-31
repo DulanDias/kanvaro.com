@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import connectDB from '@/lib/db-config'
 import { Task } from '@/models/Task'
+import { Project } from '@/models/Project'
+import { User } from '@/models/User'
+import { Story } from '@/models/Story'
 import { authenticateUser } from '@/lib/auth-utils'
 
 export async function GET(request: NextRequest) {

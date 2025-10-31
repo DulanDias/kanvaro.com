@@ -113,16 +113,52 @@ export async function POST(request: NextRequest) {
     const logoMode = organization?.logoMode || 'both'
 
     // Send invitation email
-    // Dynamically construct the invitation URL using the request origin
-    const origin = request.headers.get('origin') || request.headers.get('host')
-    const protocol = request.headers.get('x-forwarded-proto') || (origin?.includes('localhost') ? 'http' : 'https')
-    const host = origin || process.env.NEXT_PUBLIC_APP_URL?.replace(/^https?:\/\//, '') || 'localhost:3000'
+    // Dynamically construct the invitation URL based on environment
+    // Priority: 1. NEXT_PUBLIC_APP_URL env var, 2. Request headers (x-forwarded-*), 3. Request host/origin
+    let baseUrl: string
     
-    // Clean up the host to avoid double protocol
-    const cleanHost = host.replace(/^https?:\/\//, '')
-    const baseUrl = `${protocol}://${cleanHost}`
+    // First, check if NEXT_PUBLIC_APP_URL is explicitly set (recommended for all environments)
+    if (process.env.NEXT_PUBLIC_APP_URL) {
+      baseUrl = process.env.NEXT_PUBLIC_APP_URL.replace(/\/$/, '') // Remove trailing slash
+    } else {
+      // Fall back to detecting from request headers
+      // When behind a proxy/load balancer, check x-forwarded-* headers first
+      const forwardedHost = request.headers.get('x-forwarded-host')
+      const forwardedProto = request.headers.get('x-forwarded-proto')
+      
+      // Get the host from various sources
+      const hostHeader = request.headers.get('host') || request.headers.get('origin')?.replace(/^https?:\/\//, '')
+      
+      // Determine protocol
+      let protocol: string
+      if (forwardedProto) {
+        protocol = forwardedProto.split(',')[0].trim() // Use first proto if multiple
+      } else if (hostHeader?.includes('localhost') || hostHeader?.includes('127.0.0.1')) {
+        protocol = 'http'
+      } else {
+        protocol = 'https' // Default to https for production domains
+      }
+      
+      // Determine host
+      let host: string
+      if (forwardedHost) {
+        host = forwardedHost.split(',')[0].trim() // Use first host if multiple
+      } else if (hostHeader) {
+        host = hostHeader.replace(/^https?:\/\//, '') // Remove protocol if present
+      } else {
+        host = 'localhost:3000' // Fallback
+        protocol = 'http'
+      }
+      
+      // Clean up host (remove any protocol prefix, remove trailing slash)
+      host = host.replace(/^https?:\/\//, '').replace(/\/$/, '')
+      
+      baseUrl = `${protocol}://${host}`
+    }
+    
     const invitationLink = `${baseUrl}/accept-invitation?token=${token}`
     
+   
     const emailHtml = `
     <!DOCTYPE html>
     <html lang="en">

@@ -14,7 +14,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert'
 import { useCurrencies } from '@/hooks/useCurrencies'
 
 export function OrganizationSettings() {
-  const { organization, loading } = useOrganization()
+  const { organization, loading, refetch } = useOrganization()
   const { currencies, loading: currenciesLoading, formatCurrencyDisplay } = useCurrencies(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null)
@@ -155,6 +155,9 @@ export function OrganizationSettings() {
     return Object.keys(newErrors).length === 0
   }
 
+  // Check if all required fields are filled
+  const isFormValid = formData.name.trim() !== '' && (!formData.domain || /^(https?:\/\/)?([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}(\/.*)?$/.test(formData.domain))
+
   useEffect(() => {
     if (organization) {
       setFormData({
@@ -241,11 +244,24 @@ export function OrganizationSettings() {
       const response = await fetch('/api/organization', {
         method: 'PUT',
         body: formDataToSend,
+        // Don't set Content-Type header - let browser set it with boundary for multipart/form-data
       })
 
       if (!response.ok) {
-        throw new Error('Failed to update organization')
+        const errorData = await response.json().catch(() => ({}))
+        throw new Error(errorData.error || 'Failed to update organization')
       }
+
+      // Clear logo file states after successful upload
+      if (logo) {
+        setLogo(null)
+      }
+      if (darkLogo) {
+        setDarkLogo(null)
+      }
+
+      // Clear cache and refetch organization data to show updated values (including logos)
+      refetch()
 
       setMessage({ type: 'success', text: 'Organization settings updated successfully' })
     } catch (error) {
@@ -660,7 +676,7 @@ export function OrganizationSettings() {
           )}
 
           <div className="flex justify-end">
-            <Button onClick={handleSave} disabled={saving} className="flex items-center gap-2 w-full sm:w-auto text-xs sm:text-sm">
+            <Button onClick={handleSave} disabled={saving || !isFormValid} className="flex items-center gap-2 w-full sm:w-auto text-xs sm:text-sm">
               {saving ? (
                 <div className="animate-spin rounded-full h-3 w-3 sm:h-4 sm:w-4 border-b-2 border-white"></div>
               ) : (

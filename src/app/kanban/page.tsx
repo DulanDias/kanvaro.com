@@ -113,11 +113,13 @@ const columns = [
 function ColumnDropZone({ 
   column, 
   tasks, 
+  onCreateTask,
   onEditTask, 
   onDeleteTask 
 }: { 
   column: any, 
   tasks: Task[], 
+  onCreateTask?: (status?: string) => void,
   onEditTask?: (task: Task) => void,
   onDeleteTask?: (taskId: string) => void
 }) {
@@ -158,7 +160,11 @@ function ColumnDropZone({
             {tasks.length}
           </span>
         </div>
-        <Button variant="ghost" size="sm">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => onCreateTask?.(column.id)}
+        >
           <Plus className="h-4 w-4" />
         </Button>
       </div>
@@ -169,7 +175,7 @@ function ColumnDropZone({
       >
         <div 
           ref={setNodeRef}
-          className={`space-y-3 min-h-[400px] border-2 border-dashed rounded-lg transition-colors p-2 ${
+          className={`space-y-3 min-h-[400px] max-h-[600px] overflow-y-auto overflow-x-hidden border-2 border-dashed rounded-lg transition-colors p-2 ${
             isOver 
               ? 'border-primary bg-primary/5' 
               : 'border-transparent hover:border-gray-200 dark:hover:border-gray-700'
@@ -177,14 +183,15 @@ function ColumnDropZone({
         >
           {tasks.length === 0 ? (
             <div className="h-full flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <p className="text-sm opacity-50"> <Plus className="h-4 w-4 mr-2" />
-                Add Task</p>
+             <div className="text-center">
+                <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Drop tasks here</p>
               </div>
             </div>
           ) : (
             tasks.map((task) => (
               <SortableTask 
+              
                 key={task._id} 
                 task={task}
                 onClick={() => router.push(`/tasks/${task._id}`)}
@@ -518,16 +525,18 @@ export default function KanbanPage() {
                   </CardDescription>
                 </div>
               </div>
+              {/* Search bar - full width on its own line */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Input
+                  placeholder="Search tasks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-full"
+                />
+              </div>
+              {/* Filter options - on the next line */}
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2 flex-wrap">
-                <div className="relative flex-1 sm:flex-initial">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    placeholder="Search tasks..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-full sm:w-64"
-                  />
-                </div>
                 <Select value={projectFilter} onValueChange={setProjectFilter}>
                   <SelectTrigger className="w-full sm:w-40">
                     <SelectValue placeholder="Project" />
@@ -585,6 +594,7 @@ export default function KanbanPage() {
                       key={column.id} 
                       column={column} 
                       tasks={columnTasks}
+                      onCreateTask={handleCreateTask}
                       onEditTask={handleEditTask}
                       onDeleteTask={handleDeleteTask}
                     />

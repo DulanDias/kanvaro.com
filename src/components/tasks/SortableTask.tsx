@@ -60,16 +60,18 @@ export default function SortableTask({
 
   return (
     <Card 
+    
       ref={setNodeRef}
       style={style}
-      className={`hover:shadow-md transition-shadow cursor-pointer m-1 ${
+      className={`hover:shadow-md transition-shadow cursor-pointer ${
         isDragging ? 'opacity-50' : ''
       } ${isDragOverlay ? 'rotate-3 shadow-lg' : ''}`}
       onClick={onClick}
     >
-      <CardContent className="p-3">
-        <div className="space-y-2">
-          <div className="flex items-start justify-between">
+      <CardContent className="p-4">
+      <div className="space-y-3">
+
+      <div className="flex items-start justify-between">
             <h4 className="font-medium text-foreground text-sm line-clamp-2">
               {task.title}
             </h4>
@@ -173,7 +175,22 @@ export default function SortableTask({
               </span>
             </div>
           )}
-        </div>
+
+{task.labels.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {task.labels.slice(0, 2).map((label, index) => (
+                <Badge key={index} variant="outline" className="text-xs">
+                  {label}
+                </Badge>
+              ))}
+              {task.labels.length > 2 && (
+                <Badge variant="outline" className="text-xs">
+                  +{task.labels.length - 2}
+                </Badge>
+              )}
+            </div>
+          )}
+          </div>
       </CardContent>
     </Card>
   )

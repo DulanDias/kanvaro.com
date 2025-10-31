@@ -20,6 +20,11 @@
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
+  
+  /* Remove margin-top from space-y-6 utility */
+  .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+    margin-top: 0 !important;
+  }
 }
 
 @layer base {
@@ -87,6 +92,11 @@
   }
   body {
     @apply bg-background text-foreground;
+  }
+  
+  /* Remove margin-top from layout content */
+  main {
+    margin-top: 0 !important;
   }
 }
 
