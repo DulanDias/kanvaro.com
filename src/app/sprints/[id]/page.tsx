@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/Button'
 import { Badge } from '@/components/ui/Badge'
 import { Progress } from '@/components/ui/Progress'
 import { Alert, AlertDescription } from '@/components/ui/alert'
+import { ConfirmationModal } from '@/components/ui/ConfirmationModal'
 import { 
   ArrowLeft,
   Calendar,
@@ -74,6 +75,7 @@ export default function SprintDetailPage() {
   const [error, setError] = useState('')
   const [authError, setAuthError] = useState('')
   const [deleting, setDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
 
   const checkAuth = useCallback(async () => {
     try {
@@ -132,7 +134,6 @@ export default function SprintDetailPage() {
 
   const handleDelete = async () => {
     try {
-      if (!confirm('Are you sure you want to delete this sprint? This action cannot be undone.')) return
       setDeleting(true)
       const res = await fetch(`/api/sprints/${sprintId}`, { method: 'DELETE' })
       const data = await res.json()
@@ -145,6 +146,7 @@ export default function SprintDetailPage() {
       setError('Failed to delete sprint')
     } finally {
       setDeleting(false)
+      setShowDeleteConfirm(false)
     }
   }
 
@@ -221,34 +223,34 @@ export default function SprintDetailPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button variant="ghost" onClick={() => router.push('/sprints')}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0">
+            <Button variant="ghost" onClick={() => router.push('/sprints')} className="w-full sm:w-auto">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
-            <div>
-              <h1 className="text-3xl font-bold text-foreground flex items-center space-x-2">
-                <Target className="h-8 w-8 text-blue-600" />
-                <span>{sprint?.name}</span>
+            <div className="flex-1 min-w-0">
+              <h1 className="text-2xl sm:text-3xl font-bold text-foreground flex items-center space-x-2 truncate">
+                <Target className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600 flex-shrink-0" />
+                <span className="truncate">{sprint?.name}</span>
               </h1>
-              <p className="text-muted-foreground">Sprint Details</p>
+              <p className="text-sm sm:text-base text-muted-foreground">Sprint Details</p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" onClick={() => router.push(`/sprints/${sprintId}/edit`)}>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={() => router.push(`/sprints/${sprintId}/edit`)} className="w-full sm:w-auto">
               <Edit className="h-4 w-4 mr-2" />
               Edit
             </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleting}>
+            <Button variant="destructive" onClick={() => setShowDeleteConfirm(true)} disabled={deleting} className="w-full sm:w-auto">
               <Trash2 className="h-4 w-4 mr-2" />
               {deleting ? 'Deleting...' : 'Delete'}
             </Button>
           </div>
         </div>
 
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="md:col-span-2 space-y-6">
+        <div className="grid gap-6 grid-cols-1 lg:grid-cols-3">
+          <div className="lg:col-span-2 space-y-6">
             <Card>
               <CardHeader>
                 <CardTitle>Description</CardTitle>
@@ -422,6 +424,19 @@ export default function SprintDetailPage() {
             </Card>
           </div>
         </div>
+
+        {/* Delete Confirmation Modal */}
+        <ConfirmationModal
+          isOpen={showDeleteConfirm}
+          onClose={() => setShowDeleteConfirm(false)}
+          onConfirm={handleDelete}
+          title="Delete Sprint"
+          description="Are you sure you want to delete this sprint? This action cannot be undone."
+          confirmText="Delete"
+          cancelText="Cancel"
+          variant="destructive"
+          isLoading={deleting}
+        />
       </div>
     </MainLayout>
   )

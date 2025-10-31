@@ -238,19 +238,20 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-foreground">Calendar View</h3>
-          <p className="text-sm text-muted-foreground">
+          <h3 className="text-xl sm:text-2xl font-semibold text-foreground">Calendar View</h3>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             View tasks by their due dates
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <div className="flex items-center space-x-1">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-wrap w-full sm:w-auto">
+          <div className="flex items-center gap-1 w-full sm:w-auto">
             <Button
               variant={view === 'month' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setView('month')}
+              className="flex-1 sm:flex-initial"
             >
               Month
             </Button>
@@ -258,6 +259,7 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
               variant={view === 'week' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setView('week')}
+              className="flex-1 sm:flex-initial"
             >
               Week
             </Button>
@@ -265,15 +267,16 @@ export default function CalendarView({ projectId, onCreateTask }: CalendarViewPr
               variant={view === 'day' ? 'default' : 'outline'}
               size="sm"
               onClick={() => setView('day')}
+              className="flex-1 sm:flex-initial"
             >
               Day
             </Button>
           </div>
-          <Button variant="outline" size="sm" onClick={refreshTasks}>
+          <Button variant="outline" size="sm" onClick={refreshTasks} className="w-full sm:w-auto">
             <CalendarIcon className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button onClick={onCreateTask}>
+          <Button onClick={onCreateTask} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add Task
           </Button>

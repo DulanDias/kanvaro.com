@@ -244,14 +244,14 @@ export default function TaskList({ projectId, onCreateTask }: TaskListProps) {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-foreground">Project Tasks</h3>
-          <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-xl sm:text-2xl font-semibold text-foreground">Project Tasks</h3>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''} found
           </p>
         </div>
-        <Button onClick={handleCreateTaskClick}>
+        <Button onClick={handleCreateTaskClick} className="w-full sm:w-auto">
           <Plus className="h-4 w-4 mr-2" />
           Add Task
         </Button>
@@ -264,123 +264,123 @@ export default function TaskList({ projectId, onCreateTask }: TaskListProps) {
         </Alert>
       )}
 
-      <div className="flex items-center space-x-4">
+      <div className="flex flex-col gap-2 sm:gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="Search tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 w-full"
           />
         </div>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Status</SelectItem>
-            <SelectItem value="todo">To Do</SelectItem>
-            <SelectItem value="in_progress">In Progress</SelectItem>
-            <SelectItem value="review">Review</SelectItem>
-            <SelectItem value="testing">Testing</SelectItem>
-            <SelectItem value="done">Done</SelectItem>
-            <SelectItem value="cancelled">Cancelled</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Priority" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Priority</SelectItem>
-            <SelectItem value="low">Low</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-            <SelectItem value="critical">Critical</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="bug">Bug</SelectItem>
-            <SelectItem value="feature">Feature</SelectItem>
-            <SelectItem value="improvement">Improvement</SelectItem>
-            <SelectItem value="task">Task</SelectItem>
-            <SelectItem value="subtask">Subtask</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-wrap">
+          <Select value={statusFilter} onValueChange={setStatusFilter}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="todo">To Do</SelectItem>
+              <SelectItem value="in_progress">In Progress</SelectItem>
+              <SelectItem value="review">Review</SelectItem>
+              <SelectItem value="testing">Testing</SelectItem>
+              <SelectItem value="done">Done</SelectItem>
+              <SelectItem value="cancelled">Cancelled</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="Priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Priority</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="critical">Critical</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="bug">Bug</SelectItem>
+              <SelectItem value="feature">Feature</SelectItem>
+              <SelectItem value="improvement">Improvement</SelectItem>
+              <SelectItem value="task">Task</SelectItem>
+              <SelectItem value="subtask">Subtask</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="space-y-4">
         {filteredTasks.map((task) => (
           <Card key={task._id} className="hover:shadow-md transition-shadow">
             <CardContent className="p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-4 flex-1">
-                  <div className="flex-1">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <h4 className="font-medium text-foreground">{task.title}</h4>
-                      <Badge className={getStatusColor(task.status)}>
-                        {getStatusIcon(task.status)}
-                        <span className="ml-1">{task.status.replace('_', ' ')}</span>
-                      </Badge>
-                      <Badge className={getPriorityColor(task.priority)}>
-                        {task.priority}
-                      </Badge>
-                      <Badge className={getTypeColor(task.type)}>
-                        {task.type}
-                      </Badge>
-                    </div>
-                    <p className="text-sm text-muted-foreground mb-2">
-                      {task.description || 'No description'}
-                    </p>
-                    <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                      {task.assignedTo && (
-                        <div className="flex items-center space-x-1">
-                          <User className="h-4 w-4" />
-                          <span>{task.assignedTo.firstName} {task.assignedTo.lastName}</span>
-                        </div>
-                      )}
-                      {task.dueDate && (
-                        <div className="flex items-center space-x-1">
-                          <Calendar className="h-4 w-4" />
-                          <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
-                        </div>
-                      )}
-                      {task.storyPoints && (
-                        <div className="flex items-center space-x-1">
-                          <Target className="h-4 w-4" />
-                          <span>{task.storyPoints} points</span>
-                        </div>
-                      )}
-                      {task.estimatedHours && (
-                        <div className="flex items-center space-x-1">
-                          <Clock className="h-4 w-4" />
-                          <span>{task.estimatedHours}h estimated</span>
-                        </div>
-                      )}
-                    </div>
-                    {task.labels.length > 0 && (
-                      <div className="flex items-center space-x-1 mt-2">
-                        {task.labels.map((label, index) => (
-                          <Badge key={index} variant="outline" className="text-xs">
-                            {label}
-                          </Badge>
-                        ))}
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex-1 min-w-0 w-full">
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <h4 className="font-medium text-foreground text-sm sm:text-base truncate flex-1 min-w-0">{task.title}</h4>
+                    <Badge className={getStatusColor(task.status) + ' flex-shrink-0'}>
+                      {getStatusIcon(task.status)}
+                      <span className="ml-1">{task.status.replace('_', ' ')}</span>
+                    </Badge>
+                    <Badge className={getPriorityColor(task.priority) + ' flex-shrink-0'}>
+                      {task.priority}
+                    </Badge>
+                    <Badge className={getTypeColor(task.type) + ' flex-shrink-0'}>
+                      {task.type}
+                    </Badge>
+                  </div>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-2 break-words">
+                    {task.description || 'No description'}
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                    {task.assignedTo && (
+                      <div className="flex items-center space-x-1">
+                        <User className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span className="truncate">{task.assignedTo.firstName} {task.assignedTo.lastName}</span>
+                      </div>
+                    )}
+                    {task.dueDate && (
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span>Due {new Date(task.dueDate).toLocaleDateString()}</span>
+                      </div>
+                    )}
+                    {task.storyPoints && (
+                      <div className="flex items-center space-x-1">
+                        <Target className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span>{task.storyPoints} points</span>
+                      </div>
+                    )}
+                    {task.estimatedHours && (
+                      <div className="flex items-center space-x-1">
+                        <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span>{task.estimatedHours}h estimated</span>
                       </div>
                     )}
                   </div>
+                  {task.labels.length > 0 && (
+                    <div className="flex flex-wrap items-center gap-1 mt-2">
+                      {task.labels.map((label, index) => (
+                        <Badge key={index} variant="outline" className="text-xs flex-shrink-0">
+                          {label}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 flex-shrink-0 w-full sm:w-auto">
                   <Select 
                     value={task.status} 
                     onValueChange={(value) => handleStatusChange(task._id, value)}
                   >
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-full sm:w-32">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -394,7 +394,7 @@ export default function TaskList({ projectId, onCreateTask }: TaskListProps) {
                   </Select>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" className="flex-shrink-0">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>

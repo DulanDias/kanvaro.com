@@ -272,8 +272,8 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
         onClose()
       }
     }}>
-      <Card className="w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto bg-background" onClick={(e) => e.stopPropagation()}>
-        <CardHeader>
+      <Card className="w-full max-w-2xl max-h-[90vh] flex flex-col bg-background m-4 sm:m-6" onClick={(e) => e.stopPropagation()}>
+        <CardHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Create New Task</CardTitle>
@@ -284,8 +284,8 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
             </Button>
           </div>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6" autoComplete="on">
+        <CardContent className="flex-1 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="space-y-6" autoComplete="on" id="create-task-form">
             {success && (
               <Alert>
                 <AlertDescription>{success}</AlertDescription>
@@ -613,33 +613,35 @@ export default function CreateTaskModal({ isOpen, onClose, projectId, onTaskCrea
               )}
             </div>
 
-            <div className="flex justify-end space-x-2">
-              <Button type="button" variant="outline" onClick={onClose}>
-                Cancel
-              </Button>
-              <Button type="submit" disabled={
-                loading ||
-                !(formData.title && formData.title.trim().length > 0) ||
-                !(projectId || (selectedProjectId && selectedProjectId.trim().length > 0)) ||
-                !(formData.status && formData.status.trim().length > 0) ||
-                !(formData.dueDate && formData.dueDate.trim().length > 0) ||
-                subtasks.some(st => !(st.title && st.title.trim().length > 0))
-              }>
-                {loading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Creating...
-                  </>
-                ) : (
-                  <>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Task
-                  </>
-                )}
-              </Button>
-            </div>
           </form>
         </CardContent>
+        <div className="flex-shrink-0 px-4 sm:px-6 pb-4 sm:pb-6 pt-3 sm:pt-4 border-t">
+          <div className="flex flex-col-reverse sm:flex-row justify-end gap-2 sm:gap-0 sm:space-x-2">
+            <Button type="button" variant="outline" onClick={onClose}>
+              Cancel
+            </Button>
+            <Button type="submit" form="create-task-form" disabled={
+              loading ||
+              !(formData.title && formData.title.trim().length > 0) ||
+              !(projectId || (selectedProjectId && selectedProjectId.trim().length > 0)) ||
+              !(formData.status && formData.status.trim().length > 0) ||
+              !(formData.dueDate && formData.dueDate.trim().length > 0) ||
+              subtasks.some(st => !(st.title && st.title.trim().length > 0))
+            }>
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Creating...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Task
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
       </Card>
       {(success || error) && (
         <div className="fixed bottom-6 right-6 z-[10000]">

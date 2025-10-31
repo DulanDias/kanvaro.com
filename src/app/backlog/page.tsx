@@ -237,17 +237,17 @@ export default function BacklogPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Product Backlog</h1>
-            <p className="text-muted-foreground">Manage your product backlog and sprint planning</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Product Backlog</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Manage your product backlog and sprint planning</p>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button variant="outline" onClick={() => router.push('/epics/create')}>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={() => router.push('/epics/create')} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               New Epic
             </Button>
-            <Button onClick={() => router.push('/stories/create')}>
+            <Button onClick={() => router.push('/stories/create')} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               New Story
             </Button>
@@ -263,76 +263,81 @@ export default function BacklogPage() {
 
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Backlog Items</CardTitle>
-                <CardDescription>
-                  {filteredAndSortedItems.length} item{filteredAndSortedItems.length !== 1 ? 's' : ''} found
-                </CardDescription>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Backlog Items</CardTitle>
+                  <CardDescription>
+                    {filteredAndSortedItems.length} item{filteredAndSortedItems.length !== 1 ? 's' : ''} found
+                  </CardDescription>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="relative">
+              <div className="flex flex-col gap-2 sm:gap-4">
+                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input
                     placeholder="Search backlog..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-64"
+                    className="pl-10 w-full"
                   />
                 </div>
-                <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Types</SelectItem>
-                    <SelectItem value="epic">Epics</SelectItem>
-                    <SelectItem value="story">Stories</SelectItem>
-                    <SelectItem value="task">Tasks</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Priority" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Priority</SelectItem>
-                    <SelectItem value="low">Low</SelectItem>
-                    <SelectItem value="medium">Medium</SelectItem>
-                    <SelectItem value="high">High</SelectItem>
-                    <SelectItem value="critical">Critical</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="backlog">Backlog</SelectItem>
-                    <SelectItem value="sprint">Sprint</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="done">Done</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={sortBy} onValueChange={setSortBy}>
-                  <SelectTrigger className="w-32">
-                    <SelectValue placeholder="Sort by" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="priority">Priority</SelectItem>
-                    <SelectItem value="title">Title</SelectItem>
-                    <SelectItem value="created">Created</SelectItem>
-                    <SelectItem value="dueDate">Due Date</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                >
-                  {sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
-                </Button>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-wrap">
+                  <Select value={typeFilter} onValueChange={setTypeFilter}>
+                    <SelectTrigger className="w-full sm:w-32">
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Types</SelectItem>
+                      <SelectItem value="epic">Epics</SelectItem>
+                      <SelectItem value="story">Stories</SelectItem>
+                      <SelectItem value="task">Tasks</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+                    <SelectTrigger className="w-full sm:w-32">
+                      <SelectValue placeholder="Priority" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Priority</SelectItem>
+                      <SelectItem value="low">Low</SelectItem>
+                      <SelectItem value="medium">Medium</SelectItem>
+                      <SelectItem value="high">High</SelectItem>
+                      <SelectItem value="critical">Critical</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-32">
+                      <SelectValue placeholder="Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="backlog">Backlog</SelectItem>
+                      <SelectItem value="sprint">Sprint</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="done">Done</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={sortBy} onValueChange={setSortBy}>
+                    <SelectTrigger className="w-full sm:w-32">
+                      <SelectValue placeholder="Sort by" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="priority">Priority</SelectItem>
+                      <SelectItem value="title">Title</SelectItem>
+                      <SelectItem value="created">Created</SelectItem>
+                      <SelectItem value="dueDate">Due Date</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    className="w-full sm:w-auto"
+                  >
+                    {sortOrder === 'asc' ? <ArrowUp className="h-4 w-4" /> : <ArrowDown className="h-4 w-4" />}
+                  </Button>
+                </div>
               </div>
             </div>
           </CardHeader>
@@ -341,75 +346,71 @@ export default function BacklogPage() {
               {filteredAndSortedItems.map((item) => (
                 <Card key={item._id} className="hover:shadow-md transition-shadow">
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4">
-                        <div className="flex-1">
-                          <div className="flex items-center space-x-2 mb-2">
-                            <h3 className="font-medium text-foreground">{item.title}</h3>
-                            <Badge className={getTypeColor(item.type)}>
-                              {item.type}
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                      <div className="flex-1 min-w-0 w-full">
+                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                          <h3 className="font-medium text-foreground text-sm sm:text-base truncate flex-1 min-w-0">{item.title}</h3>
+                          <Badge className={getTypeColor(item.type)}>
+                            {item.type}
+                          </Badge>
+                          <Badge className={getPriorityColor(item.priority)}>
+                            {item.priority}
+                          </Badge>
+                          <Badge className={getStatusColor(item.status)}>
+                            {item.status.replace('_', ' ')}
+                          </Badge>
+                          {item.epic && (
+                            <Badge variant="outline" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
+                              {item.epic.name}
                             </Badge>
-                            <Badge className={getPriorityColor(item.priority)}>
-                              {item.priority}
+                          )}
+                          {item.sprint && (
+                            <Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
+                              {item.sprint.name}
                             </Badge>
-                            <Badge className={getStatusColor(item.status)}>
-                              {item.status.replace('_', ' ')}
-                            </Badge>
-                            {item.epic && (
-                              <Badge variant="outline" className="bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200">
-                                {item.epic.name}
-                              </Badge>
-                            )}
-                            {item.sprint && (
-                              <Badge variant="outline" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200">
-                                {item.sprint.name}
-                              </Badge>
-                            )}
-                          </div>
-                          <p className="text-sm text-muted-foreground mb-2">
-                            {item.description || 'No description'}
-                          </p>
-                          <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                            <div className="flex items-center space-x-1">
-                              <Target className="h-4 w-4" />
-                              <span>{item.project.name}</span>
-                            </div>
-                            {item.dueDate && (
-                              <div className="flex items-center space-x-1">
-                                <Calendar className="h-4 w-4" />
-                                <span>Due {new Date(item.dueDate).toLocaleDateString()}</span>
-                              </div>
-                            )}
-                            {item.storyPoints && (
-                              <div className="flex items-center space-x-1">
-                                <BarChart3 className="h-4 w-4" />
-                                <span>{item.storyPoints} points</span>
-                              </div>
-                            )}
-                            {item.estimatedHours && (
-                              <div className="flex items-center space-x-1">
-                                <Clock className="h-4 w-4" />
-                                <span>{item.estimatedHours}h estimated</span>
-                              </div>
-                            )}
-                            {item.labels.length > 0 && (
-                              <div className="flex items-center space-x-1">
-                                <Star className="h-4 w-4" />
-                                <span>{item.labels.join(', ')}</span>
-                              </div>
-                            )}
-                          </div>
+                          )}
                         </div>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <div className="text-right">
-                          {item.assignedTo && (
-                            <div className="text-sm text-muted-foreground">
-                              {item.assignedTo.firstName} {item.assignedTo.lastName}
+                        <p className="text-xs sm:text-sm text-muted-foreground mb-2 break-words">
+                          {item.description || 'No description'}
+                        </p>
+                        {item.assignedTo && (
+                          <p className="text-xs sm:text-sm text-muted-foreground mb-2">
+                            {item.assignedTo.firstName} {item.assignedTo.lastName}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-xs sm:text-sm text-muted-foreground">
+                          <div className="flex items-center space-x-1">
+                            <Target className="h-3 w-3 sm:h-4 sm:w-4" />
+                            <span className="truncate">{item.project.name}</span>
+                          </div>
+                          {item.dueDate && (
+                            <div className="flex items-center space-x-1">
+                              <Calendar className="h-3 w-3 sm:h-4 sm:w-4" />
+                              <span>Due {new Date(item.dueDate).toLocaleDateString()}</span>
+                            </div>
+                          )}
+                          {item.storyPoints && (
+                            <div className="flex items-center space-x-1">
+                              <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4" />
+                              <span>{item.storyPoints} points</span>
+                            </div>
+                          )}
+                          {item.estimatedHours && (
+                            <div className="flex items-center space-x-1">
+                              <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                              <span>{item.estimatedHours}h estimated</span>
+                            </div>
+                          )}
+                          {item.labels.length > 0 && (
+                            <div className="flex items-center space-x-1">
+                              <Star className="h-3 w-3 sm:h-4 sm:w-4" />
+                              <span className="truncate">{item.labels.join(', ')}</span>
                             </div>
                           )}
                         </div>
-                        <Button variant="ghost" size="sm">
+                      </div>
+                      <div className="flex items-center space-x-2 flex-shrink-0">
+                        <Button variant="ghost" size="sm" className="flex-shrink-0">
                           <MoreHorizontal className="h-4 w-4" />
                         </Button>
                       </div>

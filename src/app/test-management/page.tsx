@@ -346,17 +346,17 @@ export default function TestManagementPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold">Test Management</h1>
-            <p className="text-muted-foreground">Manage test suites, cases, and executions</p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold truncate">Test Management</h1>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">Manage test suites, cases, and executions</p>
           </div>
-          <div className="flex flex-col sm:flex-row gap-2">
-            <Button variant="outline" onClick={() => router.push('/test-management/reports')}>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+            <Button variant="outline" onClick={() => router.push('/test-management/reports')} className="w-full sm:w-auto">
               <BarChart3 className="h-4 w-4 mr-2" />
               Reports
             </Button>
-            <Button onClick={handleCreateTestPlan}>
+            <Button onClick={handleCreateTestPlan} className="w-full sm:w-auto">
               <TestTube className="h-4 w-4 mr-2" />
               New Test Plan
             </Button>
@@ -365,13 +365,13 @@ export default function TestManagementPage() {
 
         {projects.length === 0 ? (
           <Card>
-            <CardContent className="p-8 text-center">
-              <TestTube className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No Projects Found</h3>
-              <p className="text-muted-foreground mb-4">
+            <CardContent className="p-6 sm:p-8 text-center">
+              <TestTube className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-base sm:text-lg font-semibold mb-2">No Projects Found</h3>
+              <p className="text-sm sm:text-base text-muted-foreground mb-4">
                 You need to be assigned to a project to access test management features.
               </p>
-              <Button onClick={() => router.push('/projects/create')}>
+              <Button onClick={() => router.push('/projects/create')} className="w-full sm:w-auto">
                 <TestTube className="h-4 w-4 mr-2" />
                 Create Test Project
               </Button>
@@ -379,11 +379,11 @@ export default function TestManagementPage() {
           </Card>
         ) : (
           <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Overview</TabsTrigger>
-              <TabsTrigger value="suites">Test Suites</TabsTrigger>
-              <TabsTrigger value="cases">Test Cases</TabsTrigger>
-              <TabsTrigger value="executions">Executions</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 gap-1 overflow-x-auto">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+              <TabsTrigger value="suites" className="text-xs sm:text-sm">Test Suites</TabsTrigger>
+              <TabsTrigger value="cases" className="text-xs sm:text-sm">Test Cases</TabsTrigger>
+              <TabsTrigger value="executions" className="text-xs sm:text-sm">Executions</TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
@@ -442,31 +442,31 @@ export default function TestManagementPage() {
                     {executionsLoading ? (
                       <div className="text-center py-8 text-muted-foreground">
                         <Play className="h-8 w-8 mx-auto mb-2 animate-pulse" />
-                        <p>Loading recent executions…</p>
+                        <p className="text-sm sm:text-base">Loading recent executions…</p>
                       </div>
                     ) : executions.length === 0 ? (
                       <div className="text-center py-8 text-muted-foreground">
                         <Play className="h-8 w-8 mx-auto mb-2" />
-                        <p>No recent executions</p>
+                        <p className="text-sm sm:text-base">No recent executions</p>
                       </div>
                     ) : (
                       <div className="space-y-3">
                         {executions.slice(0, 5).map((exe: any) => (
-                          <div key={exe._id} className="flex items-center justify-between border rounded-lg p-3">
-                            <div className="min-w-0 mr-3">
-                              <div className="text-sm font-medium truncate">{exe?.testCase?.title || exe.testCase}</div>
-                              <div className="text-xs text-muted-foreground truncate">
+                          <div key={exe._id} className="flex flex-col sm:flex-row items-start sm:items-center justify-between border rounded-lg p-3 gap-3">
+                            <div className="flex-1 min-w-0 w-full sm:w-auto">
+                              <div className="text-xs sm:text-sm font-medium truncate">{exe?.testCase?.title || exe.testCase}</div>
+                              <div className="text-xs text-muted-foreground truncate mt-1">
                                 {exe?.testPlan?.name || 'No Plan'} · {exe.environment || '—'} · {exe.version || '—'}
                               </div>
                             </div>
-                            <div className="flex items-center gap-3">
-                              <Badge className={getStatusColor(exe.status)}>
+                            <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto flex-shrink-0">
+                              <Badge className={getStatusColor(exe.status) + ' text-xs flex-shrink-0'}>
                                 {exe.status.charAt(0).toUpperCase() + exe.status.slice(1)}
                               </Badge>
-                              <div className="text-xs text-muted-foreground whitespace-nowrap">
+                              <div className="text-xs text-muted-foreground whitespace-nowrap flex-shrink-0 hidden sm:block">
                                 {exe?.executedAt ? new Date(exe.executedAt).toLocaleString() : '—'}
                               </div>
-                              <Button size="sm" variant="outline" onClick={() => router.push(`/test-management/executions/${exe._id}`)}>
+                              <Button size="sm" variant="outline" onClick={() => router.push(`/test-management/executions/${exe._id}`)} className="flex-1 sm:flex-initial">
                                 View
                               </Button>
                             </div>
@@ -558,18 +558,18 @@ export default function TestManagementPage() {
                       {!selectedSuiteId || suiteDetailsLoading ? (
                         <div className="text-center py-8 text-muted-foreground">
                           <Folder className="h-8 w-8 mx-auto mb-2" />
-                          <p>{suiteDetailsLoading ? 'Loading suite details…' : 'Select a test suite to view details'}</p>
+                          <p className="text-sm sm:text-base">{suiteDetailsLoading ? 'Loading suite details…' : 'Select a test suite to view details'}</p>
                         </div>
                       ) : selectedSuiteDetails ? (
                         <div className="space-y-4">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <h2 className="text-xl font-semibold">{selectedSuiteDetails.name}</h2>
-                              <p className="text-sm text-muted-foreground">
+                          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                            <div className="flex-1 min-w-0">
+                              <h2 className="text-lg sm:text-xl font-semibold truncate">{selectedSuiteDetails.name}</h2>
+                              <p className="text-xs sm:text-sm text-muted-foreground mt-1 break-words">
                                 {selectedSuiteDetails.description || 'No description'}
                               </p>
                             </div>
-                            <div className="flex gap-2">
+                            <div className="flex gap-2 w-full sm:w-auto">
                               <Button size="sm" onClick={() => {
                                 setEditingSuite({
                                   _id: selectedSuiteDetails._id,
@@ -580,8 +580,8 @@ export default function TestManagementPage() {
                                 })
                                 setParentSuiteIdForCreate(undefined)
                                 setSuiteDialogOpen(true)
-                              }}>Edit</Button>
-                              <Button size="sm" variant="destructive" onClick={() => handleDeleteSuite(selectedSuiteDetails._id)}>Delete</Button>
+                              }} className="flex-1 sm:flex-initial">Edit</Button>
+                              <Button size="sm" variant="destructive" onClick={() => handleDeleteSuite(selectedSuiteDetails._id)} className="flex-1 sm:flex-initial">Delete</Button>
                             </div>
                           </div>
 
@@ -600,10 +600,10 @@ export default function TestManagementPage() {
                             </div>
                           </div>
                         </div>
-                      ) : (
+                        ) : (
                         <div className="text-center py-8 text-muted-foreground">
                           <Folder className="h-8 w-8 mx-auto mb-2" />
-                          <p>Unable to load suite details</p>
+                          <p className="text-sm sm:text-base">Unable to load suite details</p>
                         </div>
                       )}
                     </CardContent>
@@ -652,82 +652,86 @@ export default function TestManagementPage() {
 
             <TabsContent value="executions" className="space-y-6">
               <Card>
-                <CardHeader className="flex flex-row items-center justify-between">
-                  <CardTitle>Test Executions</CardTitle>
-                  <div className="flex gap-2">
-                    <Button variant="outline" onClick={() => router.push('/test-management/executions')}>View All</Button>
-                    <Button onClick={handleStartTestExecution}>
+                <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <CardTitle className="text-xl sm:text-2xl">Test Executions</CardTitle>
+                  <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                    <Button variant="outline" onClick={() => router.push('/test-management/executions')} className="w-full sm:w-auto">
+                      View All
+                    </Button>
+                    <Button onClick={handleStartTestExecution} className="w-full sm:w-auto">
                       <Play className="h-4 w-4 mr-2" />
                       Record Execution
                     </Button>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Test Case</TableHead>
-                        <TableHead>Test Plan</TableHead>
-                        <TableHead>Project</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Tester</TableHead>
-                        <TableHead>Duration</TableHead>
-                        <TableHead>Executed</TableHead>
-                        <TableHead>Version</TableHead>
-                        <TableHead className="w-12">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {executionsLoading ? (
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={9}>Loading…</TableCell>
+                          <TableHead className="text-xs sm:text-sm">Test Case</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Test Plan</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Project</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Tester</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Duration</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Executed</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Version</TableHead>
+                          <TableHead className="text-xs sm:text-sm w-12">Actions</TableHead>
                         </TableRow>
-                      ) : executions.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={9}>No test executions found</TableCell>
-                        </TableRow>
-                      ) : (
-                        executions.map((execution: any) => (
-                          <TableRow key={execution._id}>
-                            <TableCell className="font-medium">{execution?.testCase?.title || execution.testCase}</TableCell>
-                            <TableCell>{execution?.testPlan?.name || 'N/A'}</TableCell>
-                            <TableCell>{execution?.project?.name || '—'}</TableCell>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                {getStatusIcon(execution.status)}
-                                <Badge className={getStatusColor(execution.status)}>
-                                  {execution.status.charAt(0).toUpperCase() + execution.status.slice(1)}
-                                </Badge>
-                              </div>
-                            </TableCell>
-                            <TableCell>{(execution?.executedBy?.firstName || '') + ' ' + (execution?.executedBy?.lastName || '') || execution?.executedBy?.email || '—'}</TableCell>
-                            <TableCell>{formatDuration(execution.executionTime)}</TableCell>
-                            <TableCell>{formatDate(execution.executedAt)}</TableCell>
-                            <TableCell>{execution.version || '—'}</TableCell>
-                            <TableCell>
-                              <Button variant="ghost" size="sm" onClick={() => {
-                                // open edit dialog with selected execution
-                                // shape it to TestExecutionForm inputs
-                                const mapped = {
-                                  _id: execution._id,
-                                  testCase: execution?.testCase?._id || execution.testCase,
-                                  testPlan: execution?.testPlan?._id || execution.testPlan,
-                                  status: execution.status,
-                                  actualResult: execution.actualResult,
-                                  comments: execution.comments,
-                                  executionTime: execution.executionTime,
-                                  environment: execution.environment,
-                                  version: execution.version,
-                                  attachments: execution.attachments || []
-                                }
-                                ;(setTestExecutionDialogOpen(true), (setTimeout(() => {}, 0)))
-                              }}>Edit</Button>
-                            </TableCell>
+                      </TableHeader>
+                      <TableBody>
+                        {executionsLoading ? (
+                          <TableRow>
+                            <TableCell colSpan={9} className="text-xs sm:text-sm">Loading…</TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
+                        ) : executions.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={9} className="text-xs sm:text-sm">No test executions found</TableCell>
+                          </TableRow>
+                        ) : (
+                          executions.map((execution: any) => (
+                            <TableRow key={execution._id}>
+                              <TableCell className="font-medium text-xs sm:text-sm truncate max-w-[200px]">{execution?.testCase?.title || execution.testCase}</TableCell>
+                              <TableCell className="text-xs sm:text-sm truncate max-w-[150px]">{execution?.testPlan?.name || 'N/A'}</TableCell>
+                              <TableCell className="text-xs sm:text-sm truncate max-w-[150px]">{execution?.project?.name || '—'}</TableCell>
+                              <TableCell className="text-xs sm:text-sm">
+                                <div className="flex items-center space-x-2">
+                                  {getStatusIcon(execution.status)}
+                                  <Badge className={getStatusColor(execution.status) + ' text-xs'}>
+                                    {execution.status.charAt(0).toUpperCase() + execution.status.slice(1)}
+                                  </Badge>
+                                </div>
+                              </TableCell>
+                              <TableCell className="text-xs sm:text-sm truncate max-w-[150px]">{(execution?.executedBy?.firstName || '') + ' ' + (execution?.executedBy?.lastName || '') || execution?.executedBy?.email || '—'}</TableCell>
+                              <TableCell className="text-xs sm:text-sm">{formatDuration(execution.executionTime)}</TableCell>
+                              <TableCell className="text-xs sm:text-sm whitespace-nowrap">{formatDate(execution.executedAt)}</TableCell>
+                              <TableCell className="text-xs sm:text-sm">{execution.version || '—'}</TableCell>
+                              <TableCell>
+                                <Button variant="ghost" size="sm" onClick={() => {
+                                  // open edit dialog with selected execution
+                                  // shape it to TestExecutionForm inputs
+                                  const mapped = {
+                                    _id: execution._id,
+                                    testCase: execution?.testCase?._id || execution.testCase,
+                                    testPlan: execution?.testPlan?._id || execution.testPlan,
+                                    status: execution.status,
+                                    actualResult: execution.actualResult,
+                                    comments: execution.comments,
+                                    executionTime: execution.executionTime,
+                                    environment: execution.environment,
+                                    version: execution.version,
+                                    attachments: execution.attachments || []
+                                  }
+                                  ;(setTestExecutionDialogOpen(true), (setTimeout(() => {}, 0)))
+                                }} className="text-xs sm:text-sm">Edit</Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </CardContent>
               </Card>
             </TabsContent>

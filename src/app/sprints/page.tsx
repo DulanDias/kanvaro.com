@@ -214,12 +214,12 @@ export default function SprintsPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Sprints</h1>
-            <p className="text-muted-foreground">Manage your agile sprints and iterations</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Sprints</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Manage your agile sprints and iterations</p>
           </div>
-          <Button onClick={() => router.push('/sprints/create')}>
+          <Button onClick={() => router.push('/sprints/create')} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             New Sprint
           </Button>
@@ -234,35 +234,39 @@ export default function SprintsPage() {
 
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>All Sprints</CardTitle>
-                <CardDescription>
-                  {filteredSprints.length} sprint{filteredSprints.length !== 1 ? 's' : ''} found
-                </CardDescription>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>All Sprints</CardTitle>
+                  <CardDescription>
+                    {filteredSprints.length} sprint{filteredSprints.length !== 1 ? 's' : ''} found
+                  </CardDescription>
+                </div>
               </div>
-              <div className="flex items-center space-x-2">
-                <div className="relative">
+              <div className="flex flex-col gap-2 sm:gap-4">
+                <div className="relative flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                   <Input
                     placeholder="Search sprints..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-64"
+                    className="pl-10 w-full"
                   />
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Filter by status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="planning">Planning</SelectItem>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-wrap">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="planning">Planning</SelectItem>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
             </div>
           </CardHeader>

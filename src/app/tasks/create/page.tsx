@@ -14,7 +14,8 @@ import {
   Save,
   Loader2,
   AlertTriangle,
-  Target
+  Target,
+  X
 } from 'lucide-react'
 
 interface Project {
@@ -73,6 +74,7 @@ export default function CreateTaskPage() {
   const [authError, setAuthError] = useState('')
   const [projects, setProjects] = useState<Project[]>([])
   const [users, setUsers] = useState<User[]>([])
+  const [loadingUsers, setLoadingUsers] = useState(false)
   const [stories, setStories] = useState<Story[]>([])
   const today = new Date().toISOString().split('T')[0]
   const [projectQuery, setProjectQuery] = useState("");
@@ -131,6 +133,8 @@ export default function CreateTaskPage() {
 
   useEffect(() => {
     checkAuth()
+    setAssigneeQuery('')
+
   }, [checkAuth])
 
   const fetchProjects = async () => {
@@ -150,18 +154,22 @@ export default function CreateTaskPage() {
   }
 
   const fetchUsers = async () => {
+    setLoadingUsers(true)
     try {
       const response = await fetch('/api/members')
       const data = await response.json()
-
-      if (data.success && Array.isArray(data.data)) {
-        setUsers(data.data)
+      
+      if (data.success && data.data && Array.isArray(data.data.members)) {
+        setUsers(data.data.members)
       } else {
+        console.error('Invalid users data:', data)
         setUsers([])
       }
     } catch (err) {
       console.error('Failed to fetch users:', err)
       setUsers([])
+    } finally {
+      setLoadingUsers(false)
     }
   }
 
@@ -406,11 +414,11 @@ export default function CreateTaskPage() {
                       <Input
                         value={assigneeQuery}
                         onChange={e => setAssigneeQuery(e.target.value)}
-                        placeholder={loading ? 'Loading members...' : 'Type to search team members'}
+                        placeholder={loadingUsers ? 'Loading members...' : 'Type to search team members'}
                         className="mb-2"
                       />
                       <div className="max-h-40 overflow-y-auto space-y-1">
-                        {loading ? (
+                        {loadingUsers ? (
                           <div className="flex items-center space-x-2 text-sm text-muted-foreground p-2">
                             <Loader2 className="h-4 w-4 animate-spin" />
                             <span>Loading members...</span>
@@ -432,7 +440,10 @@ export default function CreateTaskPage() {
                                 type="button"
                                 key={user._id}
                                 className="w-full text-left p-1 rounded hover:bg-accent"
-                                onClick={() => setAssignedToIds(prev => prev.includes(user._id) ? prev : [...prev, user._id])}
+                                onClick={() => {
+                                  setAssignedToIds(prev => prev.includes(user._id) ? prev : [...prev, user._id])
+                                  setAssigneeQuery('') // Clear search after selection
+                                }}
                               >
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm">{user.firstName} {user.lastName} <span className="text-muted-foreground">({user.email})</span></span>
@@ -452,16 +463,14 @@ export default function CreateTaskPage() {
                             if (!u) return null;
                             return (
                               <span key={id} className="inline-flex items-center text-xs bg-muted px-2 py-1 rounded">
-                                <span className="mr-2">{u.firstName} {u.lastName} <span className="text-muted-foreground">({u.email})</span></span>
+                                <span className="mr-2">{u.firstName} {u.lastName}</span>
                                 <button
                                   type="button"
                                   aria-label="Remove assignee"
                                   className="text-muted-foreground hover:text-foreground"
                                   onClick={() => setAssignedToIds(prev => prev.filter(x => x !== id))}
                                 >
-                                  <svg className="h-3 w-3" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                    <path d="M5 5L11 11M11 5L5 11" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" />
-                                  </svg>
+                                  <X className="h-3 w-3" />
                                 </button>
                               </span>
                             );
