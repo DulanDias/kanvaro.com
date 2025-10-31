@@ -224,17 +224,17 @@ console.log('user',user);
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center space-x-4">
-          <Button variant="ghost" onClick={() => router.push('/time-tracking')}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+          <Button variant="ghost" onClick={() => router.push('/time-tracking')} className="flex-shrink-0 w-full sm:w-auto">
             <ArrowLeft className="h-4 w-4 mr-2" />
             Back
           </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-foreground flex items-center space-x-2">
-              <Clock className="h-8 w-8 text-blue-600" />
-              <span>Time Tracker</span>
+          <div className="flex-1 min-w-0">
+            <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-foreground flex items-center space-x-2">
+              <Clock className="h-6 w-6 sm:h-7 sm:w-7 lg:h-8 lg:w-8 text-blue-600 flex-shrink-0" />
+              <span className="truncate">Time Tracker</span>
             </h1>
-            <p className="text-muted-foreground">Start tracking time for your tasks</p>
+            <p className="text-sm sm:text-base text-muted-foreground mt-1">Start tracking time for your tasks</p>
           </div>
         </div>
 
@@ -248,27 +248,27 @@ console.log('user',user);
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center space-x-2">
-              <Clock className="h-5 w-5" />
-              <span>Time Tracker</span>
+              <Clock className="h-5 w-5 flex-shrink-0" />
+              <span className="text-xl sm:text-2xl">Time Tracker</span>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-sm sm:text-base">
               Select a project and task, then start tracking your time
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
             <div className="grid gap-4 md:grid-cols-2">
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="project">Project *</Label>
                 <Select value={selectedProject} onValueChange={handleProjectChange}>
-                  <SelectTrigger>
+                  <SelectTrigger className="w-full">
                     <SelectValue placeholder="Select a project" />
                   </SelectTrigger>
                   <SelectContent>
                     {Array.isArray(projects) && projects.map((project) => (
                       <SelectItem key={project._id} value={project._id}>
                         <div className="flex items-center space-x-2">
-                          <FolderOpen className="h-4 w-4" />
-                          <span>{project.name}</span>
+                          <FolderOpen className="h-4 w-4 flex-shrink-0" />
+                          <span className="truncate">{project.name}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -277,10 +277,10 @@ console.log('user',user);
               </div>
 
               {selectedProject && (
-                <div>
+                <div className="space-y-2">
                   <Label htmlFor="task">Task (Optional)</Label>
                   <Select value={selectedTask} onValueChange={handleTaskChange}>
-                    <SelectTrigger>
+                    <SelectTrigger className="w-full">
                       <SelectValue placeholder="Select a task" />
                     </SelectTrigger>
                     <SelectContent>
@@ -288,10 +288,10 @@ console.log('user',user);
                       {Array.isArray(tasks) && tasks.map((task) => (
                         <SelectItem key={task._id} value={task._id}>
                           <div className="flex items-center space-x-2">
-                            <Target className="h-4 w-4" />
-                            <div>
-                              <div className="font-medium">{task.title}</div>
-                              <div className="text-sm text-muted-foreground">
+                            <Target className="h-4 w-4 flex-shrink-0" />
+                            <div className="flex-1 min-w-0">
+                              <div className="font-medium truncate">{task.title}</div>
+                              <div className="text-xs sm:text-sm text-muted-foreground truncate">
                                 {task.status} • {task.priority}
                               </div>
                             </div>
@@ -305,7 +305,7 @@ console.log('user',user);
             </div>
 
             {selectedProject && (
-              <div>
+              <div className="space-y-2">
                 <Label htmlFor="description">Description *</Label>
                 <Textarea
                   id="description"
@@ -314,6 +314,7 @@ console.log('user',user);
                   placeholder="What are you working on?"
                   rows={2}
                   required
+                  className="w-full"
                 />
               </div>
             )}
@@ -340,9 +341,9 @@ console.log('user',user);
 
             {!selectedProject && (
               <div className="text-center py-8">
-                <Target className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-medium mb-2">Select a Project</h3>
-                <p className="text-muted-foreground">
+                <Target className="h-10 w-10 sm:h-12 sm:w-12 mx-auto mb-4 text-muted-foreground" />
+                <h3 className="text-base sm:text-lg font-medium mb-2">Select a Project</h3>
+                <p className="text-sm sm:text-base text-muted-foreground">
                   Choose a project above to start tracking time
                 </p>
               </div>

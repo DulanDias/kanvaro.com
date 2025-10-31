@@ -356,18 +356,20 @@ export default function KanbanBoard({ projectId, onCreateTask, onEditTask, onDel
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-foreground">
-            Kanban Board {selectedProjectId === 'all' ? '- All Projects' : project ? `- ${project.name}` : ''}
-          </h3>
-          <p className="text-sm text-muted-foreground">
-            Drag and drop tasks between columns to update their status. Stories, sprints, and epics will auto-complete when all their tasks are done.
-          </p>
+      <div className="flex flex-col gap-4">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex-1 min-w-0">
+            <h3 className="text-lg font-semibold text-foreground truncate">
+              Kanban Board {selectedProjectId === 'all' ? '- All Projects' : project ? `- ${project.name}` : ''}
+            </h3>
+            <p className="text-sm text-muted-foreground">
+              Drag and drop tasks between columns to update their status. Stories, sprints, and epics will auto-complete when all their tasks are done.
+            </p>
+          </div>
         </div>
-        <div className="flex items-center space-x-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2 flex-wrap">
           <Select value={selectedProjectId} onValueChange={handleProjectChange}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full sm:w-[200px]">
               <SelectValue placeholder="Select project" />
             </SelectTrigger>
             <SelectContent>
@@ -379,22 +381,26 @@ export default function KanbanBoard({ projectId, onCreateTask, onEditTask, onDel
               ))}
             </SelectContent>
           </Select>
-          <Button 
-            variant="outline" 
-            size="sm"
-            onClick={() => setShowColumnSettings(true)}
-          >
-            <Settings className="h-4 w-4 mr-2" />
-            Manage Columns
-          </Button>
-          <Button 
-            onClick={() => handleCreateTask()}
-            disabled={selectedProjectId === 'all'}
-            title={selectedProjectId === 'all' ? 'Please select a specific project to create tasks' : 'Add a new task'}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Add Task
-          </Button>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:ml-auto">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setShowColumnSettings(true)}
+              className="w-full sm:w-auto"
+            >
+              <Settings className="h-4 w-4 mr-2" />
+              Manage Columns
+            </Button>
+            <Button 
+              onClick={() => handleCreateTask()}
+              disabled={selectedProjectId === 'all'}
+              title={selectedProjectId === 'all' ? 'Please select a specific project to create tasks' : 'Add a new task'}
+              className="w-full sm:w-auto"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Task
+            </Button>
+          </div>
         </div>
       </div>
 

@@ -238,11 +238,12 @@ export default function TestSuiteTree({
 
   return (
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between">
-        <CardTitle>Test Suites</CardTitle>
+      <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <CardTitle className="text-xl sm:text-2xl">Test Suites</CardTitle>
         <Button
           size="sm"
           onClick={() => handleCreateSuite()}
+          className="w-full sm:w-auto"
         >
           <Plus className="h-4 w-4 mr-2" />
           Add Suite

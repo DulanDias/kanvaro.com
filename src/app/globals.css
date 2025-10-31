@@ -23,6 +23,16 @@
 }
 
 @layer base {
+  * {
+    box-sizing: border-box;
+  }
+  
+  html,
+  body {
+    overflow-x: hidden;
+    max-width: 100vw;
+  }
+  
   :root {
     /* Light theme - High contrast, accessible colors */
     --background: 0 0% 100%; /* Pure white */

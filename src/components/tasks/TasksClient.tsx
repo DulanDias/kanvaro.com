@@ -322,7 +322,7 @@ export default function TasksClient({
                 </CardDescription>
               </div>
             </div>
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
+            <div className="flex flex-col gap-2 sm:gap-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                 <Input
@@ -345,7 +345,7 @@ export default function TasksClient({
                   </button>
                 )}
               </div>
-              <div className="flex gap-2">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-wrap">
                 <Select value={statusFilter} onValueChange={setStatusFilter}>
                   <SelectTrigger className="w-full sm:w-40">
                     <SelectValue placeholder="Status" />

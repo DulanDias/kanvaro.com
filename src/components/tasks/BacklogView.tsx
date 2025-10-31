@@ -22,7 +22,8 @@ import {
   User,
   Loader2,
   Plus,
-  BarChart3
+  BarChart3,
+  RefreshCw
 } from 'lucide-react'
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/DropdownMenu'
 
@@ -230,19 +231,19 @@ export default function BacklogView({ projectId, onCreateTask }: BacklogViewProp
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h3 className="text-lg font-semibold text-foreground">Product Backlog</h3>
-          <p className="text-sm text-muted-foreground">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-xl sm:text-2xl font-semibold text-foreground">Product Backlog</h3>
+          <p className="text-sm sm:text-base text-muted-foreground mt-1">
             Prioritized list of features, bugs, and improvements
           </p>
         </div>
-        <div className="flex items-center space-x-2">
-          <Button variant="outline" size="sm" onClick={refreshTasks}>
-            <Target className="h-4 w-4 mr-2" />
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+          <Button variant="outline" size="sm" onClick={refreshTasks} className="w-full sm:w-auto">
+            <RefreshCw className="h-4 w-4 mr-2" />
             Refresh
           </Button>
-          <Button onClick={onCreateTask}>
+          <Button onClick={onCreateTask} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Add Task
           </Button>
@@ -257,7 +258,7 @@ export default function BacklogView({ projectId, onCreateTask }: BacklogViewProp
       )}
 
       {/* Backlog Stats */}
-      <div className="grid gap-4 md:grid-cols-4">
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardContent className="p-4">
             <div className="flex items-center space-x-2">
@@ -340,51 +341,53 @@ export default function BacklogView({ projectId, onCreateTask }: BacklogViewProp
       </Card>
 
       {/* Filters and Search */}
-      <div className="flex items-center space-x-4">
+      <div className="flex flex-col gap-2 sm:gap-4">
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <Input
             placeholder="Search backlog items..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
+            className="pl-10 w-full"
           />
         </div>
-        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Priority" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Priority</SelectItem>
-            <SelectItem value="critical">Critical</SelectItem>
-            <SelectItem value="high">High</SelectItem>
-            <SelectItem value="medium">Medium</SelectItem>
-            <SelectItem value="low">Low</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={typeFilter} onValueChange={setTypeFilter}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Type" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All Types</SelectItem>
-            <SelectItem value="feature">Feature</SelectItem>
-            <SelectItem value="bug">Bug</SelectItem>
-            <SelectItem value="improvement">Improvement</SelectItem>
-            <SelectItem value="task">Task</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select value={sortBy} onValueChange={setSortBy}>
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder="Sort by" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="priority">Priority</SelectItem>
-            <SelectItem value="storyPoints">Story Points</SelectItem>
-            <SelectItem value="dueDate">Due Date</SelectItem>
-            <SelectItem value="created">Created</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 flex-wrap">
+          <Select value={priorityFilter} onValueChange={setPriorityFilter}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="Priority" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Priority</SelectItem>
+              <SelectItem value="critical">Critical</SelectItem>
+              <SelectItem value="high">High</SelectItem>
+              <SelectItem value="medium">Medium</SelectItem>
+              <SelectItem value="low">Low</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="Type" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Types</SelectItem>
+              <SelectItem value="feature">Feature</SelectItem>
+              <SelectItem value="bug">Bug</SelectItem>
+              <SelectItem value="improvement">Improvement</SelectItem>
+              <SelectItem value="task">Task</SelectItem>
+            </SelectContent>
+          </Select>
+          <Select value={sortBy} onValueChange={setSortBy}>
+            <SelectTrigger className="w-full sm:w-40">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="priority">Priority</SelectItem>
+              <SelectItem value="storyPoints">Story Points</SelectItem>
+              <SelectItem value="dueDate">Due Date</SelectItem>
+              <SelectItem value="created">Created</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       {/* Backlog Items */}

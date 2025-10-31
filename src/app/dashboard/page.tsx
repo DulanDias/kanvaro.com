@@ -173,14 +173,16 @@ export default function DashboardPage() {
     <MainLayout>
       <PageContent>
         <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <DashboardHeader user={user} />
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex-1 min-w-0 w-full sm:w-auto">
+            <DashboardHeader user={user} />
+          </div>
           <Button
             variant="outline"
             size="sm"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            className="ml-4"
+            className="w-full sm:w-auto flex-shrink-0"
           >
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? 'animate-spin' : ''}`} />
             Refresh
@@ -188,21 +190,21 @@ export default function DashboardPage() {
         </div>
 
         {dataError && (
-          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">
-            <p className="text-destructive text-sm">{dataError}</p>
+          <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 sm:p-4">
+            <p className="text-destructive text-xs sm:text-sm break-words">{dataError}</p>
             <Button
               variant="outline"
               size="sm"
               onClick={handleRefresh}
-              className="mt-2"
+              className="mt-2 w-full sm:w-auto"
             >
               Try Again
             </Button>
           </div>
         )}
         
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+          <div className="lg:col-span-2 space-y-4 sm:space-y-6">
             <StatsCards 
               stats={dashboardData?.stats} 
               changes={dashboardData?.changes}
@@ -222,7 +224,7 @@ export default function DashboardPage() {
             />
           </div>
           
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {user.id && user.organization && (
               <TimeTrackingWidget 
                 userId={user.id} 

@@ -251,29 +251,31 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
         )}
 
         {/* Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div>
-            <Label htmlFor="startDate">Start Date</Label>
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          <div className="space-y-2">
+            <Label htmlFor="startDate" className="text-xs sm:text-sm">Start Date</Label>
             <Input
               id="startDate"
               type="date"
               value={filters.startDate}
               onChange={(e) => handleFilterChange('startDate', e.target.value)}
+              className="w-full"
             />
           </div>
-          <div>
-            <Label htmlFor="endDate">End Date</Label>
+          <div className="space-y-2">
+            <Label htmlFor="endDate" className="text-xs sm:text-sm">End Date</Label>
             <Input
               id="endDate"
               type="date"
               value={filters.endDate}
               onChange={(e) => handleFilterChange('endDate', e.target.value)}
+              className="w-full"
             />
           </div>
-          <div>
-            <Label htmlFor="status">Status</Label>
+          <div className="space-y-2">
+            <Label htmlFor="status" className="text-xs sm:text-sm">Status</Label>
             <Select value={filters.status} onValueChange={(value) => handleFilterChange('status', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="All statuses" />
               </SelectTrigger>
               <SelectContent>
@@ -285,10 +287,10 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label htmlFor="isBillable">Billable</Label>
+          <div className="space-y-2">
+            <Label htmlFor="isBillable" className="text-xs sm:text-sm">Billable</Label>
             <Select value={filters.isBillable} onValueChange={(value) => handleFilterChange('isBillable', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent>
@@ -298,10 +300,10 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
               </SelectContent>
             </Select>
           </div>
-          <div>
-            <Label htmlFor="isApproved">Approved</Label>
+          <div className="space-y-2">
+            <Label htmlFor="isApproved" className="text-xs sm:text-sm">Approved</Label>
             <Select value={filters.isApproved} onValueChange={(value) => handleFilterChange('isApproved', value)}>
-              <SelectTrigger>
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="All" />
               </SelectTrigger>
               <SelectContent>
@@ -315,27 +317,29 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
 
         {/* Bulk Actions */}
         {selectedEntries.length > 0 && (
-          <div className="flex items-center gap-2 p-3 bg-muted rounded-lg">
-            <span className="text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 p-3 bg-muted rounded-lg">
+            <span className="text-xs sm:text-sm text-muted-foreground flex-1">
               {selectedEntries.length} entries selected
             </span>
-            <Button
-              size="sm"
-              onClick={() => handleApproveEntries('approve')}
-              className="h-8"
-            >
-              <Check className="h-4 w-4 mr-1" />
-              Approve
-            </Button>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={() => handleApproveEntries('reject')}
-              className="h-8"
-            >
-              <X className="h-4 w-4 mr-1" />
-              Reject
-            </Button>
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <Button
+                size="sm"
+                onClick={() => handleApproveEntries('approve')}
+                className="h-8 flex-1 sm:flex-initial"
+              >
+                <Check className="h-4 w-4 mr-1" />
+                Approve
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={() => handleApproveEntries('reject')}
+                className="h-8 flex-1 sm:flex-initial"
+              >
+                <X className="h-4 w-4 mr-1" />
+                Reject
+              </Button>
+            </div>
           </div>
         )}
 
@@ -348,13 +352,13 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
             </div>
           ) : timeEntries.length === 0 ? (
             <div className="text-center py-8">
-              <Clock className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-              <p className="text-muted-foreground">No time entries found</p>
+              <Clock className="h-10 w-10 sm:h-12 sm:w-12 text-muted-foreground mx-auto mb-4" />
+              <p className="text-sm sm:text-base text-muted-foreground">No time entries found</p>
             </div>
           ) : (
             <div className="space-y-2">
-              {/* Table Header */}
-              <div className="grid grid-cols-12 gap-4 p-3 bg-muted rounded-lg text-sm font-medium">
+              {/* Table Header - Hidden on mobile */}
+              <div className="hidden md:grid grid-cols-12 gap-4 p-3 bg-muted rounded-lg text-xs sm:text-sm font-medium">
                 <div className="col-span-1">
                   <Checkbox
                     checked={selectedEntries.length === timeEntries.length && timeEntries.length > 0}
@@ -372,46 +376,106 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
 
               {/* Table Rows */}
               {timeEntries.map((entry) => (
-                <div key={entry._id} className="grid grid-cols-12 gap-4 p-3 border rounded-lg">
-                  <div className="col-span-1 flex items-center">
-                    <Checkbox
-                      checked={selectedEntries.includes(entry._id)}
-                      onCheckedChange={(checked) => handleSelectEntry(entry._id, checked as boolean)}
-                    />
+                <div key={entry._id} className="border rounded-lg overflow-hidden">
+                  {/* Mobile Card View */}
+                  <div className="md:hidden p-3 space-y-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex items-center gap-2 flex-1 min-w-0">
+                        <Checkbox
+                          checked={selectedEntries.includes(entry._id)}
+                          onCheckedChange={(checked) => handleSelectEntry(entry._id, checked as boolean)}
+                          className="flex-shrink-0"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium text-sm truncate" title={entry.description}>{entry.description}</div>
+                          <div className="text-xs text-muted-foreground truncate mt-1">
+                            {entry.project.name}
+                            {entry.task && ` • ${entry.task.title}`}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div>
+                        <div className="text-muted-foreground">Start Time</div>
+                        {(() => { const p = formatDateParts(entry.startTime); return (
+                          <div className="mt-1">
+                            <div>{p.date}</div>
+                            <div className="text-muted-foreground">{p.time}</div>
+                          </div>
+                        ) })()}
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">End Time</div>
+                        {entry.endTime ? (() => { const p = formatDateParts(entry.endTime as string); return (
+                          <div className="mt-1">
+                            <div>{p.date}</div>
+                            <div className="text-muted-foreground">{p.time}</div>
+                          </div>
+                        ) })() : <div className="mt-1">-</div>}
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Duration</div>
+                        <div className="mt-1">{formatDuration(entry.duration)}</div>
+                      </div>
+                      <div>
+                        <div className="text-muted-foreground">Status</div>
+                        <div className="mt-1">
+                          <Badge variant={entry.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
+                            {entry.status}
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <Badge variant={entry.isBillable ? 'default' : 'outline'} className="text-xs">
+                        {entry.isBillable ? 'Billable' : 'Non-billable'}
+                      </Badge>
+                    </div>
                   </div>
-                  <div className="col-span-4 truncate">
-                    <div className="font-medium truncate" title={entry.description}>{entry.description}</div>
-                  </div>
-                  <div className="col-span-2 text-sm truncate">
-                    <span title={entry.project.name}>{entry.project.name}</span>
-                    {entry.task && (
-                      <span className="text-muted-foreground"> ({entry.task.title})</span>
-                    )}
-                  </div>
-                  <div className="col-span-1 text-sm leading-tight">
-                    {(() => { const p = formatDateParts(entry.startTime); return (<>
-                      <div>{p.date}</div>
-                      <div className="text-muted-foreground">{p.time}</div>
-                    </>) })()}
-                  </div>
-                  <div className="col-span-1 text-sm leading-tight">
-                    {entry.endTime ? (() => { const p = formatDateParts(entry.endTime as string); return (<>
-                      <div>{p.date}</div>
-                      <div className="text-muted-foreground">{p.time}</div>
-                    </>) })() : '-'}
-                  </div>
-                  <div className="col-span-1 text-sm">
-                    {formatDuration(entry.duration)}
-                  </div>
-                  <div className="col-span-1">
-                    <Badge variant={entry.status === 'completed' ? 'default' : 'secondary'}>
-                      {entry.status}
-                    </Badge>
-                  </div>
-                  <div className="col-span-1">
-                    <Badge variant={entry.isBillable ? 'default' : 'outline'}>
-                      {entry.isBillable ? 'Yes' : 'No'}
-                    </Badge>
+
+                  {/* Desktop Table View */}
+                  <div className="hidden md:grid grid-cols-12 gap-4 p-3">
+                    <div className="col-span-1 flex items-center">
+                      <Checkbox
+                        checked={selectedEntries.includes(entry._id)}
+                        onCheckedChange={(checked) => handleSelectEntry(entry._id, checked as boolean)}
+                      />
+                    </div>
+                    <div className="col-span-4 truncate">
+                      <div className="font-medium text-xs sm:text-sm truncate" title={entry.description}>{entry.description}</div>
+                    </div>
+                    <div className="col-span-2 text-xs sm:text-sm truncate">
+                      <span title={entry.project.name}>{entry.project.name}</span>
+                      {entry.task && (
+                        <span className="text-muted-foreground"> ({entry.task.title})</span>
+                      )}
+                    </div>
+                    <div className="col-span-1 text-xs sm:text-sm leading-tight">
+                      {(() => { const p = formatDateParts(entry.startTime); return (<>
+                        <div>{p.date}</div>
+                        <div className="text-muted-foreground">{p.time}</div>
+                      </>) })()}
+                    </div>
+                    <div className="col-span-1 text-xs sm:text-sm leading-tight">
+                      {entry.endTime ? (() => { const p = formatDateParts(entry.endTime as string); return (<>
+                        <div>{p.date}</div>
+                        <div className="text-muted-foreground">{p.time}</div>
+                      </>) })() : '-'}
+                    </div>
+                    <div className="col-span-1 text-xs sm:text-sm">
+                      {formatDuration(entry.duration)}
+                    </div>
+                    <div className="col-span-1">
+                      <Badge variant={entry.status === 'completed' ? 'default' : 'secondary'} className="text-xs">
+                        {entry.status}
+                      </Badge>
+                    </div>
+                    <div className="col-span-1">
+                      <Badge variant={entry.isBillable ? 'default' : 'outline'} className="text-xs">
+                        {entry.isBillable ? 'Yes' : 'No'}
+                      </Badge>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -421,27 +485,29 @@ export function TimeLogs({ userId, organizationId, projectId, taskId, onTimeEntr
 
         {/* Pagination */}
         {pagination.pages > 1 && (
-          <div className="flex items-center justify-between">
-            <div className="text-sm text-muted-foreground">
+          <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
               Showing {((pagination.page - 1) * pagination.limit) + 1} to {Math.min(pagination.page * pagination.limit, pagination.total)} of {pagination.total} entries
             </div>
-            <div className="flex gap-2">
+            <div className="flex gap-2 w-full sm:w-auto">
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handlePageChange(pagination.page - 1)}
                 disabled={pagination.page === 1}
+                className="flex-1 sm:flex-initial"
               >
-              Previous
-            </Button>
+                Previous
+              </Button>
               <Button
                 variant="outline"
                 size="sm"
                 onClick={() => handlePageChange(pagination.page + 1)}
                 disabled={pagination.page === pagination.pages}
+                className="flex-1 sm:flex-initial"
               >
-              Next
-            </Button>
+                Next
+              </Button>
             </div>
           </div>
         )}
