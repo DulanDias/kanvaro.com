@@ -113,11 +113,13 @@ const columns = [
 function ColumnDropZone({ 
   column, 
   tasks, 
+  onCreateTask,
   onEditTask, 
   onDeleteTask 
 }: { 
   column: any, 
   tasks: Task[], 
+  onCreateTask?: (status?: string) => void,
   onEditTask?: (task: Task) => void,
   onDeleteTask?: (taskId: string) => void
 }) {
@@ -158,7 +160,11 @@ function ColumnDropZone({
             {tasks.length}
           </span>
         </div>
-        <Button variant="ghost" size="sm">
+        <Button 
+          variant="ghost" 
+          size="sm"
+          onClick={() => onCreateTask?.(column.id)}
+        >
           <Plus className="h-4 w-4" />
         </Button>
       </div>
@@ -169,7 +175,7 @@ function ColumnDropZone({
       >
         <div 
           ref={setNodeRef}
-          className={`space-y-3 min-h-[400px] border-2 border-dashed rounded-lg transition-colors p-2 ${
+          className={`space-y-3 min-h-[400px] max-h-[600px] overflow-y-auto overflow-x-hidden border-2 border-dashed rounded-lg transition-colors p-2 ${
             isOver 
               ? 'border-primary bg-primary/5' 
               : 'border-transparent hover:border-gray-200 dark:hover:border-gray-700'
@@ -177,14 +183,15 @@ function ColumnDropZone({
         >
           {tasks.length === 0 ? (
             <div className="h-full flex items-center justify-center text-muted-foreground">
-              <div className="text-center">
-                <p className="text-sm opacity-50"> <Plus className="h-4 w-4 mr-2" />
-                Add Task</p>
+             <div className="text-center">
+                <Target className="h-8 w-8 mx-auto mb-2 opacity-50" />
+                <p className="text-sm">Drop tasks here</p>
               </div>
             </div>
           ) : (
             tasks.map((task) => (
               <SortableTask 
+              
                 key={task._id} 
                 task={task}
                 onClick={() => router.push(`/tasks/${task._id}`)}
@@ -479,12 +486,12 @@ export default function KanbanPage() {
   return (
     <MainLayout>
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-foreground">Kanban Board</h1>
-            <p className="text-muted-foreground">Visual task management with drag and drop</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Kanban Board</h1>
+            <p className="text-sm sm:text-base text-muted-foreground">Visual task management with drag and drop</p>
           </div>
-          <Button onClick={() => router.push('/tasks/create')}>
+          <Button onClick={() => router.push('/tasks/create')} className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             New Task
           </Button>
@@ -509,25 +516,29 @@ export default function KanbanPage() {
 
         <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <div>
-                <CardTitle>Task Board</CardTitle>
-                <CardDescription>
-                  {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''} found
-                </CardDescription>
-              </div>
-              <div className="flex items-center space-x-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                  <Input
-                    placeholder="Search tasks..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 w-64"
-                  />
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle>Task Board</CardTitle>
+                  <CardDescription>
+                    {filteredTasks.length} task{filteredTasks.length !== 1 ? 's' : ''} found
+                  </CardDescription>
                 </div>
+              </div>
+              {/* Search bar - full width on its own line */}
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                <Input
+                  placeholder="Search tasks..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10 w-full"
+                />
+              </div>
+              {/* Filter options - on the next line */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-2 flex-wrap">
                 <Select value={projectFilter} onValueChange={setProjectFilter}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40">
                     <SelectValue placeholder="Project" />
                   </SelectTrigger>
                   <SelectContent>
@@ -540,7 +551,7 @@ export default function KanbanPage() {
                   </SelectContent>
                 </Select>
                 <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40">
                     <SelectValue placeholder="Priority" />
                   </SelectTrigger>
                   <SelectContent>
@@ -552,7 +563,7 @@ export default function KanbanPage() {
                   </SelectContent>
                 </Select>
                 <Select value={typeFilter} onValueChange={setTypeFilter}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-full sm:w-40">
                     <SelectValue placeholder="Type" />
                   </SelectTrigger>
                   <SelectContent>
@@ -583,6 +594,7 @@ export default function KanbanPage() {
                       key={column.id} 
                       column={column} 
                       tasks={columnTasks}
+                      onCreateTask={handleCreateTask}
                       onEditTask={handleEditTask}
                       onDeleteTask={handleDeleteTask}
                     />

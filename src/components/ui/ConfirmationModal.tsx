@@ -30,9 +30,9 @@ export function ConfirmationModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-      <Card className="w-full max-w-md mx-4">
-        <CardHeader>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+      <Card className="w-full max-w-md flex flex-col max-h-[90vh]">
+        <CardHeader className="flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               {variant === 'destructive' && (
@@ -48,7 +48,7 @@ export function ConfirmationModal({
           </div>
           <CardDescription>{description}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex-shrink-0 pt-4">
           <div className="flex justify-end space-x-2">
             <Button variant="outline" onClick={onClose} disabled={isLoading}>
               {cancelText}

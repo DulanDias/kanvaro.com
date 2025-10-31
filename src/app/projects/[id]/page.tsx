@@ -263,33 +263,44 @@ export default function ProjectDetailPage() {
     <MainLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <Button variant="outline" size="sm" onClick={() => router.back()}>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 flex-1 min-w-0">
+            <Button variant="outline" size="sm" onClick={() => router.back()} className="w-full sm:w-auto">
               <ArrowLeft className="h-4 w-4 mr-2" />
               Back
             </Button>
-            <div>
-              <div className="flex items-center space-x-3">
-                <h1 className="text-3xl font-bold text-foreground">{project.name}</h1>
+            <div className="flex-1 min-w-0">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <h1 className="text-2xl sm:text-3xl font-bold text-foreground truncate">{project.name}</h1>
                 {typeof project.projectNumber !== 'undefined' && (
-                  <Badge variant="outline">#{project.projectNumber}</Badge>
+                  <Badge variant="outline" className="flex-shrink-0">#{project.projectNumber}</Badge>
                 )}
                 {project.isDraft && (
-                  <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200">
+                  <Badge variant="outline" className="bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200 flex-shrink-0">
                     Draft
                   </Badge>
                 )}
-                <Badge className={getStatusColor(project.status)}>
+                <Badge className={getStatusColor(project.status) + ' flex-shrink-0'}>
                   {getStatusIcon(project.status)}
                   <span className="ml-1">{project.status.replace('_', ' ')}</span>
                 </Badge>
               </div>
-              <p className="text-muted-foreground mt-1">{project.description || 'No description'}</p>
+              <p className="text-sm sm:text-base text-muted-foreground mt-1 break-words overflow-wrap-anywhere">
+                <span className="sm:hidden">
+                  {project.description && project.description.length > 25 
+                    ? `${project.description.substring(0, 25)}...` 
+                    : (project.description || 'No description')}
+                </span>
+                <span className="hidden sm:inline">
+                  {project.description && project.description.length > 100 
+                    ? `${project.description.substring(0, 100)}...` 
+                    : (project.description || 'No description')}
+                </span>
+              </p>
             </div>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button size="sm" onClick={() => setShowCreateTaskModal(true)}>
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <Button size="sm" onClick={() => setShowCreateTaskModal(true)} className="w-full sm:w-auto">
               <Plus className="h-4 w-4 mr-2" />
               Add Task
             </Button>
@@ -297,7 +308,7 @@ export default function ProjectDetailPage() {
         </div>
 
         {/* Project Stats */}
-        <div className="grid gap-4 md:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center space-x-2">
@@ -375,15 +386,15 @@ export default function ProjectDetailPage() {
           newSearchParams.set('tab', value)
           router.push(`/projects/${projectId}?${newSearchParams.toString()}`)
         }} className="space-y-4">
-          <TabsList className="grid w-full grid-cols-8">
-            <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="tasks">Tasks</TabsTrigger>
-            <TabsTrigger value="kanban">Kanban</TabsTrigger>
-            <TabsTrigger value="calendar">Calendar</TabsTrigger>
-            <TabsTrigger value="backlog">Backlog</TabsTrigger>
-            <TabsTrigger value="testing">Testing</TabsTrigger>
-            <TabsTrigger value="reports">Reports</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-1 overflow-x-auto">
+            <TabsTrigger value="overview" className="text-xs sm:text-sm">Overview</TabsTrigger>
+            <TabsTrigger value="tasks" className="text-xs sm:text-sm">Tasks</TabsTrigger>
+            <TabsTrigger value="kanban" className="text-xs sm:text-sm">Kanban</TabsTrigger>
+            <TabsTrigger value="calendar" className="text-xs sm:text-sm">Calendar</TabsTrigger>
+            <TabsTrigger value="backlog" className="text-xs sm:text-sm">Backlog</TabsTrigger>
+            <TabsTrigger value="testing" className="text-xs sm:text-sm">Testing</TabsTrigger>
+            <TabsTrigger value="reports" className="text-xs sm:text-sm">Reports</TabsTrigger>
+            <TabsTrigger value="settings" className="text-xs sm:text-sm">Settings</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="space-y-6">
@@ -623,19 +634,19 @@ export default function ProjectDetailPage() {
 
           <TabsContent value="reports" className="space-y-6">
             <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="text-lg font-semibold text-foreground">Project Reports</h3>
-                  <p className="text-sm text-muted-foreground">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex-1 min-w-0">
+                  <h3 className="text-xl sm:text-2xl font-semibold text-foreground">Project Reports</h3>
+                  <p className="text-sm sm:text-base text-muted-foreground mt-1">
                     View detailed reports and analytics for this project
                   </p>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Button variant="outline" size="sm">
+                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full sm:w-auto">
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
                     <Download className="h-4 w-4 mr-2" />
                     Export
                   </Button>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" className="w-full sm:w-auto">
                     <Calendar className="h-4 w-4 mr-2" />
                     Schedule Report
                   </Button>
@@ -904,6 +915,28 @@ export default function ProjectDetailPage() {
           open={suiteDialogOpen}
           onOpenChange={setSuiteDialogOpen}
           title={editingSuite ? 'Edit Test Suite' : 'Create Test Suite'}
+          footer={
+            <>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => {
+                  setSuiteDialogOpen(false)
+                  setEditingSuite(null)
+                  setParentSuiteIdForCreate(undefined)
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={suiteSaving}
+                form="test-suite-form"
+              >
+                {suiteSaving ? 'Saving...' : (editingSuite?._id ? 'Update Test Suite' : 'Create Test Suite')}
+              </Button>
+            </>
+          }
         >
           <TestSuiteForm
             testSuite={editingSuite || (parentSuiteIdForCreate ? { name: '', description: '', parentSuite: parentSuiteIdForCreate, project: projectId } as any : undefined)}
